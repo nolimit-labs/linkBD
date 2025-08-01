@@ -1,0 +1,36 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# E2E Tests Overview
+
+> **Note:** Replace "OS SaaS Starter" with your actual application name when adapting this template.
+
+---
+
+## Package: `apps/e2e-tests`
+
+End-to-end testing for the OS SaaS Starter application using Playwright.
+
+---
+
+## Structure
+
+-   **`tests/`**: Test files (*.spec.ts)
+    - `main.spec.ts`: contains the main tests, like auth, payment, adn webhook related xstuff
+-   **`pages/`**: Page Object Models for reusable page interactions
+-   **`utils/`**: Test utilities and helpers
+
+---
+
+## Rules
+
+-   Follow Page Object Model pattern when writing test
+-   Use descriptive test names
+-   **Prioritize `data-testid` selectors first** - If an element has a data-testid attribute, use it as the primary selector (e.g., `page.locator('[data-testid="user-name"]')`). Check the client code components to find available data-testids
+-   Target user-facing elements (`getByRole`, `getByText`) only when data-testid is not available
+-   Tests run against unauthenticated and authenticated flows
+
+---
+

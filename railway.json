@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.railpack.com",
+
+  "steps": {
+    "install-all": {
+      "commands": ["pnpm install --frozen-lockfile"],
+      "deployOutputs": []
+    },
+
+    "build-web": {
+      "inputs": [{ "step": "install-all" }],
+      "commands": [
+        {
+          "cmd": "if [ \"$DEPLOY_TARGET\" = \"WEB-APP\" ]; then pnpm run build:web-app; fi",
+          "shell": "sh"
+        }
+      ],
+      "deployOutputs": ["apps/web-app/dist", "apps/web-app/Caddyfile"]
+    },
+
+    "build-server": {
+      "inputs": [{ "step": "install-all" }],
+      "commands": [
+        {
+          "cmd": "if [ \"$DEPLOY_TARGET\" = \"SERVER\" ]; then pnpm run build:server; fi",
+          "shell": "sh"
+        }
+      ],
+      "deployOutputs": [
+        "apps/server/dist",
+        "apps/server/drizzle",
+        "apps/server/package.json"
+      ]
+    }
+  },
+
+  "deploy": {
+    "base": { "image": "ghcr.io/railwayapp/railpack-runtime:latest" },
+
+    "variables": {
+      "DEPLOY_TARGET": {
+        "type": "string"
+      },
+      "BACKEND_URL": {
+        "type": "string"
+      },
+      "PORT": {
+        "type": "string"
+      }
+    },
+
+    "startCommand": "if [ \"$DEPLOY_TARGET\" = \"SERVER\" ]; then cd apps/server && node dist/index.js; else caddy run --config /app/apps/web-app/Caddyfile; fi",
+
+    "inputs": [
+      {
+        "step": "build-web",
+        "include": ["apps/web-app/dist", "apps/web-app/Caddyfile"]
+      },
+      {
+        "step": "build-server",
+        "include": [
+          "apps/server/dist",
+          "apps/server/drizzle",
+          "apps/server/package.json"
+        ]
+      }
+    ]
+  }
+}

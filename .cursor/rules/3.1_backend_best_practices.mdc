@@ -1,0 +1,108 @@
+---
+description: Best practices for backend development in the TodoApp application
+globs: apps/server/**
+alwaysApply: false
+---
+# Backend Best Practices
+
+Follow these best practices when working on the TodoApp backend to ensure code quality, type safety, and maintainability.
+
+## 1. Hono RPC Method Chaining with Documentation
+
+**CRITICAL**: All route handlers MUST use method chaining to maintain end-to-end type safety AND include documentation comments above each endpoint.
+
+### Why This Matters
+- TypeScript can only infer route types when methods are chained in a single declaration
+- Breaking the chain means the frontend loses IntelliSense and type checking
+- The RPC system depends on continuous method chaining to generate proper types
+- Clear documentation improves code maintainability and team collaboration
+
+### ✅ Correct Implementation
+```typescript
+// Always chain methods with documentation comments
+const todos = new Hono()
+  // Get all todos for the authenticated user
+  .get('/', async (c) => { /* handler */ })
+  
+  // Create a new todo with validation
+  .post('/', async (c) => { /* handler */ })
+  
+  // Get a specific todo by ID
+  .get('/:id', async (c) => { /* handler */ })
+  
+  // Update an existing todo
+  .put('/:id', async (c) => { /* handler */ })
+  
+  // Toggle todo completion status
+  .patch('/:id/toggle', async (c) => { /* handler */ })
+  
+  // Delete a todo
+  .delete('/:id', async (c) => { /* handler */ })
+
+export default todos
+```
+
+### ❌ Incorrect Implementation
+```typescript
+// NEVER break the chain like this
+const todos = new Hono()
+todos.get('/', handler)  // ❌ Breaks type inference
+todos.post('/', handler) // ❌ Types are lost
+
+// NEVER omit documentation
+const todos = new Hono()
+  .get('/', async (c) => { /* handler */ })     // ❌ No documentation
+  .post('/', async (c) => { /* handler */ })    // ❌ Unclear purpose
+```
+
+### Main App Setup
+```typescript
+// In index.ts - chain all application routes and export AppType
+const routes = app
+  .route('/api/user', userRoutes)
+  .route('/api/todos', todosRoutes)
+
+export type AppType = typeof routes  // Critical for frontend type safety
+```
+
+## 2. Model Functions vs Route Handlers
+
+### Model Functions (in `models/` directory)
+- Handle all database operations and business logic
+- Return raw data or throw errors
+- Keep routes thin and focused on HTTP concerns
+
+### Route Handlers (in `routes/` directory)
+- Handle HTTP request/response only
+- Call model functions for data operations
+- Format responses with proper status codes
+
+### Example
+```typescript
+// models/todos.ts
+export async function getTodoById(todoId: string, userId: string) {
+  const results = await db
+    .select()
+    .from(todos)
+    .where(and(
+      eq(todos.id, todoId),
+      eq(todos.userId, userId)
+    ));
+  
+  return results[0] || null;
+}
+
+// routes/todos.ts
+.get('/:id', authMiddleware, async (c) => {
+  const user = c.get('user');
+  const todoId = c.req.param('id');
+  
+  const todo = await todoModel.getTodoById(todoId, user.id);
+  
+  if (!todo) {
+    return c.json({ error: 'Todo not found' }, 404);
+  }
+  
+  return c.json(todo);
+})
+``` 

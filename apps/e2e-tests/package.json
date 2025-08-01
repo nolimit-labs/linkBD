@@ -1,0 +1,27 @@
+{
+  "name": "@repo/e2e-tests",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:codegen": "playwright codegen ${BASE_URL:-http://localhost:3005}",
+    "check-types": "tsc --noEmit",
+    "clerk-cli": "tsx scripts/clerk-cli/index.ts",
+    "clerk-cli:force": "tsx scripts/clerk-cli/index.ts --force"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^22.14.0",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "stripe": "^17.4.0",
+    "tsx": "^4.19.4"
+  }
+}

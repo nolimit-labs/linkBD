@@ -1,0 +1,66 @@
+---
+description: 
+globs: apps/server/**
+alwaysApply: false
+---
+# Backend Server Overview
+
+---
+
+## Package: `apps/server`
+
+This is the API backend for the TodoApp in the `apps/server` directory. It uses Hono.js as the web framework with PostgreSQL database and Drizzle ORM. The backend serves individual users, providing simple APIs for todo management. Authentication is handled by Better Auth with anonymous guest login support.
+
+---
+
+## Tech Stack
+  - TypeScript
+  - Hono.js - Lightweight web framework
+  - PostgreSQL - Database
+  - Drizzle ORM - Type-safe database toolkit
+  - Better Auth - Authentication with anonymous plugin
+  - Zod - Schema validation
+  - Hono RPC - Type-safe client-server communication
+  - pnpm package manager
+
+---
+
+## Server Application Structure (`apps/server`)
+
+This section details the organization of the backend application.
+
+-   **Entry Point (`apps/server/src/index.ts`)**: Main application setup and configuration:
+    *   **Hono App**: Creates the main Hono application instance with CORS and logging
+    *   **Route Registration**: Mounts all API routes under `/api` prefix
+    *   **Auth Routes**: Better Auth endpoints mounted at `/api/auth/*`
+    *   **RPC Export**: Exports type-safe client for frontend consumption
+
+-   **Database (`apps/server/src/db/`)**: PostgreSQL database configuration and schema:
+    *   **Connection (`index.ts`)**: Drizzle ORM setup with PostgreSQL driver
+    *   **Schema (`schema.ts`)**: Simple database schema including auth tables and todos table
+    *   **Admin (`admin.ts`)**: Admin directory for the cli to manage the database, also contains constants for database tables
+
+-   **Models (`apps/server/src/models/`)**: Database operations and business logic:
+    *   **User Model (`user.ts`)**: User profile data access functions
+    *   **Todo Model (`todos.ts`)**: Todo CRUD operations and business logic
+
+-   **Routes (`apps/server/src/routes/`)**: Thin HTTP handlers that call model functions:
+    *   **User Routes (`user.ts`)**: Profile management endpoints
+    *   **Todo Routes (`todos.ts`)**: Todo management endpoints
+
+-   **Authentication (`apps/server/src/auth.ts`)**: Better Auth configuration:
+    *   **Plugins**: Anonymous authentication for guest login
+    *   **Auth Schema (`auth-schema.ts`)**: Better Auth generated schema in Drizzle syntax. Used to track schema changes when adding new plugins - compare against main schema.ts to identify new auth tables/fields to add after generating new schema.
+    *   **Middleware (`middleware/auth.ts`)**: Request authentication and authorization
+
+
+---
+
+## Rules
+- Use Drizzle ORM for all database operations - no raw SQL
+- Keep database logic in model functions, not in route handlers
+- Routes should be thin - only handle HTTP request/response
+- Ensure data is scoped to the authenticated user
+- Return appropriate HTTP status codes (200, 201, 400, 401, 403, 404, 500)
+- Use the auth middleware for all protected routes
+- Follow RESTful conventions for endpoint naming

@@ -1,0 +1,246 @@
+---
+description: 
+globs: apps/web-app/**
+alwaysApply: false
+---
+# Frontend Best Practices
+
+Follow these best practices when working on the TodoApp frontend to ensure code quality, type safety, and maintainability.
+
+## 1. Always Use the RPC Client for API Hooks
+
+**CRITICAL**: All API hooks MUST use the centralized RPC client to maintain type safety and consistent API communication.
+
+### Why This Matters
+- The RPC client provides end-to-end type safety between frontend and backend
+- Centralized client configuration ensures consistent error handling and authentication
+- Modular hook structure improves maintainability and discoverability
+
+### ✅ Correct Implementation
+```typescript
+// Use the modular API structure with centralized RPC client
+import { useTodos, useCreateTodo } from '@/api'
+
+// Inside a hook file (e.g., todos.ts)
+import { rpcClient } from './rpc-client'
+import { queryKeys } from './query-keys'
+
+export const useTodos = () => {
+  return useQuery({
+    queryKey: queryKeys.todos.list(),
+    queryFn: async () => {
+      const res = await rpcClient.api.todos.$get()
+      if (!res.ok) throw new Error('Failed to fetch todos')
+      return res.json()
+    }
+  })
+}
+```
+
+### ❌ Incorrect Implementation
+```typescript
+// NEVER create separate client instances
+const client = hc<AppType>('/')  // ❌ Breaks centralization
+
+// NEVER bypass the RPC client for API calls
+fetch('/api/todos')  // ❌ Loses type safety
+```
+
+### Modular Hook Organization
+```typescript
+apps/web-app/src/api/
+├── index.ts              # Re-exports all hooks
+├── rpc-client.ts         # Centralized RPC client
+├── query-keys.ts         # Consistent cache keys
+├── todos.ts              # Todo domain hooks
+└── user.ts              # User domain hooks
+```
+
+
+## 2. Self-Contained Dialog Components
+
+**IMPORTANT**: Create dialog components that include both the trigger button and dialog content together for better encapsulation and reusability. (There are some exceptions to this)
+
+### Why This Matters
+- Reduces boilerplate and state management in consuming components
+- Makes dialogs truly portable and reusable
+- Follows the principle of co-locating related functionality
+- Simplifies component APIs and usage
+
+### ✅ Correct Implementation
+```tsx
+// Self-contained dialog with trigger and content
+export function NewTodoDialog() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          New Todo
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create New Todo</DialogTitle>
+        </DialogHeader>
+        <CreateTodoForm onSuccess={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Usage is simple and clean
+<NewTodoDialog />
+```
+
+### ❌ Incorrect Implementation
+```tsx
+// Separate state management and manual dialog setup
+const [open, setOpen] = useState(false);
+
+return (
+  <>
+    <Button onClick={() => setOpen(true)}>New Todo</Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent>
+        <CreateTodoForm onSuccess={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  </>
+);
+```
+
+## 3. Hook Organization in Components
+
+**STANDARD**: Organize hooks in a consistent order for better readability and maintainability.
+
+### Hook Order
+```tsx
+function Component() {
+  // Component State
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  
+  // Router Hooks  
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Authentication & Session
+  const session = useSession();
+  const { data: activeOrg } = useActiveOrganization();
+  
+  // Data Fetching & Mutations
+  const { data: todos, isLoading } = useTodos();
+  const { data: todo } = useTodo(id);
+  const createTodo = useCreateTodo();
+  const updateTodo = useUpdateTodo();
+  const deleteTodo = useDeleteTodo();
+  
+  // Side Effects
+  useEffect(() => {
+    // Effect logic
+  }, [dependency]);
+  
+  // Refs
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Context & Other
+  const { toast } = useToast();
+  
+  // Component logic and JSX...
+}
+```
+
+### Notes
+- **Group queries and mutations together** in the data fetching section
+- **Use comment separators** (without numbers) between each hook category
+- **Order mutations** after queries for logical flow
+
+### Benefits
+- **Consistency**: Easy to find specific hook types
+- **Readability**: Clear separation of concerns  
+- **Maintainability**: Predictable structure across components
+
+## 4. Use React Hook Form for All Forms
+
+**STANDARD**: Use React Hook Form for form state management, validation, and submission handling.
+
+### Why React Hook Form
+- **Better Performance**: Uncontrolled components with minimal re-renders
+- **Built-in Validation**: Robust validation with schema integration (Zod)
+- **Type Safety**: Full TypeScript support with type inference
+- **Less Boilerplate**: Reduces manual state management code
+
+### ✅ Correct Implementation
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const schema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type FormData = z.infer<typeof schema>;
+
+function LoginForm() {
+  // Component State
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Form Management (also in Component State section)
+  const form = useForm<FormData>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  // Router Hooks
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: FormData) => {
+    setIsLoading(true);
+    // Handle form submission
+  };
+
+  return (
+    <form onSubmit={form.handleSubmit(onSubmit)}>
+      <input
+        {...form.register('email')}
+        type="email"
+        placeholder="Email"
+      />
+      {form.formState.errors.email && (
+        <span>{form.formState.errors.email.message}</span>
+      )}
+      <button type="submit" disabled={isLoading}>
+        Submit
+      </button>
+    </form>
+  );
+}
+```
+
+### Hook Organization with Forms
+Place `useForm` in the **Component State** section with other state management hooks.
+
+## 5. Page Header with Flexbox Layout
+
+**STANDARD**: Use PageHeader or PageHeaderText componenet from `page-header.tsx` for content and flexbox layout for page headers with actions.
+
+### Pattern
+```tsx
+<div className="bg-background px-6 py-2 flex-shrink-0">
+  <div className="flex items-center justify-between">
+    <PageHeader 
+      title="Page Title"
+      description="Page description"
+    />
+    <SelfContainedActionDialog />
+  </div>
+</div>
+```

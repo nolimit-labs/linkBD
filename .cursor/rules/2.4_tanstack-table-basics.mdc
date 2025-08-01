@@ -1,0 +1,240 @@
+---
+description: When you need to work with tables, ALWAYS refer to this file first.
+globs: 
+alwaysApply: false
+---
+# TanStack Table Basics (React Table v8)
+
+This guide covers the fundamental concepts and common patterns for using TanStack Table (v8) within the `apps/client` part of this project, primarily for building data tables and custom gallery views.
+
+## Core Concepts
+
+TanStack Table is a headless UI library, meaning it provides the logic, state, and API for building tables and datagrids but leaves the rendering (markup and styling) up to you.
+
+Key elements:
+
+-   **`useReactTable` Hook**: The primary hook to create a table instance. It takes your data, column definitions, and feature configurations.
+-   **Column Definitions (`ColumnDef<TData>`)**: An array of objects that define each column:
+    -   `accessorKey`: String key for the data field in your row objects.
+    -   `accessorFn`: Function to derive cell value from a row (`(row) => value`).
+    -   `header`: What to render in the column header. Can be a string or a function/component.
+    -   `cell`: What to render in each cell of the column. Typically a function that receives props (like `row`, `getValue`) and returns JSX.
+    -   `id`: A unique ID for the column, especially if not using `accessorKey`.
+-   **Data (`data`)**: An array of your data objects (e.g., `Doc<"products">[]`). It's crucial to memoize this data (e.g., with `React.useMemo` or by ensuring it has a stable reference if coming from a query hook like `useGetAllItems`).
+-   **Table Instance**: The object returned by `useReactTable`. It holds the state and APIs to render and interact with the table.
+-   **Row Models**: Functions like `getCoreRowModel`, `getPaginationRowModel`, `getSortedRowModel`, `getFilteredRowModel` are imported and passed to `useReactTable` to enable specific features.
+-   **`flexRender`**: A utility from `@tanstack/react-table` used to render the `header` and `cell` contents, whether they are strings, functions, or React components.
+
+## Basic Table Setup (`useReactTable`)
+
+A typical setup in your components (e.g., `data-table.tsx`):
+
+```tsx
+import {
+  useReactTable,
+  getCoreRowModel,
+  getPaginationRowModel, // For pagination
+  getSortedRowModel,    // For sorting
+  getFilteredRowModel,  // For filtering
+  // ... other imports like ColumnDef, SortingState, etc.
+} from "@tanstack/react-table";
+import React, { useState, useMemo } from "react"; // Or useEffect if data is fetched
+
+// Assuming 'columns' is your memoized ColumnDef array
+// Assuming 'productsData' is your memoized data array
+
+function MyTableComponent({ productsData, columns }) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  // ... other state for visibility, pagination etc.
+
+  const table = useReactTable<YourDataType>({ // e.g., YourDataType = Doc<"products">
+    data: productsData ?? [], // Ensure data is an array
+    columns,
+    state: {
+      sorting,
+      columnFilters,
+      rowSelection,
+      // ... other states
+    },
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
+    // ... other onStateChange handlers
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getRowId: (row) => row._id, // Important for selection and other features if IDs are stable
+    // manualPagination, manualSorting etc. would be false for client-side operations
+  });
+
+  // ... JSX to render the table using `table` instance
+  return ( /* table JSX */ );
+}
+```
+
+**Important**:
+-   Memoize `data` and `columns` props passed to `useReactTable` to prevent unnecessary re-renders and re-calculations.
+    ```tsx
+    const columns = useMemo(() => [ /* ...your column defs... */ ], []);
+    // Data from API hooks like useGetAllItems is usually stable/memoized by the query library.
+    ```
+
+## Column Definition Example
+
+From `data-table.tsx`:
+
+```tsx
+import type { ColumnDef } from "@tanstack/react-table";
+import type { Doc } from "@repo/backend/convex/_generated/dataModel";
+import { Button } from "@/components/ui/button"; // Your UI component
+import { ArrowUpDown } from "lucide-react";     // Icon
+
+export const columns: ColumnDef<Doc<"products">>[] = [
+  // Example: Simple accessor column
+  {
+    accessorKey: "name",
+    header: ({ column }) => { // Custom header for sorting
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Name
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      )
+    },
+    cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+  },
+  // Example: Column with custom cell rendering (formatting)
+  {
+    accessorKey: "price",
+    header: "Price", // Can be a simple string
+    cell: ({ row }) => {
+      const price = parseFloat(row.getValue("price"));
+      const formatted = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      }).format(price);
+      return <div className="text-right font-medium">{formatted}</div>;
+    },
+  },
+  // Example: Action column (display column)
+  {
+    id: "actions", // Important for columns without an accessorKey
+    cell: ({ row }) => {
+      const product = row.original; // Access the original data object
+      // return <DropdownMenu> ... actions for the product ... </DropdownMenu>
+      return <div>Actions for {product.name}</div>
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+];
+```
+
+## Rendering the Table (JSX)
+
+You use your own UI components (`<Table>`, `<Tr>`, `<Th>`, `<Td>` from `@/components/ui/table.tsx`). `flexRender` is key.
+
+```tsx
+import { flexRender } from "@tanstack/react-table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"; // Your project's UI components
+
+// Inside your component, using the 'table' instance from useReactTable
+<div className="rounded-md border">
+  <Table>
+    <TableHeader>
+      {table.getHeaderGroups().map((headerGroup) => (
+        <TableRow key={headerGroup.id}>
+          {headerGroup.headers.map((header) => (
+            <TableHead key={header.id} style={{ width: header.getSize() }}>
+              {header.isPlaceholder
+                ? null
+                : flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
+            </TableHead>
+          ))}
+        </TableRow>
+      ))}
+    </TableHeader>
+    <TableBody>
+      {table.getRowModel().rows?.length ? (
+        table.getRowModel().rows.map((row) => (
+          <TableRow
+            key={row.id}
+            data-state={row.getIsSelected() && "selected"}
+          >
+            {row.getVisibleCells().map((cell) => (
+              <TableCell key={cell.id} style={{ width: cell.column.getSize() }}>
+                {flexRender(
+                  cell.column.columnDef.cell,
+                  cell.getContext()
+                )}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))
+      ) : (
+        <TableRow>
+          <TableCell
+            colSpan={table.getAllColumns().length} // Or columns.length
+            className="h-24 text-center"
+          >
+            No results.
+          </TableCell>
+        </TableRow>
+      )}
+    </TableBody>
+  </Table>
+</div>
+```
+
+## Implemented Features (as seen in your project)
+
+Your project uses these client-side features:
+
+-   **Pagination**:
+    -   Enable with `getPaginationRowModel()`.
+    -   Control with `table.nextPage()`, `table.previousPage()`, `table.getCanNextPage()`, `table.getCanPreviousPage()`.
+    -   State: `onPaginationChange` and `state.pagination`.
+-   **Sorting**:
+    -   Enable with `getSortedRowModel()`.
+    -   Trigger with `column.toggleSorting()`.
+    -   State: `onSortingChange` and `state.sorting`.
+-   **Filtering (Column Filtering)**:
+    -   Enable with `getFilteredRowModel()`.
+    -   Set filter value with `column.setFilterValue()`.
+    -   Access filter value with `column.getFilterValue()`.
+    -   State: `onColumnFiltersChange` and `state.columnFilters`.
+-   **Row Selection**:
+    -   Requires `getRowId` in `useReactTable` options.
+    -   Enable with `onRowSelectionChange` and `state.rowSelection`.
+    -   Checkbox example: `table.toggleAllPageRowsSelected()`, `row.toggleSelected()`, `row.getIsSelected()`.
+-   **Column Visibility**:
+    -   Enable with `onColumnVisibilityChange` and `state.columnVisibility`.
+    -   Toggle with `column.toggleVisibility()`.
+    -   Check with `column.getIsVisible()`.
+    -   Use `column.getCanHide()` to determine if a column can be hidden.
+
+## `items-gallery-table.tsx` - Custom Rendering Example
+
+The `items-gallery-table.tsx` demonstrates using TanStack Table's core logic (`useReactTable`, column definitions) to manage data and state, but with a completely custom rendering output (a gallery of cards) instead of a traditional HTML table. This highlights the "headless" nature of the library. The `columns` are defined to control which data fields *can* be shown, and `table.getColumn("field")?.getIsVisible()` is used within the card rendering logic.
+
+This file is a great example to understand when trying to use TanStack Table for non-tabular data layouts where you still need its data processing and state management capabilities.
+
+---
+
+This guide should cover the main ways TanStack Table is utilized in your client application. For more advanced features or specific API details, refer to the official TanStack Table documentation.

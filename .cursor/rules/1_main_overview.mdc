@@ -1,0 +1,51 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Main Project Overview
+
+This project is a TodoApp - Turbo Monorepo. A simple todo list application built with TypeScript, serving individual users with full type safety.
+
+The apps directory contains all the packages of this Monorepo. This is defined in the `pnpm-workspace.yaml` file.
+
+---
+
+## Project Structure
+
+The `apps` directory contains all applications
+
+- `apps/server` is the Backend Server - Hono.js API with PostgreSQL database
+- `apps/web-app` is the Frontend App - React application for todo management and file upload
+
+- **Shared Types** - Full type safety between frontend and backend via Hono RPC
+
+---
+
+## Key Features
+- Simple todo management (create, read, update, delete, toggle completion)
+- User authentication with Better Auth (email/password and anonymous guest login)
+- Clean, responsive UI with shadcn/ui components
+- File-based routing with Tanstack Router
+- File storage with R2 Cloudflare Storage
+- Type-safe API communication via Hono RPC
+
+---
+
+## Rules
+-   Implements complete, working code for all requested features
+-   Adds comments to the code to explain the purpose and structure, do not do this for imports though
+-   Use the `@` symbol when possible for imports. 
+-   Try to get to the root of a problem when debugging, instead of overengineering a solution.
+-   If you are unsure of something you can search the documentation using a tool. In this case use context7.
+-   Do not install packages on your own, just tell me what to install.
+-   Import types as type.
+-   Always follow best practices
+-   **Important** Do not make changes I didn't ask for. 
+-   **Important** Do not run `npm run dev` or scripts like that on your own. Just tell me, and I'll do it. I'll tell you the result.
+-   **Important** Always output md files that i ask you to create in the `ai_artifacts` directory
+
+
+---
+

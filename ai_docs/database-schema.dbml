@@ -1,0 +1,87 @@
+// =====================================================================
+// TodoApp Database Schema
+// =====================================================================
+// This DBML file represents the complete database schema for the TodoApp
+// Generated from: apps/server/src/db/schema.ts
+
+Project TodoApp {
+  database_type: 'PostgreSQL'
+  Note: 'Simple todo list application with Better Auth integration'
+}
+
+// =====================================================================
+// Auth Tables (Better Auth)
+// =====================================================================
+
+Table user {
+  id text [pk, note: 'Primary user identifier']
+  name text [not null, note: 'User display name']
+  email text [not null, unique, note: 'User email address']
+  email_verified boolean [not null, default: false, note: 'Email verification status']
+  image text [note: 'User profile image URL']
+  created_at timestamp [not null, default: `now()`, note: 'Account creation timestamp']
+  updated_at timestamp [not null, default: `now()`, note: 'Last update timestamp']
+  is_anonymous boolean [note: 'Anonymous user flag for guest login']
+
+  Note: 'User accounts with support for both authenticated and anonymous users'
+}
+
+Table session {
+  id text [pk, note: 'Session identifier']
+  expires_at timestamp [not null, note: 'Session expiration time']
+  token text [not null, unique, note: 'Session token for authentication']
+  created_at timestamp [not null, note: 'Session creation time']
+  updated_at timestamp [not null, note: 'Session last update time']
+  ip_address text [note: 'Client IP address']
+  user_agent text [note: 'Client user agent string']
+  user_id text [not null, ref: > user.id, note: 'Reference to user account']
+
+  Note: 'User sessions for authentication and authorization'
+}
+
+Table account {
+  id text [pk, note: 'Account record identifier']
+  account_id text [not null, note: 'External account ID']
+  provider_id text [not null, note: 'Authentication provider identifier']
+  user_id text [not null, ref: > user.id, note: 'Reference to user account']
+  access_token text [note: 'OAuth access token']
+  refresh_token text [note: 'OAuth refresh token']
+  id_token text [note: 'OAuth ID token']
+  access_token_expires_at timestamp [note: 'Access token expiration']
+  refresh_token_expires_at timestamp [note: 'Refresh token expiration']
+  scope text [note: 'OAuth scope permissions']
+  password text [note: 'Hashed password for credential auth']
+  created_at timestamp [not null, note: 'Account creation time']
+  updated_at timestamp [not null, note: 'Account last update time']
+
+  Note: 'External authentication accounts and credentials'
+}
+
+Table verification {
+  id text [pk, note: 'Verification record identifier']
+  identifier text [not null, note: 'Verification identifier (email, phone, etc.)']
+  value text [not null, note: 'Verification code or token']
+  expires_at timestamp [not null, note: 'Verification expiration time']
+  created_at timestamp [default: `now()`, note: 'Verification creation time']
+  updated_at timestamp [default: `now()`, note: 'Verification last update time']
+
+  Note: 'Email and other verification tokens'
+}
+
+// =====================================================================
+// Application Tables
+// =====================================================================
+
+Table todos {
+  id text [pk, note: 'Todo item unique identifier']
+  user_id text [not null, ref: > user.id, note: 'Owner of the todo item']
+  title text [not null, note: 'Todo item title/summary']
+  description text [note: 'Optional detailed description']
+  completed boolean [not null, default: false, note: 'Completion status']
+  created_at timestamp [not null, default: `now()`, note: 'Todo creation time']
+  updated_at timestamp [not null, default: `now()`, note: 'Todo last update time']
+
+  Note: 'Personal todo items for task management'
+}
+
+

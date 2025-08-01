@@ -1,0 +1,245 @@
+---
+description: 
+globs: apps/client/**
+alwaysApply: false
+---
+# Tanstack Router Basics (File-Based Routing)
+
+This is a quick reference for using Tanstack Router with file-based routing in this project.
+
+
+## 1. File-Based Routing
+
+Tanstack Router maps files and directories within the `src/routes` directory to URL paths.
+
+1. **`__root.tsx`**: Defines the root layout for the entire application. Must contain `<Outlet />` to render child routes.
+2. **`index.tsx`**: Represents the index route for a directory (e.g., `routes/index.tsx` -> `/`, `routes/admin/index.tsx` -> `/admin`).
+3. **`about.tsx`**: Creates a route at `/about`.
+4. **`posts/` (Directory)**: Creates a route segment `/posts`.
+   1. **`posts/index.tsx`**: Route for `/posts`.
+   2. **`posts/$postId.tsx`**: Creates a dynamic route `/posts/:postId`.
+5. **`posts.tsx`**: Can *also* create a route segment `/posts`, often used for layouts applying to child routes defined using dot notation.
+6. **`posts.index.tsx`**: Flat route equivalent to `posts/index.tsx` -> `/posts`.
+7. **`posts.$postId.tsx`**: Flat route equivalent to `posts/$postId.tsx` -> `/posts/:postId`.
+8. **`posts_.$postId.edit.tsx`**: Flat route with an underscore to avoid conflicting with the `posts/$postId.tsx` layout -> `/posts/:postId/edit`.
+9. **`route.tsx` (within a directory)**: Defines a layout for routes *within* that directory. Contains `<Outlet />`. Does *not* create a navigable route itself.
+10. **`(group)` (Directory Name in Parentheses)**: Creates a layout group without adding a path segment to the URL. Useful for organizing routes under a shared layout (e.g., `(storefront)/index.tsx` -> `/`).
+11. **`_layout` (Directory Name starting with Underscore)**: Similar to `(group)`, creates a pathless layout route.
+
+## 2. Flat Files vs Directory Structure
+
+TanStack Router supports **two approaches** for organizing routes:
+
+### **Flat File Structure** (using dots)
+```
+routes/
+├── items.tsx          // Layout route for /items (needs <Outlet />)
+├── items.index.tsx    // Index route for /items (exact match)  
+├── items.$id.tsx      // Dynamic route for /items/123
+```
+
+### **Directory Structure**
+```
+routes/
+├── items/
+│   ├── route.tsx      // Layout route for /items (needs <Outlet />)
+│   ├── index.tsx      // Index route for /items (exact match)
+│   ├── $id.tsx        // Dynamic route for /items/123
+```
+
+### **Critical Rule: Layout Routes MUST Have Outlets**
+
+When using flat files with child routes, the **named route file** (like `items.tsx`) becomes a **layout route** and **MUST render an `<Outlet />`**:
+
+```tsx
+// items.tsx (layout route)
+import { Outlet, createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/items')({
+  component: ItemsLayout,
+})
+
+function ItemsLayout() {
+  return <Outlet /> // REQUIRED for child routes to render
+}
+```
+
+1. **`items.tsx`** = Layout route (provides `<Outlet />`)
+2. **`items.index.tsx`** = Content for `/items` exact match
+3. **`items.$id.tsx`** = Content for `/items/123`
+
+**Without `<Outlet />` in the layout route, child routes will not render and may redirect unexpectedly.**
+
+
+## 3. Route Definition (`createFileRoute`)
+
+Routes are defined in their respective files using `createFileRoute`, this is automatically created when you create a file.
+**Always define route components in the same file as the route definition, not as imports from other files.**
+
+```tsx
+// src/routes/posts/index.tsx
+import { createFileRoute } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/posts/')({
+  // Loader function to prefetch data before component renders
+  loader: async () => { 
+    const posts = await fetchPosts();
+    return { posts };
+  },
+  // The component to render for this route
+  component: PostsIndexComponent, 
+})
+
+function PostsIndexComponent() {
+  // Access loader data
+  const { posts } = Route.useLoaderData();
+  
+  return (
+    <div>
+      <h2>Posts</h2>
+      {/* Render posts */}
+    </div>
+  );
+}
+```
+
+## 4. Data Loading with Loaders
+
+### 4.1 Basic Loader Pattern
+
+Loaders run before the route component renders and are perfect for prefetching data:
+
+```tsx
+export const Route = createFileRoute('/categories/')({
+  loader: async ({ context: { queryClient } }) => {
+    // Prefetch data using TanStack Query
+    await queryClient.ensureQueryData(convexQuery(api.categories.getAllCategories, {}));
+  },
+  component: CategoriesPage,
+});
+```
+
+### 4.2 Loader Parameters
+
+Loaders receive useful parameters:
+
+```tsx
+loader: async ({ context, params, deps, abortController }) => {
+  // context: Router context (includes queryClient)
+  // params: Route parameters (e.g., { postId: "123" })
+  // deps: Dependencies from loaderDeps function
+  // abortController: For cancelling requests
+}
+```
+
+### 4.3 Using Search Params in Loaders
+
+Access search params via `loaderDeps`:
+
+```tsx
+export const Route = createFileRoute('/posts/')({
+  loaderDeps: ({ search: { page, limit } }) => ({ page, limit }),
+  loader: async ({ context: { queryClient }, deps: { page, limit } }) => {
+    await queryClient.ensureQueryData(
+      convexQuery(api.posts.getPosts, { page, limit })
+    );
+  },
+});
+```
+
+### 4.4 Benefits of Loaders
+
+1. **Parallel Loading**: Loaders run in parallel for better performance
+2. **Preloading**: Routes can be preloaded on hover/intent for instant navigation
+3. **SSR Support**: Data is available on server-side rendering
+
+## 5. Layouts and `<Outlet />`
+
+1. `__root.tsx` provides the top-level layout.
+2. `route.tsx` files within directories provide nested layouts.
+3. Both must render the `<Outlet />` component where child routes should be rendered.
+
+```tsx
+// src/routes/admin/route.tsx (Example Layout)
+import { Outlet, createFileRoute } from '@tanstack/react-router'
+import { AdminSidebar } from '@/components/layout/AdminSidebar' // Example sidebar
+
+export const Route = createFileRoute('/admin/_layout')({
+  component: AdminLayout,
+})
+
+function AdminLayout() {
+  return (
+    <div className="flex">
+      <AdminSidebar />
+      <main className="flex-1 p-4">
+        <Outlet /> { /* Child admin routes render here */ }
+      </main>
+    </div>
+  )
+}
+```
+
+## 6. Linking
+
+Use the `<Link>` component for navigation:
+
+```tsx
+import { Link } from '@tanstack/react-router'
+
+function Navigation() {
+  return (
+    <nav>
+      <Link to="/" className="[&.active]:font-bold">
+        Home
+      </Link>
+      <Link to="/admin/products" className="[&.active]:font-bold">
+        Products
+      </Link>
+    </nav>
+  )
+}
+```
+
+1. `to`: Specifies the target path.
+2. `[&.active]:font-bold`: Example of applying styles when the link is active (uses Tailwind arbitrary variants).
+
+## 7. Programmatic Navigation
+
+Use the `useRouter` hook:
+
+```tsx
+import { useRouter } from '@tanstack/react-router'
+
+function SomeComponent() {
+  const router = useRouter();
+
+  const handleAction = () => {
+    // Navigate to a different route
+    router.navigate({ to: '/admin' });
+
+    // Invalidate router cache (useful after mutations)
+    router.invalidate();
+
+    // Go back
+    router.history.back();
+  }
+  
+  return <button onClick={handleAction}>Do Action</button>;
+}
+```
+
+## 8. Router Setup
+
+Done in `src/main.tsx`:
+
+```tsx
+import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { routeTree } from "./routeTree.gen.ts" // Generated tree
+
+const router = createRouter({ routeTree, context: { /* ... */ } })
+
+// ... Render <RouterProvider router={router} /> ...
+```
+
+This covers the basics used in this project. Refer to the official Tanstack Router documentation for more advanced features like search params, loaders/actions in depth, pending states, etc. 
