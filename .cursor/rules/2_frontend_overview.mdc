@@ -9,7 +9,7 @@ alwaysApply: false
 
 ## Package: `apps/web-app`
 
-This is the web-based frontend app for the TodoApp in the `apps/web-app` directory. It uses TanStack Router for routing. The main route group is `(app)` which contains simple todo management routes. The application serves individual users for managing their personal todos.
+This is the web-based frontend app for linkBD in the `apps/web-app` directory. It uses TanStack Router for routing. The main route group is `(app)` which contains social networking and job board routes. The application serves the Bangladeshi diaspora community for connecting and finding opportunities.
 
 ---
 
@@ -38,18 +38,18 @@ This section details the organization of the React frontend application.
 
 -   **Routing (`apps/web-app/src/routes`)**: Manages navigation using TanStack Router's file-based routing:
     *   **App Route Group (`(app)`)**: Parent group containing authenticated application routes
-        *   **Todo Routes**: Simple todo management - `/todos` for todo list, `/settings` for user settings
+        *   **Social Routes**: Social networking features - `/feed` for posts, `/jobs` for job listings, `/settings` for user settings
     *   **Authentication Routes**: Login and onboarding pages
     *   **Route Protection**: Centralized auth checks in `(app)/route.tsx`
 
 -   **Components (`apps/web-app/src/components`)**: Central repository for all React components:
     *   **UI Primitives (`ui/`)**: Foundational components from shadcn/ui library
     *   **Layout Components (`layout/`)**: Page structure components including `AppHeader`
-    *   **Feature Components**: Simple todo components - `todos/` for todo management
+    *   **Feature Components**: Social media components - `posts/` for social posts, `jobs/` for job listings
 
 -   **Data Fetching & API Interaction**: Frontend-backend communication patterns:
     *   **Hono RPC Client (`apps/web-app/src/api/rpc-client.ts`)**: Type-safe client for API calls
-    *   **Query Hooks (`apps/web-app/src/api/`)**: TanStack Query hooks for todos and user management
+    *   **Query Hooks (`apps/web-app/src/api/`)**: TanStack Query hooks for posts, jobs, and user management
     *   **Real-time Updates**: Queries automatically refetch on window focus and data mutations
     *   **Type Safety**: Full type inference from backend Hono routes
 
@@ -61,7 +61,7 @@ This section details the organization of the React frontend application.
 ## Rules
 - Use CSS variables for colors to maintain a unified theme. Do not use hardcoded colors unless I explicitly ask for it.
 - Use UI primitives from the `components/ui` directory when creating components
-- All component file names must be in kebab-case (e.g., `create-todo-dialog.tsx`)
+- All component file names must be in kebab-case (e.g., `create-post-dialog.tsx`)
 - Do not use `useMemo` and `useReducer` unless absolutely necessary
 - Follow existing patterns in the `api/` directory when creating new query hooks
 

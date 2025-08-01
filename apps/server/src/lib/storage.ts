@@ -4,7 +4,7 @@ import dotenv from 'dotenv'
 
 dotenv.config()
 
-const BUCKET_NAME = 'os-saas-starter-1';
+const BUCKET_NAME = 'linkbd';
 
 export const r2 = new S3Client({
   region: "auto",

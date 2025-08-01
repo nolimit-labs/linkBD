@@ -36,7 +36,7 @@ app.use('*', cors(
 app.get('/api/health', (c) => {
   return c.json({ 
     status: 'ok', 
-    message: 'Simple Todo App API is running',
+    message: 'linkBD API is running',
     timestamp: new Date().toISOString()
   })
 })
@@ -77,7 +77,7 @@ app.onError((err, c) => {
 
 // Start the server
 const port = process.env.PORT || 3002
-console.log(`📝 Simple Todo App API starting on port ${port}`)
+console.log(`📝 linkBD API starting on port ${port}`)
 
 serve({
   fetch: app.fetch,

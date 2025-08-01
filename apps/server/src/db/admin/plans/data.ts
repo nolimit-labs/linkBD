@@ -1,5 +1,14 @@
 import type { StripePlan } from '@better-auth/stripe/*';
 import type { PlanLimits } from '../../schema';
+import dotenv from 'dotenv'
+
+dotenv.config()
+
+const STRIPE_PRO_PRICE_ID = process.env.STRIPE_PRO_PRICE_ID
+
+if (!STRIPE_PRO_PRICE_ID) {
+  throw new Error('STRIPE_PRO_PRICE_ID is not set');
+}
 
 // Extend StripePlan to include id and isActive for managing legacy plans
 export interface ExtendedStripePlan extends StripePlan {
@@ -19,24 +28,13 @@ export const SUBSCRIPTION_PLANS: ExtendedStripePlan[] = [
   },
   {
     name: 'pro',
-    priceId: 'price_1RoyS1AozJl34ksQZ7qAZY5J',
+    priceId: STRIPE_PRO_PRICE_ID,
     limits: {
       todos: 20,
       files: 20,
     },
     isActive: true,
   },
-  // Example legacy plan (disabled) with custom ID
-  // {
-  //   id: 'legacy_starter_2023', // Optional custom ID
-  //   name: 'starter',
-  //   priceId: 'price_legacy_starter',
-  //   limits: {
-  //     todos: 10,
-  //     files: 10,
-  //   },
-  //   isActive: false, // Legacy plan - won't be offered to new users
-  // },
 ];
 
 export const DEFAULT_PLAN_NAME = 'free';

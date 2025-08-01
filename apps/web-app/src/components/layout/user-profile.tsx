@@ -106,7 +106,7 @@ export function UserProfile({ className }: UserProfileProps) {
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-destructive hover:text-destructive"
+            className="w-full justify-start text-primary hover:text-primary"
             onClick={handleSignOut}
           >
             <LogOut className="mr-2 h-4 w-4" />

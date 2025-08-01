@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1753414479974,
-      "tag": "0000_young_chronomancer",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1753500554977,
-      "tag": "0001_same_leader",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1753646807593,
-      "tag": "0002_lively_ares",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1753649570354,
-      "tag": "0003_aspiring_drax",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1753754809803,
-      "tag": "0004_deep_wolf_cub",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1753756336361,
-      "tag": "0005_cultured_lord_tyger",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1753759901719,
-      "tag": "0006_dizzy_blazing_skull",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1753917663353,
-      "tag": "0007_slim_hellcat",
+      "when": 1754018098144,
+      "tag": "0000_bored_red_hulk",
       "breakpoints": true
     }
   ]

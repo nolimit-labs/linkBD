@@ -22,7 +22,7 @@ export default function Header() {
       <div className="container mx-auto flex h-32 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center">
-          <Logo textSize="text-6xl" className="mx-auto" />
+          <Logo height={220} width={220} className="mx-auto" />
         </div>
 
         {/* Spacer */}
@@ -80,12 +80,7 @@ export default function Header() {
                 <Menu className="size-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent className="overflow-y-auto px-4 pt-2 pb-3">
-              <SheetHeader className="mb-4">
-                <SheetTitle>
-                  <Logo textSize="text-6xl" className="mx-auto" />
-                </SheetTitle>
-              </SheetHeader>
+            <SheetContent className="overflow-y-auto px-4 pt-4 pb-3">
               {/* Mobile Navigation List */}
               <nav className="space-y-1">
                 <Link
@@ -108,7 +103,7 @@ export default function Header() {
                 </Link>
                 <Link
                   to="/sign-in"
-                  className="text-foreground/90 hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-lg font-medium transition-colors mt-4"
+                  className="text-foreground/90 hover:bg-accent hover:text-accent-foreground block rounded-md px-3 py-2 text-lg font-medium transition-colors"
                 >
                   Sign In
                 </Link>

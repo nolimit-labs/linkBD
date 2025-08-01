@@ -1,11 +1,11 @@
 ---
-description: Best practices for backend development in the TodoApp application
+description: Best practices for backend development in the linkBD application
 globs: apps/server/**
 alwaysApply: false
 ---
 # Backend Best Practices
 
-Follow these best practices when working on the TodoApp backend to ensure code quality, type safety, and maintainability.
+Follow these best practices when working on the linkBD backend to ensure code quality, type safety, and maintainability.
 
 ## 1. Hono RPC Method Chaining with Documentation
 
@@ -20,37 +20,37 @@ Follow these best practices when working on the TodoApp backend to ensure code q
 ### ✅ Correct Implementation
 ```typescript
 // Always chain methods with documentation comments
-const todos = new Hono()
-  // Get all todos for the authenticated user
+const posts = new Hono()
+  // Get all posts for the authenticated user
   .get('/', async (c) => { /* handler */ })
   
-  // Create a new todo with validation
+  // Create a new post with validation
   .post('/', async (c) => { /* handler */ })
   
-  // Get a specific todo by ID
+  // Get a specific post by ID
   .get('/:id', async (c) => { /* handler */ })
   
-  // Update an existing todo
+  // Update an existing post
   .put('/:id', async (c) => { /* handler */ })
   
-  // Toggle todo completion status
-  .patch('/:id/toggle', async (c) => { /* handler */ })
+  // Like/unlike a post
+  .patch('/:id/like', async (c) => { /* handler */ })
   
-  // Delete a todo
+  // Delete a post
   .delete('/:id', async (c) => { /* handler */ })
 
-export default todos
+export default posts
 ```
 
 ### ❌ Incorrect Implementation
 ```typescript
 // NEVER break the chain like this
-const todos = new Hono()
-todos.get('/', handler)  // ❌ Breaks type inference
-todos.post('/', handler) // ❌ Types are lost
+const posts = new Hono()
+posts.get('/', handler)  // ❌ Breaks type inference
+posts.post('/', handler) // ❌ Types are lost
 
 // NEVER omit documentation
-const todos = new Hono()
+const posts = new Hono()
   .get('/', async (c) => { /* handler */ })     // ❌ No documentation
   .post('/', async (c) => { /* handler */ })    // ❌ Unclear purpose
 ```
@@ -60,7 +60,8 @@ const todos = new Hono()
 // In index.ts - chain all application routes and export AppType
 const routes = app
   .route('/api/user', userRoutes)
-  .route('/api/todos', todosRoutes)
+  .route('/api/posts', postsRoutes)
+  .route('/api/jobs', jobsRoutes)
 
 export type AppType = typeof routes  // Critical for frontend type safety
 ```
@@ -79,30 +80,30 @@ export type AppType = typeof routes  // Critical for frontend type safety
 
 ### Example
 ```typescript
-// models/todos.ts
-export async function getTodoById(todoId: string, userId: string) {
+// models/posts.ts
+export async function getPostById(postId: string, userId: string) {
   const results = await db
     .select()
-    .from(todos)
+    .from(posts)
     .where(and(
-      eq(todos.id, todoId),
-      eq(todos.userId, userId)
+      eq(posts.id, postId),
+      eq(posts.userId, userId)
     ));
   
   return results[0] || null;
 }
 
-// routes/todos.ts
+// routes/posts.ts
 .get('/:id', authMiddleware, async (c) => {
   const user = c.get('user');
-  const todoId = c.req.param('id');
+  const postId = c.req.param('id');
   
-  const todo = await todoModel.getTodoById(todoId, user.id);
+  const post = await postModel.getPostById(postId, user.id);
   
-  if (!todo) {
-    return c.json({ error: 'Todo not found' }, 404);
+  if (!post) {
+    return c.json({ error: 'Post not found' }, 404);
   }
   
-  return c.json(todo);
+  return c.json(post);
 })
 ``` 

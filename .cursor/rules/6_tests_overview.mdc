@@ -5,13 +5,12 @@ alwaysApply: false
 ---
 # E2E Tests Overview
 
-> **Note:** Replace "OS SaaS Starter" with your actual application name when adapting this template.
 
 ---
 
 ## Package: `apps/e2e-tests`
 
-End-to-end testing for the OS SaaS Starter application using Playwright.
+End-to-end testing for the linkBD application using Playwright.
 
 ---
 

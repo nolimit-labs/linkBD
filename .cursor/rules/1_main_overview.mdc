@@ -6,7 +6,7 @@ alwaysApply: true
 
 # Main Project Overview
 
-This project is a TodoApp - Turbo Monorepo. A simple todo list application built with TypeScript, serving individual users with full type safety.
+linkBD - A social media and job board platform for the Bangladeshi diaspora. Built as a Turbo Monorepo with TypeScript, providing full type safety across the stack.
 
 The apps directory contains all the packages of this Monorepo. This is defined in the `pnpm-workspace.yaml` file.
 
@@ -17,14 +17,15 @@ The apps directory contains all the packages of this Monorepo. This is defined i
 The `apps` directory contains all applications
 
 - `apps/server` is the Backend Server - Hono.js API with PostgreSQL database
-- `apps/web-app` is the Frontend App - React application for todo management and file upload
+- `apps/web-app` is the Frontend App - React application for social networking and job board features
 
 - **Shared Types** - Full type safety between frontend and backend via Hono RPC
 
 ---
 
 ## Key Features
-- Simple todo management (create, read, update, delete, toggle completion)
+- Social networking features for the Bangladeshi diaspora community
+- Job board functionality for posting and finding opportunities
 - User authentication with Better Auth (email/password and anonymous guest login)
 - Clean, responsive UI with shadcn/ui components
 - File-based routing with Tanstack Router

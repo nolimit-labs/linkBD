@@ -39,7 +39,7 @@ function SignIn() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <Logo width={220} height={220} className="mx-auto" />
+              <Logo width={220} height={100} className="mx-auto" />
             </div>
             <CardTitle className="text-2xl">Welcome Back</CardTitle>
             <CardDescription>

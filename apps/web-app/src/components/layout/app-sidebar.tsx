@@ -35,7 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
-        <Logo textSize="text-5xl" className="mx-auto mb-4 mt-2" />
+        <Logo height={80} width={200} className="mx-auto mb-2 mt-2" />
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>

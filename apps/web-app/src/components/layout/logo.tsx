@@ -1,21 +1,27 @@
 
+// LogoProps now accepts height and width instead of textSize
 interface LogoProps {
 	className?: string;
-	textSize?: string;
+	height?: number | string;
+	width?: number | string;
 	priority?: boolean;
 }
 
-// Logo component renders the app name "TodoApp" with "Todo" in primary color and "App" in secondary color.
-// The words "Todo" and "App" are displayed side by side (horizontally), not stacked.
-// Accepts optional className, width, height, and priority props for styling and accessibility.
-export function Logo({ className, textSize = "text-2xl" }: LogoProps) {
+/**
+ * Logo component for displaying the LinkBD logo.
+ * Accepts optional height and width props to control the logo size.
+ * - height/width can be a number (pixels) or string (e.g., "2rem", "40px").
+ * - className allows for additional styling.
+ */
+export function Logo({ className, height = 40, width = 40 }: LogoProps) {
 	return (
-		<span
-			className={`inline-flex flex-row items-center leading-none select-none ${className ?? ''}`}
-			aria-label="TodoApp Logo"
-		>
-			<span className={`${textSize} font-bold text-primary`}>Todo</span>
-			<span className={`${textSize} font-bold text-secondary`}>App</span>
-		</span>
+		<img
+			src='/logo.svg'
+			alt="LinkBD Logo"
+			height={height}
+			width={width}
+			className={className ?? ''}
+			style={{ height, width }}
+		/>
 	);
 }

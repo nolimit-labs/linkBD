@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Frontend Best Practices
 
-Follow these best practices when working on the TodoApp frontend to ensure code quality, type safety, and maintainability.
+Follow these best practices when working on the linkBD frontend to ensure code quality, type safety, and maintainability.
 
 ## 1. Always Use the RPC Client for API Hooks
 
@@ -19,18 +19,18 @@ Follow these best practices when working on the TodoApp frontend to ensure code 
 ### ✅ Correct Implementation
 ```typescript
 // Use the modular API structure with centralized RPC client
-import { useTodos, useCreateTodo } from '@/api'
+import { usePosts, useCreatePost } from '@/api'
 
-// Inside a hook file (e.g., todos.ts)
+// Inside a hook file (e.g., posts.ts)
 import { rpcClient } from './rpc-client'
 import { queryKeys } from './query-keys'
 
-export const useTodos = () => {
+export const usePosts = () => {
   return useQuery({
-    queryKey: queryKeys.todos.list(),
+    queryKey: queryKeys.posts.list(),
     queryFn: async () => {
-      const res = await rpcClient.api.todos.$get()
-      if (!res.ok) throw new Error('Failed to fetch todos')
+      const res = await rpcClient.api.posts.$get()
+      if (!res.ok) throw new Error('Failed to fetch posts')
       return res.json()
     }
   })
@@ -43,7 +43,7 @@ export const useTodos = () => {
 const client = hc<AppType>('/')  // ❌ Breaks centralization
 
 // NEVER bypass the RPC client for API calls
-fetch('/api/todos')  // ❌ Loses type safety
+fetch('/api/posts')  // ❌ Loses type safety
 ```
 
 ### Modular Hook Organization
@@ -52,7 +52,8 @@ apps/web-app/src/api/
 ├── index.ts              # Re-exports all hooks
 ├── rpc-client.ts         # Centralized RPC client
 ├── query-keys.ts         # Consistent cache keys
-├── todos.ts              # Todo domain hooks
+├── posts.ts              # Social post domain hooks
+├── jobs.ts               # Job listing domain hooks
 └── user.ts              # User domain hooks
 ```
 
@@ -70,7 +71,7 @@ apps/web-app/src/api/
 ### ✅ Correct Implementation
 ```tsx
 // Self-contained dialog with trigger and content
-export function NewTodoDialog() {
+export function NewPostDialog() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -78,21 +79,21 @@ export function NewTodoDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          New Todo
+          New Post
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Todo</DialogTitle>
+          <DialogTitle>Create New Post</DialogTitle>
         </DialogHeader>
-        <CreateTodoForm onSuccess={() => setOpen(false)} />
+        <CreatePostForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
 // Usage is simple and clean
-<NewTodoDialog />
+<NewPostDialog />
 ```
 
 ### ❌ Incorrect Implementation
@@ -102,10 +103,10 @@ const [open, setOpen] = useState(false);
 
 return (
   <>
-    <Button onClick={() => setOpen(true)}>New Todo</Button>
+    <Button onClick={() => setOpen(true)}>New Post</Button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
-        <CreateTodoForm onSuccess={() => setOpen(false)} />
+        <CreatePostForm onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   </>
@@ -132,11 +133,11 @@ function Component() {
   const { data: activeOrg } = useActiveOrganization();
   
   // Data Fetching & Mutations
-  const { data: todos, isLoading } = useTodos();
-  const { data: todo } = useTodo(id);
-  const createTodo = useCreateTodo();
-  const updateTodo = useUpdateTodo();
-  const deleteTodo = useDeleteTodo();
+  const { data: posts, isLoading } = usePosts();
+  const { data: post } = usePost(id);
+  const createPost = useCreatePost();
+  const updatePost = useUpdatePost();
+  const deletePost = useDeletePost();
   
   // Side Effects
   useEffect(() => {
