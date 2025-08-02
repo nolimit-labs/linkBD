@@ -12,11 +12,11 @@ interface EnvironmentConfig {
  */
 function getEnvVar(key: string, defaultValue?: string): string {
   const value = import.meta.env[key] || defaultValue;
-  
+
   if (!value) {
     throw new Error(`Missing required environment variable: ${key}`);
   }
-  
+
   return value;
 }
 
@@ -33,9 +33,7 @@ export function getEnvironmentConfig(): EnvironmentConfig {
  * Individual environment variable getters
  */
 export const env = {
-  app: {
-    url: () => getEnvVar('VITE_APP_URL', 'http://localhost:3000'),
-  },
+  appUrl: import.meta.env.VITE_APP_URL,
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
 };

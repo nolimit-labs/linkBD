@@ -30,7 +30,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, action, children }: PageHeaderProps) {
   return (
-    <div className="bg-background px-6 py-2 mb-4 flex-shrink-0" data-slot="page-header">
+    <div className="bg-background py-2 flex-shrink-0" data-slot="page-header">
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <PageHeaderText title={title} description={description} />

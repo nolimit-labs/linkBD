@@ -1,9 +1,11 @@
 import * as React from "react"
 import {
-  CheckSquare,
+  Home,
   CreditCard,
   Image,
   Settings2,
+  Search,
+  Users,
 } from "lucide-react"
 
 import {
@@ -16,7 +18,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/layout/logo"
-import { UserProfile } from "@/components/layout/user-profile"
+import { UserProfileBox } from "@/components/layout/user-profile-box"
 import {
   Link
 
@@ -34,21 +36,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar variant="inset" {...props}>
-      <SidebarHeader>
-        <Logo height={80} width={200} className="mx-auto mb-2 mt-2" />
+      <SidebarHeader className="px-4">
+        <Logo className="h-28 w-64 mx-auto mb-2 mt-2 sm:h-20 sm:w-64" />
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
+        <SidebarMenu className="gap-2">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-xl font-semibold pl-6">
-              <Link to="/todos" className="flex items-center gap-2">
-                <CheckSquare className="size-4" />
-                <span>Todos</span>
+            <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
+              <Link to="/feed" className="flex items-center gap-2">
+                <Home className="size-4" />
+                <span>Feed</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-xl font-semibold pl-6">
+            <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
+              <Link to="/search" className="flex items-center gap-2">
+                <Search className="size-4" />
+                <span>Search</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
               <Link to="/images" className="flex items-center gap-2">
                 <Image className="size-4" />
                 <span>Images</span>
@@ -56,28 +66,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-xl font-semibold pl-6">
+            <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
               <Link to="/settings" className="flex items-center gap-2">
-                <Settings2 className="size-4" />
+                <Settings2 className="size-6" />
                 <span>Settings</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
-        
+
           <SidebarMenuItem>
             {!isPro && (
-            <UpgradeDialog>
-              <SidebarMenuButton className="text-xl font-semibold pl-6">
-                <CreditCard className="size-4" />
-                <span>Upgrade</span>
-              </SidebarMenuButton>
-            </UpgradeDialog>
+              <UpgradeDialog>
+                <SidebarMenuButton className="text-2xl font-semibold pl-6">
+                  <CreditCard className="size-6" />
+                  <span>Upgrade</span>
+                </SidebarMenuButton>
+              </UpgradeDialog>
             )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <UserProfile />
+        <UserProfileBox />
       </SidebarFooter>
     </Sidebar>
   )

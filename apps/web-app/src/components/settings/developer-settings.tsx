@@ -1,8 +1,8 @@
-import { useUser, useUserSubscriptions } from '@/api'
+import { useCurrentUser, useUserSubscriptions } from '@/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function DeveloperSettings() {
-  const { data: user, isLoading: userLoading } = useUser()
+  const { data: user, isLoading: userLoading } = useCurrentUser()
   const { data: subscriptions, isLoading: subscriptionsLoading } = useUserSubscriptions()
 
   const debugData = {

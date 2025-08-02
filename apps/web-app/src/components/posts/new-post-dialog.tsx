@@ -4,18 +4,18 @@ import { Textarea } from '@/components/ui/textarea'
 import { Plus, ImageIcon, X, Building2, User } from 'lucide-react'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
-import { useCreateTodo } from '@/api'
+import { useCreatePost } from '@/api'
 import { Label } from '@/components/ui/label'
 import { useActiveOrganization } from '@/lib/auth-client'
 import { Badge } from '@/components/ui/badge'
 
-export function NewTodoDialog() {
+export function NewPostDialog() {
   const [open, setOpen] = useState(false)
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [content, setContent] = useState('')
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const createTodoWithImage = useCreateTodo()
+  const [visibility, setVisibility] = useState<'public' | 'organization' | 'private'>('public')
+  const createPostWithImage = useCreatePost()
   const { data: activeOrg } = useActiveOrganization()
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,24 +41,23 @@ export function NewTodoDialog() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title.trim()) return
+    if (!content.trim()) return
 
     try {
-      await createTodoWithImage.mutateAsync({
-        todoData: {
-          title: title.trim(),
-          description: description.trim() || undefined,
+      await createPostWithImage.mutateAsync({
+        postData: {
+          content: content.trim(),
+          visibility,
         },
         imageFile: selectedImage || undefined,
       })
       
-      setTitle('')
-      setDescription('')
+      setContent('')
       setSelectedImage(null)
       setImagePreview(null)
       setOpen(false)
     } catch (error) {
-      console.error('Failed to create todo:', error)
+      console.error('Failed to create post:', error)
     }
   }
 
@@ -67,14 +66,14 @@ export function NewTodoDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          New Todo
+          New Post
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Todo</DialogTitle>
+          <DialogTitle>Create New Post</DialogTitle>
           <DialogDescription className="flex items-center gap-2">
-            Creating todo in
+            Posting to
             <Badge variant={activeOrg ? 'default' : 'secondary'} className="inline-flex items-center gap-1">
               {activeOrg ? (
                 <>
@@ -92,29 +91,32 @@ export function NewTodoDialog() {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium mb-2">
-              Title
+            <label htmlFor="content" className="block text-sm font-medium mb-2">
+              What's on your mind?
             </label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="What needs to be done?"
+            <Textarea
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              placeholder="Share something with the community..."
+              rows={4}
               required
             />
           </div>
           
           <div>
-            <label htmlFor="description" className="block text-sm font-medium mb-2">
-              Description (optional)
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Add more details..."
-              rows={3}
-            />
+            <Label className="block text-sm font-medium mb-2">
+              Visibility
+            </Label>
+            <select
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value as 'public' | 'organization' | 'private')}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="public">Public - Everyone can see</option>
+              {activeOrg && <option value="organization">Organization - {activeOrg.name} members only</option>}
+              <option value="private">Private - Only you can see</option>
+            </select>
           </div>
           
           <div>
@@ -158,8 +160,8 @@ export function NewTodoDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!title.trim() || createTodoWithImage.isPending}>
-              {createTodoWithImage.isPending ? 'Creating...' : 'Create Todo'}
+            <Button type="submit" disabled={!content.trim() || createPostWithImage.isPending}>
+              {createPostWithImage.isPending ? 'Posting...' : 'Create Post'}
             </Button>
           </div>
         </form>

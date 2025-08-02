@@ -5,46 +5,52 @@ import { toast } from 'sonner';
 import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
-// Get all todos for the authenticated user
-export const useTodos = () => {
+// Get posts based on context
+export const usePosts = (feed?: 'public' | 'user', targetUserId?: string) => {
   const { data: activeOrg } = useActiveOrganization();
   const organizationId = activeOrg?.id;
   
   return useQuery({
-    queryKey: queryKeys.todos.all(organizationId),
+    queryKey: queryKeys.posts.all(organizationId, feed, targetUserId),
     queryFn: async () => {
-      const response = await rpcClient.api.todos.$get();
+      const params = new URLSearchParams();
+      if (feed) params.append('feed', feed);
+      if (targetUserId) params.append('userId', targetUserId);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch todos');
-      }
-      
-      return response.json();
-    },
-  });
-};
-
-// Get single todo by ID
-export const useTodo = (todoId: string) => {
-  return useQuery({
-    queryKey: queryKeys.todos.single(todoId),
-    queryFn: async () => {
-      const response = await rpcClient.api.todos[':id'].$get({
-        param: { id: todoId },
+      const response = await rpcClient.api.posts.$get({
+        query: params.size > 0 ? Object.fromEntries(params) : undefined,
       });
       
       if (!response.ok) {
-        throw new Error('Failed to fetch todo');
+        throw new Error('Failed to fetch posts');
       }
       
       return response.json();
     },
-    enabled: !!todoId,
   });
 };
 
-// Create a todo with optional image upload
-export const useCreateTodo = () => {
+// Get single post by ID
+export const usePost = (postId: string) => {
+  return useQuery({
+    queryKey: queryKeys.posts.single(postId),
+    queryFn: async () => {
+      const response = await rpcClient.api.posts[':id'].$get({
+        param: { id: postId },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch post');
+      }
+      
+      return response.json();
+    },
+    enabled: !!postId,
+  });
+};
+
+// Create a post with optional image upload
+export const useCreatePost = () => {
   const uploadFile = useUploadFile();
   const queryClient = useQueryClient();
   const { data: activeOrg } = useActiveOrganization();
@@ -52,12 +58,12 @@ export const useCreateTodo = () => {
   
   return useMutation({
     mutationFn: async ({ 
-      todoData, 
+      postData, 
       imageFile 
     }: { 
-      todoData: {
-        title: string;
-        description: string;
+      postData: {
+        content: string;
+        visibility?: 'public' | 'organization' | 'private';
       }; 
       imageFile?: File 
     }) => {
@@ -70,28 +76,28 @@ export const useCreateTodo = () => {
         } catch (error) {
           // If image upload fails, still create the todo without image
           console.error('Image upload failed:', error);
-          toast.error('Image upload failed, creating todo without image');
+          toast.error('Image upload failed, creating post without image');
         }
       }
       
-      // Step 2: Create todo with image reference
-      const response = await rpcClient.api.todos.$post({
+      // Step 2: Create post with image reference
+      const response = await rpcClient.api.posts.$post({
         json: {
-          ...todoData,
+          ...postData,
           imageKey,
         },
       });
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error((error as any).message || (error as any).error || 'Failed to create todo');
+        throw new Error((error as any).message || (error as any).error || 'Failed to create post');
       }
       
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.all(organizationId) });
-      toast.success('Todo created successfully');
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
+      toast.success('Post created successfully');
     },
     onError: (error) => {
       toast.error(error.message);
@@ -139,60 +145,58 @@ export const useCreateTodo = () => {
 //   });
 // };
 
-// Toggle todo completion
-export const useToggleTodo = () => {
+// Toggle post like
+export const useTogglePostLike = () => {
   const queryClient = useQueryClient();
   const { data: activeOrg } = useActiveOrganization();
   const organizationId = activeOrg?.id;
   
   return useMutation({
-    mutationFn: async (todoId: string) => {
-      const response = await rpcClient.api.todos[':id'].toggle.$patch({
-        param: { id: todoId }
+    mutationFn: async (postId: string) => {
+      const response = await rpcClient.api.posts[':id'].like.$patch({
+        param: { id: postId }
       });
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error((error as any).error || 'Failed to toggle todo');
+        throw new Error((error as any).error || 'Failed to toggle like');
       }
       
       return response.json();
     },
-    onSuccess: (updatedTodo) => {
-      // Update the single todo query
-      queryClient.setQueryData(queryKeys.todos.single(updatedTodo.id), updatedTodo);
-      
-      // Invalidate list queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.all(organizationId) });
+    onSuccess: (_, postId) => {
+      // Invalidate post queries to refresh like status
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.single(postId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
     },
   });
 };
 
-// Delete a todo
-export const useDeleteTodo = () => {
+// Delete a post
+export const useDeletePost = () => {
   const queryClient = useQueryClient();
   const { data: activeOrg } = useActiveOrganization();
   const organizationId = activeOrg?.id;
   
   return useMutation({
-    mutationFn: async (todoId: string) => {
-      const response = await rpcClient.api.todos[':id'].$delete({
-        param: { id: todoId }
+    mutationFn: async (postId: string) => {
+      const response = await rpcClient.api.posts[':id'].$delete({
+        param: { id: postId }
       });
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error((error as any).error || 'Failed to delete todo');
+        throw new Error((error as any).error || 'Failed to delete post');
       }
       
       return response.json();
     },
-    onSuccess: (_, todoId) => {
+    onSuccess: (_, postId) => {
       // Remove from cache
-      queryClient.removeQueries({ queryKey: queryKeys.todos.single(todoId) });
+      queryClient.removeQueries({ queryKey: queryKeys.posts.single(postId) });
       
       // Invalidate list queries
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.all(organizationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
     },
   });
 };
@@ -238,28 +242,28 @@ export const useDeleteTodo = () => {
 //   });
 // };
 
-// Remove todo image
-export const useRemoveTodoImage = () => {
+// Remove post image
+export const useRemovePostImage = () => {
   const queryClient = useQueryClient();
   const { data: activeOrg } = useActiveOrganization();
   const organizationId = activeOrg?.id;
   
   return useMutation({
-    mutationFn: async (todoId: string) => {
-      const response = await rpcClient.api.todos[':id'].image.$delete({
-        param: { id: todoId },
+    mutationFn: async (postId: string) => {
+      const response = await rpcClient.api.posts[':id'].image.$delete({
+        param: { id: postId },
       });
       
       if (!response.ok) {
         const error = await response.json();
-        throw new Error((error as any).error || 'Failed to remove todo image');
+        throw new Error((error as any).error || 'Failed to remove post image');
       }
       
       return response.json();
     },
-    onSuccess: (updatedTodo) => {
-      queryClient.setQueryData(queryKeys.todos.single(updatedTodo.id), updatedTodo);
-      queryClient.invalidateQueries({ queryKey: queryKeys.todos.all(organizationId) });
+    onSuccess: (updatedPost) => {
+      queryClient.setQueryData(queryKeys.posts.single(updatedPost.id), updatedPost);
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       toast.success('Image removed successfully');
     },
     onError: (error) => {

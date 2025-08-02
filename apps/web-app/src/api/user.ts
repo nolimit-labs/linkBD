@@ -3,37 +3,56 @@ import { rpcClient } from './rpc-client';
 import { queryKeys } from './query-keys';
 import { subscription } from '@/lib/auth-client';
 
-// Get user profile from user table
-export function useUser() {
+// Get current user profile
+export function useCurrentUser() {
   return useQuery({
     queryKey: queryKeys.user.profile,
     queryFn: async () => {
       const response = await rpcClient.api.user.profile.$get();
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
       }
-      
+
       const data = await response.json();
       return data.user;
     },
   });
 }
 
-// Update user profile
+// Get user profile by ID
+export const useUser = (userId: string) => {
+  return useQuery({
+    queryKey: queryKeys.users.single(userId),
+    queryFn: async () => {
+      const response = await rpcClient.api.user[':id'].$get({
+        param: { id: userId },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+      }
+
+      return response.json();
+    },
+    enabled: !!userId,
+  });
+};
+
+// Update current user profile
 export function useUpdateUser() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (userData: { name?: string; image?: string | null }) => {
       const response = await rpcClient.api.user.profile.$put({
         json: userData
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to update user profile');
       }
-      
+
       const data = await response.json();
       return data.user;
     },
@@ -44,6 +63,28 @@ export function useUpdateUser() {
   });
 }
 
+// General search (now only searches users)
+export const useSearch = (query: string) => {
+  return useQuery({
+    queryKey: queryKeys.search.all(query, 'users'),
+    queryFn: async () => {
+      const response = await rpcClient.api.search.$get({
+        query: {
+          q: query,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      return response.json();
+    },
+    enabled: !!query && query.length > 0,
+  });
+};
+
+// User subscriptions
 export function useUserSubscriptions() {
   return useQuery({
     queryKey: queryKeys.user.subscription,

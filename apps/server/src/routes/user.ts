@@ -16,7 +16,7 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
     }
 
     try {
-      const currentUser = await userModel.getUserById(userId);
+      const currentUser = await userModel.getUserProfile(userId);
 
       if (!currentUser) {
         return c.json({ error: 'User not found' }, 404);
@@ -68,6 +68,32 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
     } catch (error) {
       console.error('Error updating user profile:', error);
       return c.json({ error: 'Failed to update user profile' }, 500);
+    }
+  })
+  
+  // Get user profile by ID
+  .get('/:id', authMiddleware, async (c) => {
+    const targetUserId = c.req.param('id');
+    
+    try {
+      const userProfile = await userModel.getUserProfile(targetUserId);
+      
+      if (!userProfile) {
+        return c.json({ error: 'User not found' }, 404);
+      }
+      
+      // Generate avatar URL if user has an image
+      const avatarUrl = await generateDownloadURL(userProfile.image);
+      
+      return c.json({
+        user: {
+          ...userProfile,
+          avatarUrl
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return c.json({ error: 'Failed to fetch user profile' }, 500);
     }
   });
 

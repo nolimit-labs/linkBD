@@ -22,7 +22,7 @@ export default function Header() {
       <div className="container mx-auto flex h-32 max-w-screen-2xl items-center px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center">
-          <Logo height={220} width={220} className="mx-auto" />
+          <Logo className="h-52 w-52 mx-auto" />
         </div>
 
         {/* Spacer */}
@@ -80,6 +80,7 @@ export default function Header() {
                 <Menu className="size-6" />
               </Button>
             </SheetTrigger>
+
             <SheetContent className="overflow-y-auto px-4 pt-4 pb-3">
               {/* Mobile Navigation List */}
               <nav className="space-y-1">

@@ -5,10 +5,22 @@ export const queryKeys = {
     profile: ['user', 'profile'] as const,
     subscription: ['user', 'subscription'] as const,
   },
-  todos: {
-    all: (organizationId?: string) => 
-      organizationId ? ['todos', 'org', organizationId] : ['todos', 'personal'] as const,
-    single: (id: string) => ['todos', id] as const,
+  posts: {
+    all: (organizationId?: string, feed?: string, userId?: string) => {
+      const key = ['posts'];
+      if (feed) key.push(feed);
+      if (organizationId) key.push('org', organizationId);
+      if (userId) key.push('user', userId);
+      return key as const;
+    },
+    single: (id: string) => ['posts', id] as const,
+  },
+  users: {
+    single: (id: string) => ['users', id] as const,
+    search: (query: string) => ['users', 'search', query] as const,
+  },
+  search: {
+    all: (query: string, type: string) => ['search', type, query] as const,
   },
   subscription: {
     limits: () => ['subscription', 'limits'] as const,

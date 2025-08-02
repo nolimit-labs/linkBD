@@ -7,6 +7,7 @@ import { DeveloperSettings } from '@/components/settings/developer-settings'
 import { OrganizationSettings } from '@/components/settings/organization-settings'
 import { useState } from 'react'
 import { useActiveOrganization } from '@/lib/auth-client'
+import { env } from '@/lib/env'
 
 export const Route = createFileRoute('/(app)/settings')({
   component: SettingsPage,
@@ -36,14 +37,16 @@ type TabType = 'account' | 'organization' | 'system' | 'developer'
 function SettingsPage() {
   const { data: activeOrg } = useActiveOrganization()
   const [activeTab, setActiveTab] = useState<TabType>('account')
-  
+  const isDevelopment = env.isDevelopment
+
+
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title={activeTab === 'organization' && !activeOrg ? tabHeaders.account.title : tabHeaders[activeTab].title} 
-        description={activeTab === 'organization' && !activeOrg ? tabHeaders.account.description : tabHeaders[activeTab].description} 
+      <PageHeader
+        title={activeTab === 'organization' && !activeOrg ? tabHeaders.account.title : tabHeaders[activeTab].title}
+        description={activeTab === 'organization' && !activeOrg ? tabHeaders.account.description : tabHeaders[activeTab].description}
       />
-      
+
       <div className="px-6">
         <div className="max-w-full">
           <Tabs defaultValue="account" value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
@@ -53,7 +56,9 @@ function SettingsPage() {
                 <TabsTrigger value="organization" className="flex-1">Organization</TabsTrigger>
               )}
               <TabsTrigger value="system" className="flex-1">System</TabsTrigger>
-              <TabsTrigger value="developer" className="flex-1">Developer</TabsTrigger>
+              {isDevelopment && (
+                <TabsTrigger value="developer" className="flex-1">Developer</TabsTrigger>
+              )}
             </TabsList>
             <TabsContent value="account">
               <AccountSettings />
@@ -66,9 +71,11 @@ function SettingsPage() {
             <TabsContent value="system">
               <SystemSettings />
             </TabsContent>
-            <TabsContent value="developer">
-              <DeveloperSettings />
-            </TabsContent>
+            {isDevelopment && (
+              <TabsContent value="developer">
+                <DeveloperSettings />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </div>

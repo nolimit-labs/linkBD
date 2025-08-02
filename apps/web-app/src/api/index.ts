@@ -2,6 +2,6 @@
 export * from './rpc-client'
 export * from './query-keys'
 export * from './user'
-export * from './todos'
+export * from './posts'
 export * from './storage'
 export * from './organization'

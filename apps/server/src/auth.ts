@@ -11,12 +11,14 @@ import { assignDefaultSubscription, assignDefaultSubscriptionForOrganization, ha
 import dotenv from "dotenv";
 dotenv.config();
 
-// const basicPlan
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2025-02-24.acacia",
 })
- 
-const trustedOrigins = process.env.CORS_ORIGINS 
+
+// Doesn't work with trustedOrigins, fix later
+const trustedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
     : ['http://localhost:3001', 'http://localhost:3000'];
 
@@ -28,7 +30,7 @@ export const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg", // or "mysql", "sqlite"
     }),
-    emailAndPassword: {  
+    emailAndPassword: {
         enabled: true
     },
     databaseHooks: {
@@ -50,16 +52,16 @@ export const auth = betterAuth({
         },
     },
     plugins: [
-        anonymous(),
-        organization({
-            organizationCreation: {
-                afterCreate: async ({ organization /*, member, user */ }) => {
-                    if (!(await hasActiveSubscription(organization.id))) {
-                        await assignDefaultSubscriptionForOrganization(organization.id);
-                    }
-                },
-            },
-        }),
+        // anonymous(),
+        // organization({
+        //     organizationCreation: {
+        //         afterCreate: async ({ organization /*, member, user */ }) => {
+        //             if (!(await hasActiveSubscription(organization.id))) {
+        //                 await assignDefaultSubscriptionForOrganization(organization.id);
+        //             }
+        //         },
+        //     },
+        // }),
         stripe({
             stripeClient,
             stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
@@ -74,7 +76,7 @@ export const auth = betterAuth({
     logger: {
         level: "debug",
         log: (level, msg, ...args) => {
-          console.log(`[better-auth] [${level}] ${msg}`, ...args)
+            console.log(`[better-auth] [${level}] ${msg}`, ...args)
         },
     },
     trustedOrigins: ["*"],

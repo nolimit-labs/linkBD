@@ -25,9 +25,9 @@ export function UpgradeDialog({ children, triggerClassName }: UpgradeDialogProps
     setOpen(false)
     subscription.upgrade({
       plan: planId,
-      successUrl: `${env.app.url()}/todos`,
-      cancelUrl: `${env.app.url()}/todos`,
-      returnUrl: `${env.app.url()}/todos`,
+      successUrl: `${env.appUrl}/todos`,
+      cancelUrl: `${env.appUrl}/todos`,
+      returnUrl: `${env.appUrl}/todos`,
       disableRedirect: false,
     })
   }

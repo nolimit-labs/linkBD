@@ -16,7 +16,7 @@ if (import.meta.env.PROD) {
   validateEnvironment();
 }
 
-const router = createRouter({ 
+const router = createRouter({
   routeTree,
   context: {
     ...getContext(),

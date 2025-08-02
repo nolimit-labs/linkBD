@@ -13,9 +13,11 @@ import { Route as appRouteRouteImport } from './routes/(app)/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as authSignUpRouteImport } from './routes/(auth)/sign-up'
 import { Route as authSignInRouteImport } from './routes/(auth)/sign-in'
-import { Route as appTodosRouteImport } from './routes/(app)/todos'
 import { Route as appSettingsRouteImport } from './routes/(app)/settings'
+import { Route as appSearchRouteImport } from './routes/(app)/search'
 import { Route as appImagesRouteImport } from './routes/(app)/images'
+import { Route as appFeedRouteImport } from './routes/(app)/feed'
+import { Route as appUsersUserIdRouteImport } from './routes/(app)/users/$userId'
 
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
@@ -36,14 +38,14 @@ const authSignInRoute = authSignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
-const appTodosRoute = appTodosRouteImport.update({
-  id: '/todos',
-  path: '/todos',
-  getParentRoute: () => appRouteRoute,
-} as any)
 const appSettingsRoute = appSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appSearchRoute = appSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
   getParentRoute: () => appRouteRoute,
 } as any)
 const appImagesRoute = appImagesRouteImport.update({
@@ -51,47 +53,81 @@ const appImagesRoute = appImagesRouteImport.update({
   path: '/images',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appFeedRoute = appFeedRouteImport.update({
+  id: '/feed',
+  path: '/feed',
+  getParentRoute: () => appRouteRoute,
+} as any)
+const appUsersUserIdRoute = appUsersUserIdRouteImport.update({
+  id: '/users/$userId',
+  path: '/users/$userId',
+  getParentRoute: () => appRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof appRouteRouteWithChildren
+  '/feed': typeof appFeedRoute
   '/images': typeof appImagesRoute
+  '/search': typeof appSearchRoute
   '/settings': typeof appSettingsRoute
-  '/todos': typeof appTodosRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
+  '/users/$userId': typeof appUsersUserIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof appRouteRouteWithChildren
+  '/feed': typeof appFeedRoute
   '/images': typeof appImagesRoute
+  '/search': typeof appSearchRoute
   '/settings': typeof appSettingsRoute
-  '/todos': typeof appTodosRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
+  '/users/$userId': typeof appUsersUserIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(app)': typeof appRouteRouteWithChildren
+  '/(app)/feed': typeof appFeedRoute
   '/(app)/images': typeof appImagesRoute
+  '/(app)/search': typeof appSearchRoute
   '/(app)/settings': typeof appSettingsRoute
-  '/(app)/todos': typeof appTodosRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/(auth)/sign-up': typeof authSignUpRoute
+  '/(app)/users/$userId': typeof appUsersUserIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/images' | '/settings' | '/todos' | '/sign-in' | '/sign-up'
+  fullPaths:
+    | '/'
+    | '/feed'
+    | '/images'
+    | '/search'
+    | '/settings'
+    | '/sign-in'
+    | '/sign-up'
+    | '/users/$userId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/images' | '/settings' | '/todos' | '/sign-in' | '/sign-up'
+  to:
+    | '/'
+    | '/feed'
+    | '/images'
+    | '/search'
+    | '/settings'
+    | '/sign-in'
+    | '/sign-up'
+    | '/users/$userId'
   id:
     | '__root__'
     | '/'
     | '/(app)'
+    | '/(app)/feed'
     | '/(app)/images'
+    | '/(app)/search'
     | '/(app)/settings'
-    | '/(app)/todos'
     | '/(auth)/sign-in'
     | '/(auth)/sign-up'
+    | '/(app)/users/$userId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,18 +167,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authSignInRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/(app)/todos': {
-      id: '/(app)/todos'
-      path: '/todos'
-      fullPath: '/todos'
-      preLoaderRoute: typeof appTodosRouteImport
-      parentRoute: typeof appRouteRoute
-    }
     '/(app)/settings': {
       id: '/(app)/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof appSettingsRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/search': {
+      id: '/(app)/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof appSearchRouteImport
       parentRoute: typeof appRouteRoute
     }
     '/(app)/images': {
@@ -152,19 +188,37 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appImagesRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/feed': {
+      id: '/(app)/feed'
+      path: '/feed'
+      fullPath: '/feed'
+      preLoaderRoute: typeof appFeedRouteImport
+      parentRoute: typeof appRouteRoute
+    }
+    '/(app)/users/$userId': {
+      id: '/(app)/users/$userId'
+      path: '/users/$userId'
+      fullPath: '/users/$userId'
+      preLoaderRoute: typeof appUsersUserIdRouteImport
+      parentRoute: typeof appRouteRoute
+    }
   }
 }
 
 interface appRouteRouteChildren {
+  appFeedRoute: typeof appFeedRoute
   appImagesRoute: typeof appImagesRoute
+  appSearchRoute: typeof appSearchRoute
   appSettingsRoute: typeof appSettingsRoute
-  appTodosRoute: typeof appTodosRoute
+  appUsersUserIdRoute: typeof appUsersUserIdRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appFeedRoute: appFeedRoute,
   appImagesRoute: appImagesRoute,
+  appSearchRoute: appSearchRoute,
   appSettingsRoute: appSettingsRoute,
-  appTodosRoute: appTodosRoute,
+  appUsersUserIdRoute: appUsersUserIdRoute,
 }
 
 const appRouteRouteWithChildren = appRouteRoute._addFileChildren(

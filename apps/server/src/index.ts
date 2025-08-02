@@ -2,10 +2,11 @@ import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
-import todosRoutes from './routes/todos'
+import postsRoutes from './routes/posts'
 import { auth } from './auth'
 import userRoutes from './routes/user'
 import storageRoutes from './routes/storage'
+import searchRoutes from './routes/search'
 import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
 
@@ -50,8 +51,9 @@ app.all('/api/auth/*', async (c) => {
 // Mount route handlers and create routes for RPC
 const routes = app
   .route('/api/user', userRoutes)
-  .route('/api/todos', todosRoutes)
+  .route('/api/posts', postsRoutes)
   .route('/api/storage', storageRoutes)
+  .route('/api/search', searchRoutes)
 
 // Export AppType for RPC client usage in client 
 export type AppType = typeof routes

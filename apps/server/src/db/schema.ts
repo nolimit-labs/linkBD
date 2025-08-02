@@ -1,9 +1,9 @@
-import { 
-  pgTable, 
-  text, 
-  integer, 
-  timestamp, 
-  boolean, 
+import {
+  pgTable,
+  text,
+  integer,
+  timestamp,
+  boolean,
   serial,
   varchar,
   numeric,
@@ -133,25 +133,46 @@ export const subscription = pgTable("subscription", {
 // Application Schema
 // =====================================================================
 
-// Todos table - simple personal todos only
-export const todos = pgTable('todos', {
+// Posts table - social posts for the community
+export const posts = pgTable('posts', {
   id: text('id').primaryKey(),
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   organizationId: text('organization_id')
     .references(() => organization.id, { onDelete: 'cascade' }),
-  title: text('title').notNull(),
-  description: text('description'),
+  content: text('content').notNull(),
   imageKey: text('image_key'), // nullable, stores R2 file key
-  completed: boolean('completed').notNull().default(false),
+  likesCount: integer('likes_count').notNull().default(0),
+  visibility: text('visibility').notNull().default('public'), // public, organization, private
   createdAt: timestamp('created_at')
     .defaultNow()
     .notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
     .notNull(),
-});
+}, (table) => ({
+  userIdIdx: index('idx_posts_user_id').on(table.userId),
+  createdAtIdx: index('idx_posts_created_at').on(table.createdAt),
+  visibilityIdx: index('idx_posts_visibility').on(table.visibility),
+}));
+
+// Likes table - track who liked what post
+export const likes = pgTable('likes', {
+  id: text('id').primaryKey(),
+  postId: text('post_id')
+    .notNull()
+    .references(() => posts.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at')
+    .defaultNow()
+    .notNull(),
+}, (table) => ({
+  postUserIdx: index('idx_likes_post_user').on(table.postId, table.userId),
+  userIdIdx: index('idx_likes_user_id').on(table.userId),
+}));
 
 export const storage = pgTable('storage', {
   id: text('id').primaryKey(),
@@ -189,13 +210,8 @@ export type NewMember = typeof member.$inferInsert;
 export type Invitation = typeof invitation.$inferSelect;
 export type NewInvitation = typeof invitation.$inferInsert;
 
-// Strongly typed plan limits interface
-export interface PlanLimits {
-  todos: number;  
-  files: number;  
-}
-
-
-// Todo types
-export type Todo = typeof todos.$inferSelect;
-export type NewTodo = typeof todos.$inferInsert;
+// Post types
+export type Post = typeof posts.$inferSelect;
+export type NewPost = typeof posts.$inferInsert;
+export type Like = typeof likes.$inferSelect;
+export type NewLike = typeof likes.$inferInsert;

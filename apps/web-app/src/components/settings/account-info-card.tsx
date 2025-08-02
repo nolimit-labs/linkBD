@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useUser, useUpdateUser, useUploadFile } from '@/api'
+import { useCurrentUser, useUpdateUser, useUploadFile } from '@/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ export function AccountInfoCard() {
   const [isEditingName, setIsEditingName] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { data: user, isLoading } = useUser()
+  const { data: user, isLoading } = useCurrentUser()
   const updateUser = useUpdateUser()
   const uploadFile = useUploadFile()
 

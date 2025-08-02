@@ -21,7 +21,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
+
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -38,13 +38,13 @@ export function SignupForm() {
         email: data.email,
         password: data.password,
         name: data.name,
-        callbackURL: '/todos',
+        callbackURL: '/feed',
       });
-      
+
       if (result.error) {
         toast.error(result.error.message);
       } else {
-        navigate({ to: '/todos' });
+        navigate({ to: '/feed' });
       }
     } catch (error) {
       console.error('Error signing up:', error);
@@ -73,7 +73,7 @@ export function SignupForm() {
           <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <div className="relative">
@@ -91,7 +91,7 @@ export function SignupForm() {
           <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
@@ -109,7 +109,7 @@ export function SignupForm() {
           <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
         )}
       </div>
-      
+
       <Button type="submit" className="w-full" disabled={isLoading} data-testid="signup-submit-button">
         {isLoading ? 'Creating account...' : 'Create Account'}
       </Button>

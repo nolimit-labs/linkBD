@@ -47,9 +47,9 @@ export function PricingTable({ onUpgrade }: PricingTableProps) {
     } else {
       subscription.upgrade({
         plan: planId,
-        successUrl: `${env.app.url()}/todos`,
-        cancelUrl: `${env.app.url()}/todos`,
-        returnUrl: `${env.app.url()}/todos`,
+        successUrl: `${env.appUrl}/todos`,
+        cancelUrl: `${env.appUrl}/todos`,
+        returnUrl: `${env.appUrl}/todos`,
         disableRedirect: false,
       })
     }
@@ -76,8 +76,8 @@ export function PricingTable({ onUpgrade }: PricingTableProps) {
                 </li>
               ))}
             </ul>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               variant={plan.name === 'Pro' ? 'default' : 'outline'}
               disabled={plan.disabled}
               onClick={() => handleUpgrade(plan.planId)}

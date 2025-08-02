@@ -20,7 +20,7 @@ function SignUp() {
   const session = useSession();
 
   if (session.data) {
-    return <Navigate to="/todos" />
+    return <Navigate to="/feed" />
   }
 
   return (
@@ -34,16 +34,16 @@ function SignUp() {
           </Button>
         </Link>
       </div>
-      
+
       <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <Logo width={220} height={100} className="mx-auto" />
+              <Logo className="h-20 w-60 mx-auto" />
             </div>
             <CardTitle className="text-2xl">Create Account</CardTitle>
             <CardDescription>
-              Join TodoApp and start organizing your tasks
+              Join LinkBD and connect with the Bangladeshi community
             </CardDescription>
           </CardHeader>
           <CardContent>

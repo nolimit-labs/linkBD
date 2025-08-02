@@ -1,5 +1,5 @@
 import { User, Building, Settings, ChevronsUpDown, LogOut } from "lucide-react"
-import { useUser } from "@/api"
+import { useCurrentUser } from "@/api/user"
 import { Link } from "@tanstack/react-router"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization, signOut } from "@/lib/auth-client"
@@ -17,8 +17,8 @@ interface UserProfileProps {
   className?: string
 }
 
-export function UserProfile({ className }: UserProfileProps) {
-  const { data: user } = useUser()
+export function UserProfileBox({ className }: UserProfileProps) {
+  const { data: user } = useCurrentUser()
   const { data: activeOrg } = useActiveOrganization()
   const [showOrgSwitcher, setShowOrgSwitcher] = useState(false)
 
@@ -29,7 +29,7 @@ export function UserProfile({ className }: UserProfileProps) {
       await signOut({
         fetchOptions: {
           onSuccess: () => {
-            window.location.href = '/login'
+            window.location.href = '/sign-in'
           }
         }
       })
@@ -56,7 +56,7 @@ export function UserProfile({ className }: UserProfileProps) {
                 <User className="w-5 h-5 text-primary" />
               )}
             </div>
-            
+
             {/* User Info */}
             <div className="flex-1 min-w-0">
               <p className="text-lg font-medium text-foreground truncate">
@@ -74,12 +74,12 @@ export function UserProfile({ className }: UserProfileProps) {
             <p className="text-sm font-medium">{user?.name || 'User'}</p>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
           </div>
-          
+
           <Separator className="my-2" />
-          
+
           {/* Menu Items */}
           <div className="space-y-1">
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               className="w-full justify-start"
@@ -87,8 +87,8 @@ export function UserProfile({ className }: UserProfileProps) {
             >
               <ChevronsUpDown className="mr-2 h-4 w-4" />
               Switch Profile
-            </Button>
-            
+            </Button> */}
+
             <Link to="/settings">
               <Button
                 variant="ghost"
@@ -100,9 +100,9 @@ export function UserProfile({ className }: UserProfileProps) {
               </Button>
             </Link>
           </div>
-          
+
           <Separator className="my-2" />
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -115,13 +115,13 @@ export function UserProfile({ className }: UserProfileProps) {
         </PopoverContent>
       </Popover>
 
-      {/* Organization Switcher Popover */}
-      {showOrgSwitcher && (
+      {/* Organization Switcher Popover , will turn on later */}
+      {/* {showOrgSwitcher && (
         <AccountSwitcher
           open={showOrgSwitcher}
           onOpenChange={setShowOrgSwitcher}
         />
-      )}
+      )} */}
     </>
   )
 } 
