@@ -58,8 +58,8 @@ export async function searchUsers(query: string, limit = 20, offset = 0) {
     .from(user)
     .where(
       or(
-        like(user.name, searchPattern),
-        like(user.email, searchPattern)
+        sql`${user.name} ILIKE ${searchPattern}`,
+        sql`${user.email} ILIKE ${searchPattern}`
       )
     )
     .orderBy(user.name)
