@@ -2,9 +2,15 @@ import { db } from '../db';
 import { subscription, user } from '../db/schema';
 import { DEFAULT_PLAN_NAME } from '../db/admin/plans/data';
 import { eq, and, or } from 'drizzle-orm';
+import * as organizationModel from "./organization";
 
-// Assign default free plan to a new user
-export async function assignDefaultSubscription(userId: string) {
+
+/**
+ * Assign default free plan to a user
+ * @param userId - The user ID to assign the default subscription to
+ * @returns The new subscription
+ */
+export async function assignDefaultSubscriptionForUser(userId: string) {
   try {
     console.log(`🎁 Assigning default subscription to user: ${userId}`);
     
@@ -44,10 +50,18 @@ export async function assignDefaultSubscription(userId: string) {
   }
 } 
 
-// Assign default free plan to a new organization
-export async function assignDefaultSubscriptionForOrganization(organizationId: string) {
+/**
+ * Assign default free plan to a organization
+ * @param organizationId - The organization ID to assign the default subscription to
+ * @returns The new subscription
+ */
+export async function assignDefaultSubscriptionForOrg(organizationId: string) {
   try {
     console.log(`🎁 Assigning default subscription to organization: ${organizationId}`);
+
+    const org = await organizationModel.getOrgById(organizationId);
+
+    console.log("Org", org);
 
     // Create a free plan subscription for the new organization
     const newSubscription = await db
@@ -57,6 +71,7 @@ export async function assignDefaultSubscriptionForOrganization(organizationId: s
         plan: DEFAULT_PLAN_NAME,
         referenceId: organizationId, // Link to organization
         status: 'active', // Free plan is immediately active
+        stripeCustomerId: org.stripeCustomerId, // Include Stripe customer ID if available
         // Note: stripeSubscriptionId will be null for free plans (no Stripe subscription)
         // periodStart and periodEnd can be null for free plans (no billing periods)
       })

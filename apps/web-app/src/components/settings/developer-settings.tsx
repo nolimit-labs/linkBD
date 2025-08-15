@@ -1,17 +1,16 @@
 import { useCurrentUser, useUserSubscriptions } from '@/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useSession } from '@/lib/auth-client'
 
 export function DeveloperSettings() {
-  const { data: user, isLoading: userLoading } = useCurrentUser()
-  const { data: subscriptions, isLoading: subscriptionsLoading } = useUserSubscriptions()
+  const { data: user } = useCurrentUser()
+  const { data: subscriptions } = useUserSubscriptions()
+  const { data: session } = useSession()
 
   const debugData = {
+    session: session || null,
     user: user || null,
     subscriptions: subscriptions || null,
-    loading: {
-      user: userLoading,
-      subscriptions: subscriptionsLoading
-    },
     timestamp: new Date().toISOString()
   }
 

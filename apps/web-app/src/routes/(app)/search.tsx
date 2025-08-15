@@ -1,20 +1,28 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
+import { createFileRoute, Link, useSearch as useRouterSearch } from '@tanstack/react-router'
 import { useSearch } from '@/api'
 import { PageHeader } from '@/components/layout/page-header'
-import { Input } from '@/components/ui/input'
+import { SearchBar } from '@/components/layout/search-bar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Search as SearchIcon, Users, Loader2 } from 'lucide-react'
 import { useDebounce } from '@/hooks/use-debounce'
 
+type SearchParams = {
+  q?: string
+}
+
 export const Route = createFileRoute('/(app)/search')({
   component: SearchPage,
+  validateSearch: (search: Record<string, unknown>): SearchParams => {
+    return {
+      q: typeof search.q === 'string' ? search.q : undefined,
+    }
+  },
 })
 
 function SearchPage() {
-  const [query, setQuery] = useState('')
-  const debouncedQuery = useDebounce(query, 300)
+  const { q } = useRouterSearch({ from: '/(app)/search' })
+  const debouncedQuery = useDebounce(q || '', 300)
 
   const { data: searchResults, isLoading } = useSearch(debouncedQuery)
 
@@ -22,7 +30,7 @@ function SearchPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-background px-6 py-4">
+      <div className="px-6 py-4">
         <PageHeader
           title="Search People"
           description="Find and connect with members of the linkBD community"
@@ -30,14 +38,11 @@ function SearchPage() {
 
         <div className="mt-6">
           {/* Search Input */}
-          <div className="relative max-w-2xl">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
+          <div className="max-w-2xl">
+            <SearchBar
+              showDropdown={false}
               placeholder="Search for people by name or email..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="pl-10"
+              className="w-full"
             />
           </div>
         </div>
@@ -45,7 +50,7 @@ function SearchPage() {
 
       <div className="px-6">
         {/* Loading State */}
-        {isLoading && debouncedQuery && (
+        {isLoading && q && (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span className="ml-2">Searching...</span>
@@ -53,7 +58,7 @@ function SearchPage() {
         )}
 
         {/* No Query State */}
-        {!debouncedQuery && (
+        {!q && (
           <div className="text-center py-12">
             <SearchIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">
@@ -63,10 +68,10 @@ function SearchPage() {
         )}
 
         {/* No Results State */}
-        {debouncedQuery && !isLoading && !hasResults && (
+        {q && !isLoading && !hasResults && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              No results found for "{debouncedQuery}"
+              No results found for "{q}"
             </p>
           </div>
         )}

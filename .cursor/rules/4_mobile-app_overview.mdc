@@ -1,0 +1,40 @@
+---
+globs: apps/mobile-app/**
+alwaysApply: false
+---
+# Mobile App (Expo + NativeWind)
+
+Concise overview of the mobile app package.
+
+## Stack
+- React Native, Expo Router, TypeScript
+- React Query
+- Hono RPC (type-safe API)
+- Better Auth (Expo plugin + SecureStore)
+- NativeWind (Tailwind for RN)
+
+## Structure
+- `app/` Expo Router screens (NativeWind enabled via `global.css`)
+  - `(auth)/` unauthenticated routes: `sign-in.tsx`, `sign-up.tsx` (uses `lib/auth-client.ts`; on success, navigate to `(app)`)
+  - `(app)/` authenticated routes: `todos.tsx` (protect with `authClient.useSession`; unauthenticated → redirect to `(auth)`)
+  - `_layout.tsx` (imports `~/global.css`), `+not-found.tsx` and sets up providers
+- `api/` networking via centralized `rpc-client.ts`
+- `lib/` shared libs (e.g., `auth-client.ts`, `icons/`, `utils.ts`, `useColorScheme.tsx`, `constants.ts`)
+- `components/` UI primitives (e.g., `ui/button.tsx`, `ui/card.tsx`), `ThemeToggle.tsx`
+- `providers/` contains different providers for the app
+- `assets/` contains all the assets for the app
+- `global.css` contains the global styles for the app (Currently Unused)
+- `tailwind.config.js` contains the tailwind config for the app
+- `app.json` contains the expo app config for the app
+
+Additional Notes:
+
+* **Auth:** `lib/auth-client.ts` with Better Auth (Expo + SecureStore); `api/rpc-client.ts` forwards `authClient.getCookie()` for RPC.
+* **NativeWind:** Tailwind via `className`; CSS built from `global.css`, and `tailwind.config.js`.
+
+## Rules
+- Use kebab-case for files (e.g., `new-todo-form.tsx`).
+- Use `@/` or `~` aliases from `tsconfig`.
+- All network calls go through `api/rpc-client.ts` and hooks colocated in `api/`.
+- Apply all styles as Tailwind classes, via NativeWind.
+

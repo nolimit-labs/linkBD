@@ -11,7 +11,7 @@ const plans = [
     period: 'forever',
     description: 'Perfect for getting started',
     features: [
-      '5 todos',
+      '1 post per day',
       '5 file uploads',
       'Basic support'
     ],
@@ -25,7 +25,7 @@ const plans = [
     period: 'per month',
     description: 'For power users who need more',
     features: [
-      '20 todos',
+      '20 posts per day',
       '20 file uploads',
       'Priority support',
       'Advanced features'
@@ -47,9 +47,9 @@ export function PricingTable({ onUpgrade }: PricingTableProps) {
     } else {
       subscription.upgrade({
         plan: planId,
-        successUrl: `${env.appUrl}/todos`,
-        cancelUrl: `${env.appUrl}/todos`,
-        returnUrl: `${env.appUrl}/todos`,
+        successUrl: `${env.appUrl}/feed`,
+        cancelUrl: `${env.appUrl}/feed`,
+        returnUrl: `${env.appUrl}/feed`,
         disableRedirect: false,
       })
     }

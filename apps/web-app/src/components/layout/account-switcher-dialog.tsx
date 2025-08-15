@@ -82,7 +82,7 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
               <Separator className="my-3" />
               <div className="space-y-1">
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 pb-1">
-                  Organizations
+                  Business Accounts
                 </p>
                 {organizations.map((org) => (
                   <Button
@@ -101,7 +101,7 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
                       </div>
                       <div className="flex-1 text-left">
                         <p className="font-medium truncate">{org.name}</p>
-                        <p className="text-xs text-muted-foreground">Organization</p>
+                        <p className="text-xs text-muted-foreground">Business Account</p>
                       </div>
                       {activeOrg?.id === org.id && <Check className="w-4 h-4" />}
                     </div>
@@ -112,8 +112,8 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
           ) : (
             <div className="px-3 py-6 text-center">
               <Building className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-sm text-muted-foreground mb-1">No organizations yet</p>
-              <p className="text-xs text-muted-foreground">Create one to collaborate with your team</p>
+              <p className="text-sm text-muted-foreground mb-1">No business accounts yet</p>
+              <p className="text-xs text-muted-foreground">Create one for your business</p>
             </div>
           )}
           
@@ -128,7 +128,7 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
                 className="w-full justify-start"
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Create Organization
+                Create Business Account
               </Button>
             }
           />

@@ -23,14 +23,14 @@ import {
   Link
 
 } from "@tanstack/react-router"
-import { UpgradeDialog } from "@/components/pricing/upgrade-dialog"
 import { useUserSubscriptions } from "@/api"
-
+import { useActiveOrganization } from "@/lib/auth-client"
+import { UpgradeUserSubscriptionDialog } from "@/components/pricing/upgrade-user-dialog"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { data: subscriptionData } = useUserSubscriptions()
+  const { data: userSubscriptionData } = useUserSubscriptions()
 
-  const isPro = subscriptionData?.[0]?.plan === "pro"
+  const isUserPro = userSubscriptionData?.[0]?.plan === "pro"
 
 
 
@@ -74,15 +74,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarMenuButton>
           </SidebarMenuItem>
 
+          {/* Fix this when better auth fixes their stripe integration */}
           <SidebarMenuItem>
-            {!isPro && (
-              <UpgradeDialog>
+            {!isUserPro ? (
+              <UpgradeUserSubscriptionDialog>
                 <SidebarMenuButton className="text-2xl font-semibold pl-6">
                   <CreditCard className="size-6" />
                   <span>Upgrade</span>
                 </SidebarMenuButton>
-              </UpgradeDialog>
-            )}
+              </UpgradeUserSubscriptionDialog>
+            ) : null}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>

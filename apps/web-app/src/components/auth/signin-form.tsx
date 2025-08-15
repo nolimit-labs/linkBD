@@ -20,7 +20,7 @@ type SigninFormData = z.infer<typeof signinSchema>;
 export function SigninForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  
+
   const form = useForm<SigninFormData>({
     resolver: zodResolver(signinSchema),
     defaultValues: {
@@ -33,13 +33,13 @@ export function SigninForm() {
     try {
       setIsLoading(true);
       const result = await signIn.anonymous();
-      
+
       if (result.error) {
         toast.error(result.error.message);
         return;
       }
-      
-      navigate({ to: '/todos' });
+
+      navigate({ to: '/feed' });
     } catch (error) {
       console.error('Error signing in:', error);
       toast.error('Failed to sign in as guest');
@@ -54,9 +54,9 @@ export function SigninForm() {
       const result = await signIn.email({
         email: data.email,
         password: data.password,
-        callbackURL: '/todos',
+        callbackURL: '/feed',
       });
-      
+
       if (result.error) {
         toast.error(result.error.message);
         return;
@@ -88,7 +88,7 @@ export function SigninForm() {
           <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
         )}
       </div>
-      
+
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <div className="relative">
@@ -105,14 +105,14 @@ export function SigninForm() {
           <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
         )}
       </div>
-      
+
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
-      
-      <Button 
+
+      <Button
         type="button"
-        variant="outline" 
+        variant="outline"
         onClick={handleGuestLogin}
         className="w-full"
         disabled={isLoading}

@@ -68,7 +68,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={author?.user?.avatarUrl} />
+              <AvatarImage src={author?.user?.avatarUrl || ''} />
               <AvatarFallback>
                 {author?.user?.name?.charAt(0) || '?'}
               </AvatarFallback>
@@ -95,14 +95,14 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="bg-background/70 text-xl" side="bottom">
                 {onEdit && (
                   <DropdownMenuItem onClick={onEdit}>
                     Edit
                   </DropdownMenuItem>
                 )}
                 {onDelete && (
-                  <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <DropdownMenuItem onClick={onDelete} className="text-lg text-destructive">
                     Delete
                   </DropdownMenuItem>
                 )}

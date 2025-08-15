@@ -1,10 +1,13 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import dotenv from 'dotenv'
 
 dotenv.config()
 
-const BUCKET_NAME = 'linkbd';
+const BUCKET_NAME = process.env.R2_BUCKET_NAME!;
+if (!BUCKET_NAME) {
+  throw new Error('R2_BUCKET_NAME is not set');
+}
 
 export const r2 = new S3Client({
   region: "auto",
@@ -69,4 +72,11 @@ export async function generateUploadURL(fileKey: string | null, fileType: string
     console.error('Failed to generate upload URL:', error);
     return null;
   }
+}
+
+export async function deleteFile(fileKey: string) {
+  await r2.send(new DeleteObjectCommand({
+    Bucket: BUCKET_NAME,
+    Key: fileKey,
+  }));
 }

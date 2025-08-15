@@ -4,18 +4,16 @@ import { db } from "./db"; // your drizzle instance
 import { anonymous, organization } from "better-auth/plugins"
 import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
-import { createAuthMiddleware } from "better-auth/api";
 import { SUBSCRIPTION_PLANS, DEFAULT_PLAN_NAME } from "./db/admin/plans/data";
-import { assignDefaultSubscription, assignDefaultSubscriptionForOrganization, hasActiveSubscription } from "./models/subscriptions";
+import { assignDefaultSubscriptionForUser, assignDefaultSubscriptionForOrg, hasActiveSubscription } from "./models/subscriptions";
+import * as organizationModel from "./models/organization";
 
 import dotenv from "dotenv";
 dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: "2025-02-24.acacia",
-})
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 // Doesn't work with trustedOrigins, fix later
 const trustedOrigins = process.env.CORS_ORIGINS
@@ -41,7 +39,7 @@ export const auth = betterAuth({
                         // Check if user already has a subscription (in case of multiple auth methods)
                         const hasSubscription = await hasActiveSubscription(user.id);
                         if (!hasSubscription) {
-                            await assignDefaultSubscription(user.id);
+                            await assignDefaultSubscriptionForUser(user.id);
                         }
                     } catch (error) {
                         console.error('Failed to assign default subscription:', error);
@@ -52,16 +50,7 @@ export const auth = betterAuth({
         },
     },
     plugins: [
-        // anonymous(),
-        // organization({
-        //     organizationCreation: {
-        //         afterCreate: async ({ organization /*, member, user */ }) => {
-        //             if (!(await hasActiveSubscription(organization.id))) {
-        //                 await assignDefaultSubscriptionForOrganization(organization.id);
-        //             }
-        //         },
-        //     },
-        // }),
+        organization(),
         stripe({
             stripeClient,
             stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
@@ -70,6 +59,7 @@ export const auth = betterAuth({
             subscription: {
                 enabled: true,
                 plans: activePlans,
+                requireEmailVerification: true,
             },
         }),
     ],

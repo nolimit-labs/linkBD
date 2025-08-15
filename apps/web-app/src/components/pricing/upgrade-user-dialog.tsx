@@ -12,22 +12,31 @@ import { PricingTable } from './pricing-table'
 import { CreditCard } from 'lucide-react'
 import { subscription } from '@/lib/auth-client'
 import { env } from '@/lib/env'
+import { useCurrentUser } from '@/api/user'
 
-interface UpgradeDialogProps {
+interface UpgradeUserSubscriptionDialogProps {
   children?: React.ReactNode
   triggerClassName?: string
 }
 
-export function UpgradeDialog({ children, triggerClassName }: UpgradeDialogProps) {
+export function UpgradeUserSubscriptionDialog({ children, triggerClassName }: UpgradeUserSubscriptionDialogProps) {
   const [open, setOpen] = useState(false)
 
+  const { data: user } = useCurrentUser()
+
   const handleUpgrade = (planId: string) => {
+    if (!user?.id) {
+      console.error('No user found')
+      return
+    }
+
     setOpen(false)
     subscription.upgrade({
+      referenceId: user?.id,
       plan: planId,
-      successUrl: `${env.appUrl}/todos`,
-      cancelUrl: `${env.appUrl}/todos`,
-      returnUrl: `${env.appUrl}/todos`,
+      successUrl: `${env.appUrl}/feed`,
+      cancelUrl: `${env.appUrl}/feed`,
+      returnUrl: `${env.appUrl}/feed`,
       disableRedirect: false,
     })
   }

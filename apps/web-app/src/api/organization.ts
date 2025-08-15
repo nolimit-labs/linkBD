@@ -5,6 +5,7 @@ import { useRouter } from '@tanstack/react-router';
 import { queryKeys } from './query-keys';
 import { rpcClient } from './rpc-client';
 
+
 // Delete organization
 export const useDeleteOrganization = () => {
   const queryClient = useQueryClient();

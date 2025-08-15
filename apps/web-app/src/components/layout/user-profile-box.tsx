@@ -1,9 +1,8 @@
-import { User, Building, Settings, ChevronsUpDown, LogOut } from "lucide-react"
+import { User, Building, Settings, LogOut, ChevronsUpDown } from "lucide-react"
 import { useCurrentUser } from "@/api/user"
 import { Link } from "@tanstack/react-router"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization, signOut } from "@/lib/auth-client"
-import { useState } from "react"
 import {
   Popover,
   PopoverContent,
@@ -11,16 +10,20 @@ import {
 } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { AccountSwitcher } from "./account-switcher-dialog"
+import { useState } from "react"
+import { AccountSwitcher } from "@/components/layout/account-switcher-dialog"
 
 interface UserProfileProps {
   className?: string
+  /** Compact mode for header usage */
+  compact?: boolean
 }
 
-export function UserProfileBox({ className }: UserProfileProps) {
+export function UserProfileBox({ className, compact = false }: UserProfileProps) {
+
+  const [showOrgSwitcher, setShowOrgSwitcher] = useState(false)
   const { data: user } = useCurrentUser()
   const { data: activeOrg } = useActiveOrganization()
-  const [showOrgSwitcher, setShowOrgSwitcher] = useState(false)
 
   const accountLabel = activeOrg ? activeOrg.name : "Personal Account"
 
@@ -44,42 +47,52 @@ export function UserProfileBox({ className }: UserProfileProps) {
         <PopoverTrigger asChild>
           <div
             className={cn(
-              "flex items-center gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 hover:border-primary border-2 border-transparent transition-all duration-300 ease-in-out cursor-pointer group",
+              compact
+                ? "flex items-center gap-2 p-2 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                : "flex items-center gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 hover:border-primary border-2 border-transparent transition-all duration-300 ease-in-out cursor-pointer group",
               className
             )}
           >
             {/* User/Organization Avatar */}
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <div className={cn(
+              "rounded-full bg-primary/10 flex items-center justify-center transition-colors",
+              compact
+                ? "w-8 h-8 hover:bg-primary/20"
+                : "w-12 h-12 group-hover:bg-primary/20"
+            )}>
               {activeOrg ? (
-                <Building className="w-5 h-5 text-primary" />
+                <Building className={cn("text-primary", compact ? "w-4 h-4" : "w-5 h-5")} />
               ) : (
-                <User className="w-5 h-5 text-primary" />
+                <User className={cn("text-primary", compact ? "w-4 h-4" : "w-5 h-5")} />
               )}
             </div>
 
             {/* User Info */}
-            <div className="flex-1 min-w-0">
-              <p className="text-lg font-medium text-foreground truncate">
-                {user?.name || 'User'}
-              </p>
-              <p className="text-sm text-primary truncate">
-                {accountLabel}
-              </p>
-            </div>
+            {!compact && (
+              <div className="flex-1 min-w-0">
+                <p className="text-lg font-medium text-foreground truncate">
+                  {user?.name || 'User'}
+                </p>
+                <p className="text-sm text-primary truncate">
+                  {accountLabel}
+                </p>
+              </div>
+            )}
           </div>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-2" align="end" side="right">
+        <PopoverContent className="w-64 p-2" align="end" side={compact ? "bottom" : "right"}>
           {/* User Info Header */}
           <div className="px-2 py-1.5">
             <p className="text-sm font-medium">{user?.name || 'User'}</p>
             <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <p className="text-xs text-primary mt-1">{accountLabel}</p>
           </div>
 
           <Separator className="my-2" />
 
           {/* Menu Items */}
           <div className="space-y-1">
-            {/* <Button
+            <Button
               variant="ghost"
               size="sm"
               className="w-full justify-start"
@@ -87,7 +100,7 @@ export function UserProfileBox({ className }: UserProfileProps) {
             >
               <ChevronsUpDown className="mr-2 h-4 w-4" />
               Switch Profile
-            </Button> */}
+            </Button>
 
             <Link to="/settings">
               <Button
@@ -116,12 +129,12 @@ export function UserProfileBox({ className }: UserProfileProps) {
       </Popover>
 
       {/* Organization Switcher Popover , will turn on later */}
-      {/* {showOrgSwitcher && (
+      {showOrgSwitcher && (
         <AccountSwitcher
           open={showOrgSwitcher}
           onOpenChange={setShowOrgSwitcher}
         />
-      )} */}
+      )}
     </>
   )
 } 

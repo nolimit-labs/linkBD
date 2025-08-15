@@ -28,8 +28,8 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  isAnonymous: boolean("is_anonymous"),
-  stripeCustomerId: text("stripe_customer_id"),
+  isAnonymous: boolean("is_anonymous"), // From Better-Auth Plugin: Anonymous
+  stripeCustomerId: text("stripe_customer_id"), // From Better-Auth Plugin: Stripe
 });
 
 export const session = pgTable("session", {
@@ -78,6 +78,7 @@ export const verification = pgTable("verification", {
   ),
 });
 
+// From Better-Auth Plugin: Organization
 export const organization = pgTable("organization", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -85,8 +86,10 @@ export const organization = pgTable("organization", {
   logo: text("logo"),
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
+  stripeCustomerId: text("stripe_customer_id").unique(), // Manually added this field
 });
 
+// From Better-Auth Plugin: Organization
 export const member = pgTable("member", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id")
@@ -99,6 +102,7 @@ export const member = pgTable("member", {
   createdAt: timestamp("created_at").notNull(),
 });
 
+// From Better-Auth Plugin: Organization
 export const invitation = pgTable("invitation", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id")
@@ -114,6 +118,7 @@ export const invitation = pgTable("invitation", {
 });
 
 // Join table for subscriptions and users/organizations, which is referenced by the referenceId
+// From Better-Auth Plugin: Stripe
 export const subscription = pgTable("subscription", {
   id: text("id").primaryKey(),
   plan: text("plan").notNull(),

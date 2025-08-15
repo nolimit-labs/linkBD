@@ -82,7 +82,7 @@ export function AccountSettings() {
                           onClick={() => {
                             console.log('sub.id', sub.id)
                             subscription.cancel({
-                              returnUrl: env.app.url() + '/todos',
+                              returnUrl: env.appUrl + '/feed',
                               subscriptionId: sub.id,
                             });
                           }}
@@ -112,8 +112,8 @@ export function AccountSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={handleSignOut}
             className="w-full sm:w-auto"
           >

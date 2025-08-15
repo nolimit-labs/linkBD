@@ -42,6 +42,14 @@ app.get('/api/health', (c) => {
   })
 })
 
+// app.use("/api/auth/*", async (c, next) => {
+//   if (c.req.method === "POST") {
+//     const body = await c.req.json().catch(() => ({}));
+//     console.log("⮑ Better-Auth inbound", c.req.path, body);   // shows referenceId
+//   }
+//   await next();
+// });
+
 // Auth routes from BetterAuth
 app.all('/api/auth/*', async (c) => {
   const res = await auth.handler(c.req.raw);

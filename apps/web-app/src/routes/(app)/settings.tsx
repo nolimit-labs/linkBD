@@ -41,13 +41,13 @@ function SettingsPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-6 py-4">
       <PageHeader
         title={activeTab === 'organization' && !activeOrg ? tabHeaders.account.title : tabHeaders[activeTab].title}
         description={activeTab === 'organization' && !activeOrg ? tabHeaders.account.description : tabHeaders[activeTab].description}
       />
 
-      <div className="px-6">
+      <div>
         <div className="max-w-full">
           <Tabs defaultValue="account" value={activeTab} onValueChange={(value) => setActiveTab(value as TabType)} className="w-full">
             <TabsList className="w-full mb-4">

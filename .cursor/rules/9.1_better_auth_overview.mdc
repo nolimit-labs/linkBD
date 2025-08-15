@@ -1,0 +1,57 @@
+---
+description: Context and info on how auth is done in our project
+globs: 
+alwaysApply: false
+---
+# Better Auth in CarFixer
+
+Better Auth is a TypeScript-first authentication framework providing type-safe APIs, multi-database support, and a powerful plugin system.
+
+## Our Implementation
+
+### Server Configuration (`apps/server/src/auth.ts`)
+- **Database**: SQLite via Drizzle adapter
+- **Plugins**: 
+  - `anonymous()` - Guest login without account creation
+  - `organization()` - Multi-tenant support with auto-seeding
+
+### Client Setup (`apps/client/src/lib/auth-client.ts`)
+- Connects to backend at `http://localhost:3002`
+- Cookie-based sessions with `credentials: 'include'`
+- Matching client plugins for anonymous and organization features
+
+## Key Features
+
+### Multi-Tenancy
+- Each repair shop is an isolated organization
+- Users can belong to multiple organizations
+- Active organization tracked in session
+- All API calls require organization context via `orgMiddleware`
+
+### Authentication Flow
+1. **Login** - Currently anonymous/guest only
+2. **Session Check** - Routes validate user + organization
+3. **API Protection** - Middleware extracts userId & organizationId
+4. **Organization Selection** - Required before accessing app features
+
+## Database Tables
+- `user`, `session`, `account` - Core auth
+- `organization`, `member`, `invitation` - Multi-tenant
+- `verification` - Email/token validation
+
+## React Hooks
+```typescript
+useSession() // Current user
+useActiveOrganization() // Active org
+signIn.anonymous() // Guest login
+signOut() // Logout
+```
+
+## Security
+- HttpOnly session cookies
+- CORS with trusted origins
+- Organization-scoped data access
+- Session tracking (IP, user agent)
+
+## Future Expansion
+Login page indicates planned support for email/password and social providers - easily added via Better Auth's plugin system while maintaining type safety and multi-tenancy.

@@ -25,7 +25,7 @@ function getEnvVar(key: string, defaultValue?: string): string {
  */
 export function getEnvironmentConfig(): EnvironmentConfig {
   return {
-    appUrl: getEnvVar('VITE_APP_URL', 'http://localhost:3000'),
+    appUrl: getEnvVar('VITE_BASE_URL', 'http://localhost:3000'),
   };
 }
 
@@ -33,7 +33,7 @@ export function getEnvironmentConfig(): EnvironmentConfig {
  * Individual environment variable getters
  */
 export const env = {
-  appUrl: import.meta.env.VITE_APP_URL,
+  appUrl: import.meta.env.VITE_BASE_URL,
   isDevelopment: import.meta.env.DEV,
   isProduction: import.meta.env.PROD,
 };

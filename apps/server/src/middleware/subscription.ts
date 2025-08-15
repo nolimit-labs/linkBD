@@ -12,7 +12,7 @@ export type SubscriptionVariables = {
   postLimit: number
 }
 
-// Middleware to check subscription limits before creating todos
+// Middleware to check subscription limits before creating any new resources
 export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
   try {
     const { activeOrganizationId, userId } = c.get('session')
@@ -31,11 +31,11 @@ export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
       (sub: any) => sub.status === 'active' || sub.status === 'trialing'
     )
 
-    // Get todo limit from active subscription or default to free plan
+    // Get post limit from active subscription or default to free plan
     const postLimit = activeSubscription?.limits?.posts || 5 // Default to free plan limit
     const currentPlan = activeSubscription?.plan || 'free'
 
-    // Get current todo count based on context
+    // Get current post count based on context
     const postCountResult = activeOrganizationId
       ? await db
         .select({ count: count() })
@@ -51,7 +51,7 @@ export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
 
     const currentPostCount = postCountResult[0]?.count || 0
 
-    // Check if user has reached their limit
+    // Check if user has reached their post limit
     if (currentPostCount >= postLimit) {
       return c.json({
         error: 'Post limit reached',
@@ -93,10 +93,10 @@ export const subscriptionInfoMiddleware = createMiddleware(async (c, next) => {
       (sub: any) => sub.status === 'active' || sub.status === 'trialing'
     )
 
-    // Get todo limit from active subscription or default to free plan
+    // Get post limit from active subscription or default to free plan
     const postLimit = activeSubscription?.limits?.posts || 5 // Default to free plan limit
 
-    // Get current todo count based on context
+    // Get current post count based on context
     const postCountResult = activeOrganizationId
       ? await db
         .select({ count: count() })

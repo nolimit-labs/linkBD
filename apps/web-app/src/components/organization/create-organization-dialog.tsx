@@ -111,7 +111,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
         {trigger || (
           <Button variant="outline" size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Create Organization
+            Create Business Account
           </Button>
         )}
       </DialogTrigger>
@@ -119,10 +119,10 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
-            Create Organization
+            Create Business Account
           </DialogTitle>
           <DialogDescription>
-            Create a new organization to collaborate with your team. You'll be the owner of this organization.
+            Create a new business account for your business. You'll be the owner of this business account.
           </DialogDescription>
         </DialogHeader>
         
@@ -133,7 +133,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Name</FormLabel>
+                  <FormLabel>Business Account Name</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="Acme Corp" 
@@ -145,7 +145,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
                     />
                   </FormControl>
                   <FormDescription>
-                    This is your organization's display name.
+                    This is your business account's display name.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -157,7 +157,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
               name="slug"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Organization Slug</FormLabel>
+                  <FormLabel>Business Account Slug</FormLabel>
                   <FormControl>
                     <Input 
                       placeholder="acme-corp" 
@@ -165,7 +165,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
                     />
                   </FormControl>
                   <FormDescription>
-                    Unique identifier for your organization URL.
+                    Unique identifier for your business account URL.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -182,7 +182,7 @@ export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogPr
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Creating..." : "Create Organization"}
+                {isLoading ? "Creating..." : "Create Business Account"}
               </Button>
             </DialogFooter>
           </form>

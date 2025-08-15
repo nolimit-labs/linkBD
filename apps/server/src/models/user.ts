@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import { user, posts } from '../db/schema.js';
-import { eq, like, or, sql, desc } from 'drizzle-orm';
+import { eq, ilike, or, sql, desc } from 'drizzle-orm';
 
 export async function getUserById(userId: string) {
   const users = await db
@@ -58,8 +58,8 @@ export async function searchUsers(query: string, limit = 20, offset = 0) {
     .from(user)
     .where(
       or(
-        sql`${user.name} ILIKE ${searchPattern}`,
-        sql`${user.email} ILIKE ${searchPattern}`
+        ilike(user.name, searchPattern),
+        ilike(user.email, searchPattern)
       )
     )
     .orderBy(user.name)
