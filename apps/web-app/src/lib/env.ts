@@ -36,7 +36,7 @@ export const env = {
   appUrl: import.meta.env.VITE_BASE_URL,
   isDevelopment: import.meta.env.DEV,
   isStaging: import.meta.env.NODE_ENV === 'staging',
-  isProduction: import.meta.env.PROD,
+  isProduction: import.meta.env.NODE_ENV === 'production',
 };
 
 /**

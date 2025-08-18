@@ -10,6 +10,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from '@tanstack/react-router';
+import { env } from '@/lib/env';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -22,6 +23,8 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  
+  const allowEmailAndPassword = env.isStaging || env.isDevelopment;
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -73,78 +76,84 @@ export function SignupForm() {
 
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Name</Label>
-        <div className="relative">
-          <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="name"
-            type="text"
-            placeholder="Enter your full name"
-            className="pl-10"
-            data-testid="signup-name-input"
-            {...form.register('name')}
-          />
-        </div>
-        {form.formState.errors.name && (
-          <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-        )}
-      </div>
+    <div className="space-y-4">
+      {allowEmailAndPassword && (
+        <>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your full name"
+                  className="pl-10"
+                  data-testid="signup-name-input"
+                  {...form.register('name')}
+                />
+              </div>
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              )}
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <div className="relative">
-          <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            className="pl-10"
-            data-testid="signup-email-input"
-            {...form.register('email')}
-          />
-        </div>
-        {form.formState.errors.email && (
-          <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-        )}
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="pl-10"
+                  data-testid="signup-email-input"
+                  {...form.register('email')}
+                />
+              </div>
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              )}
+            </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            id="password"
-            type="password"
-            placeholder="Create a password"
-            className="pl-10"
-            data-testid="signup-password-input"
-            {...form.register('password')}
-          />
-        </div>
-        {form.formState.errors.password && (
-          <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
-        )}
-      </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create a password"
+                  className="pl-10"
+                  data-testid="signup-password-input"
+                  {...form.register('password')}
+                />
+              </div>
+              {form.formState.errors.password && (
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+              )}
+            </div>
 
-      <Button type="submit" className="w-full" disabled={isLoading} data-testid="signup-submit-button">
-        {isLoading ? 'Creating account...' : 'Create Account'}
-      </Button>
+            <Button type="submit" className="w-full" disabled={isLoading} data-testid="signup-submit-button">
+              {isLoading ? 'Creating account...' : 'Create Account'}
+            </Button>
+          </form>
 
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="px-2 text-muted-foreground">Or sign up with</span>
-        </div>
-      </div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="px-2 text-muted-foreground">Or sign up with</span>
+            </div>
+          </div>
+        </>
+      )}
 
       <Button type="button" variant="outline" className="w-full" disabled={isLoading} onClick={handleSignInWithGoogle}>
         <GoogleIcon className="mr-2 h-4 w-4" />
         {isLoading ? 'Signing up with Google...' : 'Sign Up with Google'}
       </Button>
-    </form>
+    </div>
   );
 }

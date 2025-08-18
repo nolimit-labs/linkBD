@@ -12,6 +12,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isStaging = process.env.NODE_ENV === 'staging';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const enableEmailAndPassword = isDevelopment || isStaging;
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -29,7 +33,7 @@ export const auth = betterAuth({
         provider: "pg", // or "mysql", "sqlite"
     }),
     emailAndPassword: {
-        enabled: true
+        enabled: enableEmailAndPassword
     },
     socialProviders: {
         google: {
