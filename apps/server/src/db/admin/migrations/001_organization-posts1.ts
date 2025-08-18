@@ -15,28 +15,15 @@
  * 3. Execute: tsx migration-organization-posts-phase1.ts
  */
 
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import { posts } from '../../../schema';
-import { and, isNotNull, sql } from 'drizzle-orm';
-import dotenv from 'dotenv';
-
-// Load environment variables
-dotenv.config();
+import { sql, and, isNotNull } from 'drizzle-orm';
+import { db } from '../../index';
+import { posts } from '../../schema';
+import { log } from '../cli/utils/logger';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '../../schema';
 
 async function migrateOrganizationPosts() {
-  const connectionString = process.env.DATABASE_URL;
-  
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is not set');
-  }
-
-  // Create database connection
-  const client = postgres(connectionString);
-  const db = drizzle(client);
-
-  console.log('Starting migration: Organization Posts Phase 1');
-  console.log('================================================');
+  log.title('Starting migration: Organization Posts Phase 1');
 
   try {
     // Step 1: Count posts that will be affected
@@ -51,21 +38,20 @@ async function migrateOrganizationPosts() {
       );
 
     const totalCount = Number(affectedPosts[0]?.count || 0);
-    console.log(`Found ${totalCount} posts with both userId and organizationId`);
+    log.info(`Found ${totalCount} posts with both userId and organizationId`);
 
     if (totalCount === 0) {
-      console.log('No posts need migration. Exiting...');
-      await client.end();
+      log.warning('No posts need migration. Exiting...');
       return;
     }
 
     // Step 2: Begin transaction for safety
-    console.log('\nStarting database transaction...');
+    log.step('Starting database transaction...');
     
     // Execute migration in a transaction
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: NodePgDatabase<typeof schema>) => {
       // Step 3: Update posts - populate createdBy with userId for organization posts
-      console.log('Populating createdBy field with userId values...');
+      log.step('Populating createdBy field with userId values...');
       
       const updateCreatedBy = await tx.execute(sql`
         UPDATE ${posts}
@@ -75,10 +61,10 @@ async function migrateOrganizationPosts() {
           AND created_by IS NULL
       `);
 
-      console.log(`Updated createdBy for ${updateCreatedBy.rowCount} posts`);
+      log.success(`Updated createdBy for ${updateCreatedBy.rowCount} posts`);
 
       // Step 4: Remove userId for organization posts (make them org-only)
-      console.log('Removing userId from organization posts...');
+      log.step('Removing userId from organization posts...');
       
       const removeUserId = await tx.execute(sql`
         UPDATE ${posts}
@@ -87,10 +73,10 @@ async function migrateOrganizationPosts() {
           AND created_by IS NOT NULL
       `);
 
-      console.log(`Removed userId from ${removeUserId.rowCount} posts`);
+      log.success(`Removed userId from ${removeUserId.rowCount} posts`);
 
       // Step 5: Verify the migration
-      console.log('\nVerifying migration results...');
+      log.step('Verifying migration results...');
       
       // Check for posts that still have both userId and organizationId
       const invalidPosts = await tx
@@ -123,51 +109,36 @@ async function migrateOrganizationPosts() {
       const missingCreatedByCount = Number(orgPostsWithoutCreatedBy[0]?.count || 0);
       
       if (missingCreatedByCount > 0) {
-        console.warn(`Warning: ${missingCreatedByCount} organization posts don't have createdBy set. These may be legacy posts.`);
+        log.warning(`${missingCreatedByCount} organization posts don't have createdBy set. These may be legacy posts.`);
       }
 
-      console.log('✅ Migration verification passed!');
+      log.success('Migration verification passed!');
     });
 
     // Step 6: Final summary
-    console.log('\n================================================');
-    console.log('Migration completed successfully!');
-    console.log('\nSummary:');
-    console.log(`- Total posts migrated: ${totalCount}`);
-    console.log('- All organization posts now have:');
-    console.log('  • userId: null (posts attributed to organization)');
-    console.log('  • organizationId: set (organization ownership)');
-    console.log('  • createdBy: set (user who created the post)');
-    
-    // Close database connection
-    await client.end();
+    log.title('Migration completed successfully!');
+    log.info('Summary:');
+    log.info(`• Total posts migrated: ${totalCount}`);
+    log.info('• All organization posts now have:');
+    log.info('  - userId: null (posts attributed to organization)');
+    log.info('  - organizationId: set (organization ownership)');
+    log.info('  - createdBy: set (user who created the post)');
     
   } catch (error) {
-    console.error('\n❌ Migration failed:', error);
-    console.error('Transaction has been rolled back. No changes were made to the database.');
-    await client.end();
+    log.error(`Migration failed: ${error}`);
+    log.error('Transaction has been rolled back. No changes were made to the database.');
     process.exit(1);
   }
 }
 
 // Add rollback function for safety
 async function rollbackMigration() {
-  const connectionString = process.env.DATABASE_URL;
-  
-  if (!connectionString) {
-    throw new Error('DATABASE_URL environment variable is not set');
-  }
-
-  const client = postgres(connectionString);
-  const db = drizzle(client);
-
-  console.log('Starting rollback: Organization Posts Phase 1');
-  console.log('================================================');
+  log.title('Starting rollback: Organization Posts Phase 1');
 
   try {
-    await db.transaction(async (tx) => {
+    await db.transaction(async (tx: NodePgDatabase<typeof schema>) => {
       // Restore userId from createdBy for organization posts
-      console.log('Restoring userId from createdBy field...');
+      log.step('Restoring userId from createdBy field...');
       
       const restoreUserId = await tx.execute(sql`
         UPDATE ${posts}
@@ -177,10 +148,10 @@ async function rollbackMigration() {
           AND created_by IS NOT NULL
       `);
 
-      console.log(`Restored userId for ${restoreUserId.rowCount} posts`);
+      log.success(`Restored userId for ${restoreUserId.rowCount} posts`);
 
       // Clear createdBy field for organization posts that now have userId
-      console.log('Clearing createdBy field...');
+      log.step('Clearing createdBy field...');
       
       const clearCreatedBy = await tx.execute(sql`
         UPDATE ${posts}
@@ -190,25 +161,27 @@ async function rollbackMigration() {
           AND created_by = user_id
       `);
 
-      console.log(`Cleared createdBy for ${clearCreatedBy.rowCount} posts`);
+      log.success(`Cleared createdBy for ${clearCreatedBy.rowCount} posts`);
     });
 
-    console.log('\n✅ Rollback completed successfully!');
-    await client.end();
+    log.success('Rollback completed successfully!');
     
   } catch (error) {
-    console.error('\n❌ Rollback failed:', error);
-    await client.end();
+    log.error(`Rollback failed: ${error}`);
     process.exit(1);
   }
 }
 
 // Check command line arguments
+// Main execution
 const command = process.argv[2];
 
 if (command === '--rollback') {
-  console.log('Running in ROLLBACK mode...\n');
-  rollbackMigration();
+  log.info('Running in ROLLBACK mode...');
+  rollbackMigration().catch((error) => {
+    log.error(`Failed to execute rollback: ${error}`);
+    process.exit(1);
+  });
 } else if (command === '--help') {
   console.log('Organization Posts Migration Script - Phase 1');
   console.log('');
@@ -221,5 +194,8 @@ if (command === '--rollback') {
   console.log('  DATABASE_URL    PostgreSQL connection string (required)');
 } else {
   // Run the migration
-  migrateOrganizationPosts();
+  migrateOrganizationPosts().catch((error) => {
+    log.error(`Failed to execute migration: ${error}`);
+    process.exit(1);
+  });
 }

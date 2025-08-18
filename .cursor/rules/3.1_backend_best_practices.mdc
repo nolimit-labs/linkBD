@@ -107,3 +107,98 @@ export async function getPostById(postId: string, userId: string) {
   return c.json(post);
 })
 ``` 
+
+## 3. Custom Data Migration Standards
+
+**STANDARD**: All custom data migration scripts in `src/db/admin/migrations/` MUST follow a standardized naming convention and structure.
+
+### Naming Convention
+- **Format**: `{sequence}_{feature-name}{phase}.ts`
+- **Sequence**: 3-digit zero-padded number (001, 002, 003, etc.)
+- **Feature Name**: Descriptive kebab-case name of the feature being migrated
+- **Phase**: Optional numeric suffix for multi-phase migrations
+
+### ✅ Correct Migration Names
+```
+001_organization-posts-phase1.ts
+002_user-profile-data.ts
+003_storage-cleanup.ts
+004_organization-posts-phase2.ts
+005_better-auth-migration.ts
+```
+
+### ❌ Incorrect Migration Names
+```
+migration-organization-posts.ts           // ❌ No sequence number
+1-org-posts.ts                           // ❌ Not zero-padded
+organization_posts_migration.ts          // ❌ Underscores instead of hyphens
+001-organizationPosts.ts                 // ❌ CamelCase instead of kebab-case
+```
+
+### Migration File Structure
+```typescript
+/**
+ * Migration Script - {Phase}: {Feature Name}
+ * 
+ * Brief description of what this migration does and why.
+ * 
+ * Prerequisites:
+ * - List any schema changes required first
+ * - Database backup recommendations
+ * 
+ * Usage:
+ * tsx {filename}.ts           // Run migration
+ * tsx {filename}.ts --rollback // Rollback migration  
+ * tsx {filename}.ts --help     // Show help
+ */
+
+import { sql, and, isNotNull } from 'drizzle-orm';
+import { db } from '../../index';
+import { tableName } from '../../schema';
+import { log } from '../cli/utils/logger';
+import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '../../schema';
+
+async function migrateFeatureName() {
+  log.title('Starting migration: {Feature Name} {Phase}');
+  
+  try {
+    // Step 1: Pre-migration validation
+    // Step 2: Execute migration in transaction
+    // Step 3: Post-migration verification
+    // Step 4: Summary logging
+  } catch (error) {
+    log.error(`Migration failed: ${error}`);
+    process.exit(1);
+  }
+}
+
+async function rollbackMigration() {
+  log.title('Starting rollback: {Feature Name} {Phase}');
+  // Rollback implementation
+}
+
+// Command line handling
+const command = process.argv[2];
+if (command === '--rollback') {
+  rollbackMigration().catch(handleError);
+} else if (command === '--help') {
+  showHelp();
+} else {
+  migrateFeatureName().catch(handleError);
+}
+```
+
+### Migration Requirements
+1. **Transaction Safety**: All data modifications MUST be wrapped in transactions
+2. **Rollback Support**: Every migration MUST include a rollback function
+3. **Validation**: Include pre and post-migration validation checks
+4. **Logging**: Use the admin CLI logger for consistent output
+5. **Error Handling**: Proper error handling with process.exit(1) on failure
+6. **Documentation**: Clear header comments explaining purpose and usage
+
+### Integration with Admin CLI
+- Migrations are separate from Drizzle schema migrations
+- Use existing `db` instance from `../../index`
+- Follow same patterns as other admin tools
+- Include help command for usage documentation
