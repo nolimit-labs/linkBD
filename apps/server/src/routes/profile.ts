@@ -12,34 +12,34 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
     
     try {
       // Try to fetch as user first
-      const userProfile = await userModel.getUserProfile(profileId);
+      const userInfo = await userModel.getUserById(profileId);
       
-      if (userProfile) {
+      if (userInfo) {
         // Generate avatar URL if user has an image
-        const avatarUrl = await generateDownloadURL(userProfile.image);
+        const imageUrl = await generateDownloadURL(userInfo.image);
         
         return c.json({
+          id: userInfo.id,
+          name: userInfo.name,
+          image: imageUrl,
           type: 'user' as const,
-          profile: {
-            ...userProfile,
-            avatarUrl
-          }
+          createdAt: userInfo.createdAt
         });
       }
       
       // If not a user, try to fetch as organization
-      const orgProfile = await orgModel.getOrgProfile(profileId);
+      const orgInfo = await orgModel.getOrgById(profileId);
       
-      if (orgProfile) {
+      if (orgInfo) {
         // Generate logo URL if organization has a logo
-        const logoUrl = await generateDownloadURL(orgProfile.logo);
+        const imageUrl = await generateDownloadURL(orgInfo.logo);
         
         return c.json({
+          id: orgInfo.id,
+          name: orgInfo.name,
+          image: imageUrl,
           type: 'organization' as const,
-          profile: {
-            ...orgProfile,
-            logoUrl
-          }
+          createdAt: orgInfo.createdAt
         });
       }
       

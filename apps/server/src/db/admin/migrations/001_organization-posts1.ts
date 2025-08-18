@@ -1,9 +1,9 @@
 /**
  * Migration Script - Phase 1: Organization Posts
  * 
- * This migration script populates the createdBy field with the userId value
- * for posts that have an organizationId, then removes the userId to make them
- * true organization-only posts.
+ * This migration script:
+ * 1. Populates the createdBy field with userId for ALL posts
+ * 2. For posts with organizationId, removes userId to make them organization-only posts
  * 
  * Prerequisites:
  * - createdBy field must already exist in the posts table
@@ -12,7 +12,7 @@
  * Usage:
  * 1. Run this script in a test environment first
  * 2. Backup your database before running in production
- * 3. Execute: tsx migration-organization-posts-phase1.ts
+ * 3. Execute: tsx 001_organization-posts1.ts
  */
 
 import { sql, and, isNotNull } from 'drizzle-orm';
@@ -26,8 +26,13 @@ async function migrateOrganizationPosts() {
   log.title('Starting migration: Organization Posts Phase 1');
 
   try {
-    // Step 1: Count posts that will be affected
-    const affectedPosts = await db
+    // Step 1: Count all posts and organization posts
+    const allPostsResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(posts)
+      .where(isNotNull(posts.userId));
+
+    const orgPostsResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(posts)
       .where(
@@ -37,11 +42,14 @@ async function migrateOrganizationPosts() {
         )
       );
 
-    const totalCount = Number(affectedPosts[0]?.count || 0);
-    log.info(`Found ${totalCount} posts with both userId and organizationId`);
+    const totalPosts = Number(allPostsResult[0]?.count || 0);
+    const orgPosts = Number(orgPostsResult[0]?.count || 0);
+    
+    log.info(`Found ${totalPosts} total posts with userId`);
+    log.info(`Found ${orgPosts} organization posts that will become org-only`);
 
-    if (totalCount === 0) {
-      log.warning('No posts need migration. Exiting...');
+    if (totalPosts === 0) {
+      log.warning('No posts found. Exiting...');
       return;
     }
 
@@ -50,18 +58,17 @@ async function migrateOrganizationPosts() {
     
     // Execute migration in a transaction
     await db.transaction(async (tx: NodePgDatabase<typeof schema>) => {
-      // Step 3: Update posts - populate createdBy with userId for organization posts
-      log.step('Populating createdBy field with userId values...');
+      // Step 3: Populate createdBy for ALL posts with userId
+      log.step('Populating createdBy field for ALL posts...');
       
-      const updateCreatedBy = await tx.execute(sql`
+      const updateAllCreatedBy = await tx.execute(sql`
         UPDATE ${posts}
         SET created_by = user_id
-        WHERE organization_id IS NOT NULL
-          AND user_id IS NOT NULL
+        WHERE user_id IS NOT NULL
           AND created_by IS NULL
       `);
 
-      log.success(`Updated createdBy for ${updateCreatedBy.rowCount} posts`);
+      log.success(`Updated createdBy for ${updateAllCreatedBy.rowCount} posts`);
 
       // Step 4: Remove userId for organization posts (make them org-only)
       log.step('Removing userId from organization posts...');
@@ -73,7 +80,7 @@ async function migrateOrganizationPosts() {
           AND created_by IS NOT NULL
       `);
 
-      log.success(`Removed userId from ${removeUserId.rowCount} posts`);
+      log.success(`Removed userId from ${removeUserId.rowCount} organization posts`);
 
       // Step 5: Verify the migration
       log.step('Verifying migration results...');
@@ -118,11 +125,13 @@ async function migrateOrganizationPosts() {
     // Step 6: Final summary
     log.title('Migration completed successfully!');
     log.info('Summary:');
-    log.info(`• Total posts migrated: ${totalCount}`);
-    log.info('• All organization posts now have:');
+    log.info(`• Total posts updated: ${totalPosts}`);
+    log.info(`• Organization posts converted: ${orgPosts}`);
+    log.info('• All posts now have:');
+    log.info('  - createdBy: populated with original userId');
+    log.info('• Organization posts additionally have:');
     log.info('  - userId: null (posts attributed to organization)');
     log.info('  - organizationId: set (organization ownership)');
-    log.info('  - createdBy: set (user who created the post)');
     
   } catch (error) {
     log.error(`Migration failed: ${error}`);
@@ -138,7 +147,7 @@ async function rollbackMigration() {
   try {
     await db.transaction(async (tx: NodePgDatabase<typeof schema>) => {
       // Restore userId from createdBy for organization posts
-      log.step('Restoring userId from createdBy field...');
+      log.step('Restoring userId for organization posts...');
       
       const restoreUserId = await tx.execute(sql`
         UPDATE ${posts}
@@ -148,17 +157,15 @@ async function rollbackMigration() {
           AND created_by IS NOT NULL
       `);
 
-      log.success(`Restored userId for ${restoreUserId.rowCount} posts`);
+      log.success(`Restored userId for ${restoreUserId.rowCount} organization posts`);
 
-      // Clear createdBy field for organization posts that now have userId
-      log.step('Clearing createdBy field...');
+      // Clear createdBy field for ALL posts
+      log.step('Clearing createdBy field for all posts...');
       
       const clearCreatedBy = await tx.execute(sql`
         UPDATE ${posts}
         SET created_by = NULL
-        WHERE organization_id IS NOT NULL
-          AND user_id IS NOT NULL
-          AND created_by = user_id
+        WHERE created_by IS NOT NULL
       `);
 
       log.success(`Cleared createdBy for ${clearCreatedBy.rowCount} posts`);

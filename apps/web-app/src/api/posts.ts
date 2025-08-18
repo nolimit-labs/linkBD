@@ -21,20 +21,13 @@ export const useFeed = () => {
   });
 };
 
-// Get posts for specific user or organization
-export const usePosts = (organizationId?: string, userId?: string) => {
-  const { data: activeOrg } = useActiveOrganization();
-  const currentOrgId = activeOrg?.id;
-  
+// Get posts for specific author (user or organization)
+export const useGetPostsByAuthor = (authorId: string) => {
   return useQuery({
-    queryKey: queryKeys.posts.all(organizationId || currentOrgId, userId),
+    queryKey: queryKeys.posts.byAuthor(authorId),
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (userId) params.append('userId', userId);
-      if (organizationId) params.append('organizationId', organizationId);
-      
       const response = await rpcClient.api.posts.$get({
-        query: params.size > 0 ? Object.fromEntries(params) : undefined,
+        query: { authorId },
       });
       
       if (!response.ok) {
@@ -43,6 +36,7 @@ export const usePosts = (organizationId?: string, userId?: string) => {
       
       return response.json();
     },
+    enabled: !!authorId,
   });
 };
 

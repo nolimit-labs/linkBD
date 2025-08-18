@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
-import { useTogglePostLike, useUser } from '@/api'
+import { useTogglePostLike } from '@/api'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -18,7 +18,7 @@ import { Link } from '@tanstack/react-router'
 
 type Post = Awaited<
   ReturnType<
-    Awaited<ReturnType<typeof rpcClient.api.posts.$get>>['json']
+    Awaited<ReturnType<typeof rpcClient.api.posts.feed.$get>>['json']
   >
 >[number]
 
@@ -29,10 +29,11 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
-  const { data: author } = useUser(post.userId)
   const { data: session } = useSession()
   const toggleLike = useTogglePostLike()
 
+  // Use author data from post response (no additional API call needed)
+  const author = post.author
   const isOwner = session?.user?.id === post.userId
 
   const handleLike = () => {
@@ -67,19 +68,19 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         <div className="flex items-start justify-between">
           <Link 
             to="/profile/$id" 
-            params={{ id: post.organizationId || post.userId }}
+            params={{ id: author?.id || post.userId || '' }}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
             <Avatar className="h-10 w-10">
-              <AvatarImage src={author?.user?.avatarUrl || ''} />
+              <AvatarImage src={author?.image || ''} />
               <AvatarFallback>
-                {author?.user?.name?.charAt(0) || '?'}
+                {author?.name?.charAt(0) || '?'}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h4 className="text-sm font-semibold">
-                  {author?.user?.name || 'Unknown User'}
+                  {author?.name || 'Unknown User'}
                 </h4>
                 <Badge variant="secondary" className="flex items-center gap-1 text-xs">
                   {getVisibilityIcon()}

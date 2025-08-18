@@ -110,6 +110,8 @@ export async function getPostById(postId: string, userId: string) {
 
 ## 3. Custom Data Migration Standards
 
+For new tables or new fields in a table, we can use the dirzzle generated migration scripts. However, for complex migrations, we can use the custom migration scripts in `src/db/admin/migrations/`.
+
 **STANDARD**: All custom data migration scripts in `src/db/admin/migrations/` MUST follow a standardized naming convention and structure.
 
 ### Naming Convention

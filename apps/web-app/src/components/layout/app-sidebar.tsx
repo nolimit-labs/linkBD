@@ -26,13 +26,13 @@ import {
 import { useUserSubscriptions } from "@/api"
 import { useActiveOrganization } from "@/lib/auth-client"
 import { UpgradeUserSubscriptionDialog } from "@/components/pricing/upgrade-user-dialog"
+import { env } from "@/lib/env"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: userSubscriptionData } = useUserSubscriptions()
 
+  const displayImagesLink = env.isStaging || env.isDevelopment
   const isUserPro = userSubscriptionData?.[0]?.plan === "pro"
-
-
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -57,14 +57,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          {displayImagesLink && (
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
               <Link to="/images" className="flex items-center gap-2">
                 <Image className="size-4" />
                 <span>Images</span>
               </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
               <Link to="/settings" className="flex items-center gap-2">

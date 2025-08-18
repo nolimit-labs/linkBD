@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useUser, usePosts } from '@/api'
+import { useUser, useGetPostsByAuthor } from '@/api'
 import { PageHeader } from '@/components/layout/page-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -14,7 +14,7 @@ export const Route = createFileRoute('/(app)/users/$userId')({
 function UserProfilePage() {
   const { userId } = Route.useParams()
   const { data: userProfile, isLoading: userLoading, error: userError } = useUser(userId)
-  const { data: userPosts, isLoading: postsLoading } = usePosts(undefined, userId)
+  const { data: userPosts, isLoading: postsLoading } = useGetPostsByAuthor(undefined, userId)
 
   if (userLoading) {
     return (

@@ -3,7 +3,7 @@ import { rpcClient } from './rpc-client';
 import { queryKeys } from './query-keys';
 
 // Get profile by ID (can be user or organization)
-export const useProfile = (profileId: string | undefined) => {
+export const useGetProfile = (profileId: string | undefined) => {
   return useQuery({
     queryKey: queryKeys.profile.detail(profileId || ''),
     queryFn: async () => {
@@ -15,7 +15,8 @@ export const useProfile = (profileId: string | undefined) => {
       
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.error || 'Failed to fetch profile');
+        console.error(error);
+        throw new Error('Failed to fetch profile');
       }
       
       return res.json();

@@ -4,6 +4,8 @@ import { subscriptionLimitMiddleware, subscriptionInfoMiddleware, type Subscript
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator'
 import * as postModel from '../models/posts';
+import * as userModel from '../models/user';
+import * as orgModel from '../models/organization';
 import { generateDownloadURL } from '../lib/storage';
 // import { Session } from 'better-auth';
 
@@ -37,22 +39,43 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
   // Get posts for specific user or organization
   .get('/', authMiddleware, async (c) => {
     const { userId, activeOrganizationId } = c.get('session');
-    const { userId: targetUserId, organizationId } = c.req.query();
+    const { authorId } = c.req.query();
 
     let postList;
-    if (targetUserId) {
-      // Get specific user's posts
-      postList = await postModel.getPostsByUserId(targetUserId);
-    } else if (organizationId) {
-      // Get specific organization posts
-      postList = await postModel.getOrgPosts(organizationId);
-    } else if (activeOrganizationId) {
-      // Get current organization posts
-      postList = await postModel.getOrgPosts(activeOrganizationId);
+
+    // Handle authorId - determine if it's a user or organization
+    const userInfo = await userModel.getUserById(authorId);
+
+    if (userInfo) {
+      // It's a user ID
+      postList = await postModel.getPostsByUserId(authorId);
+      const author = {
+        id: userInfo.id,
+        name: userInfo.name,
+        image: userInfo.image,
+        type: 'user' as const
+      };
+      postList = postList.map(post => ({ ...post, author }));
     } else {
-      // Get user's own posts
-      postList = await postModel.getUserPosts(userId);
+      // Check if it's an organization ID
+      const orgInfo = await orgModel.getOrgById(authorId);
+
+      if (orgInfo) {
+        // It's an organization ID
+        postList = await postModel.getOrgPosts(authorId);
+        const author = {
+          id: orgInfo.id,
+          name: orgInfo.name,
+          image: orgInfo.logo,
+          type: 'organization' as const
+        };
+        postList = postList.map(post => ({ ...post, author }));
+      } else {
+        // Author not found
+        return c.json({ error: 'Author not found' }, 404);
+      }
     }
+
 
     // Map download URLs for posts that have images and check likes
     const postsWithDetails = await Promise.all(

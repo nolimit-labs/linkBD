@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useProfile, usePosts } from '@/api'
+import { useGetProfile, useGetPostsByAuthor } from '@/api'
 import { PageHeader } from '@/components/layout/page-header'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -13,13 +13,10 @@ export const Route = createFileRoute('/(app)/profile/$id')({
 
 function ProfilePage() {
   const { id } = Route.useParams()
-  const { data: profileData, isLoading: profileLoading, error: profileError } = useProfile(id)
+  const { data: profile, isLoading: profileLoading, error: profileError } = useGetProfile(id)
   
   // Get posts based on profile type
-  const { data: profilePosts, isLoading: postsLoading } = usePosts(
-    profileData?.type === 'organization' ? profileData.profile.id : undefined,
-    profileData?.type === 'user' ? profileData.profile.id : undefined
-  )
+  const { data: profilePosts, isLoading: postsLoading } = useGetPostsByAuthor(id)
 
   if (profileLoading) {
     return (
@@ -30,7 +27,7 @@ function ProfilePage() {
     )
   }
 
-  if (profileError || !profileData) {
+  if (profileError || !profile) {
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold mb-2">Profile not found</h2>
@@ -39,21 +36,16 @@ function ProfilePage() {
     )
   }
 
-  const isOrganization = profileData.type === 'organization'
-  const profile = profileData.profile
+  const isOrganization = profile.type === 'organization'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-8">
       {/* Profile Header */}
-      <div className="bg-background px-6 py-8 border-b">
-        <div className="max-w-4xl mx-auto">
+      <div className="bg-background pt-6 pb-2">
+        <div className="mx-auto">
           <div className="flex items-start gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={
-                isOrganization 
-                  ? profile.logoUrl || undefined
-                  : profile.avatarUrl || undefined
-              } />
+              <AvatarImage src={profile.image || undefined} />
               <AvatarFallback className="text-2xl">
                 {isOrganization && <Building2 className="h-12 w-12" />}
                 {!isOrganization && (profile.name?.charAt(0) || '?')}
@@ -63,12 +55,6 @@ function ProfilePage() {
             <div className="flex-1 space-y-4">
               <div>
                 <h1 className="text-3xl font-bold">{profile.name}</h1>
-                {!isOrganization && (
-                  <p className="text-muted-foreground">{profile.email}</p>
-                )}
-                {isOrganization && profile.slug && (
-                  <p className="text-muted-foreground">@{profile.slug}</p>
-                )}
               </div>
 
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -76,33 +62,14 @@ function ProfilePage() {
                   <Calendar className="h-4 w-4" />
                   {isOrganization ? 'Established' : 'Joined'} {formatDistanceToNow(new Date(profile.createdAt), { addSuffix: true })}
                 </div>
-                {isOrganization ? (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      {profile.memberCount || 0} members
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {profile.postCount || 0} posts
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {profile.postCount || 0} posts
-                  </div>
-                )}
               </div>
 
               <div className="flex gap-2">
                 {isOrganization && (
                   <Badge variant="secondary">
                     <Building2 className="h-3 w-3 mr-1" />
-                    Business Account
+                    Organization
                   </Badge>
-                )}
-                {!isOrganization && profile.isAnonymous && (
-                  <Badge variant="secondary">Guest User</Badge>
                 )}
               </div>
             </div>
@@ -111,8 +78,8 @@ function ProfilePage() {
       </div>
 
       {/* Posts Section */}
-      <div className="px-6">
-        <div className="max-w-4xl mx-auto">
+      <div className="">
+        <div className="mx-auto">
           <PageHeader
             title={`${profile.name}'s Posts`}
             description={`Recent posts from ${profile.name}`}
@@ -132,9 +99,19 @@ function ProfilePage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {profilePosts.map((post) => (
-                  <PostCard key={post.id} post={post} />
-                ))}
+                {profilePosts.map((post) => {
+                  // Add author information to post if missing
+                  const postWithAuthor = {
+                    ...post,
+                    author: post.author || {
+                      id: profile.id,
+                      name: profile.name,
+                      image: profile.image,
+                      type: profile.type
+                    }
+                  }
+                  return <PostCard key={post.id} post={postWithAuthor} />
+                })}
               </div>
             )}
           </div>

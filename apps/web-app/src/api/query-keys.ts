@@ -12,6 +12,7 @@ export const queryKeys = {
       if (userId) key.push('user', userId);
       return key as const;
     },
+    byAuthor: (authorId: string) => ['posts', 'author', authorId] as const,
     single: (id: string) => ['posts', id] as const,
   },
   feed: {
