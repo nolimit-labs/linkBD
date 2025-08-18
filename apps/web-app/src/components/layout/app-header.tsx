@@ -1,7 +1,7 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { SearchBar } from './search-bar'
-import { UserProfileBox } from './user-profile-box'
+import { UserAccount } from './user-account'
 
 export function AppHeader() {
 
@@ -22,7 +22,7 @@ export function AppHeader() {
       {/* Right side actions */}
       <div className="flex items-center gap-3">
         <ThemeToggle />
-        <UserProfileBox compact={true} />
+        <UserAccount />
       </div>
     </header>
   )

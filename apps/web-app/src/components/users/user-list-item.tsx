@@ -14,8 +14,8 @@ interface UserListItemProps {
 export function UserListItem({ user }: UserListItemProps) {
   return (
     <Link 
-      to="/users/$userId" 
-      params={{ userId: user.id }}
+      to="/profile/$id" 
+      params={{ id: user.id }}
       className="block"
     >
       <Card className="hover:shadow-md transition-shadow">

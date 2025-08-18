@@ -39,6 +39,7 @@ This section details the organization of the backend application.
     *   **Connection (`index.ts`)**: Drizzle ORM setup with PostgreSQL driver
     *   **Schema (`schema.ts`)**: Simple database schema including auth tables and social/job board tables
     *   **Admin (`admin.ts`)**: Admin directory for the cli to manage the database, also contains constants for database tables
+    *   **Migrations (`admin/migrations/`)**: Custom data migration scripts (separate from Drizzle schema migrations)
 
 -   **Models (`apps/server/src/models/`)**: Database operations and business logic:
     *   **User Model (`user.ts`)**: User profile data access functions

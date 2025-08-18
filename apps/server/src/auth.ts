@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db"; // your drizzle instance
-import { anonymous, organization } from "better-auth/plugins"
+import { organization } from "better-auth/plugins"
 import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 import { SUBSCRIPTION_PLANS, DEFAULT_PLAN_NAME } from "./db/admin/plans/data";
@@ -30,6 +30,13 @@ export const auth = betterAuth({
     }),
     emailAndPassword: {
         enabled: true
+    },
+    socialProviders: {
+        google: {
+            enabled: true,
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        },
     },
     databaseHooks: {
         user: {

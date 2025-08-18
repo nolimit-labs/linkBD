@@ -1,4 +1,4 @@
-import { usePosts, useDeletePost } from '@/api'
+import { usePosts, useFeed, useDeletePost } from '@/api'
 import { PostCard } from './post-card'
 import { Loader2 } from 'lucide-react'
 import { useSession } from '@/lib/auth-client'
@@ -13,22 +13,17 @@ export function PostsFeedView({ feedType }: PostsFeedViewProps) {
   const { data: activeOrg } = useActiveOrganization()
   const deletePost = useDeletePost()
   
-  // Determine query parameters based on feed type
-  const getFeedParams = () => {
-    switch (feedType) {
-      case 'public':
-        return { feed: 'public' as const, targetUserId: undefined }
-      case 'personal':
-        return { feed: undefined, targetUserId: session?.user?.id }
-      case 'organization':
-        return { feed: 'organization' as const, targetUserId: undefined }
-      default:
-        return { feed: 'public' as const, targetUserId: undefined }
-    }
-  }
+  // Use different hooks based on feed type
+  const publicFeedQuery = useFeed()
+  const personalPostsQuery = usePosts(undefined, feedType === 'personal' ? session?.user?.id : undefined)
+  const orgPostsQuery = usePosts(feedType === 'organization' ? activeOrg?.id : undefined, undefined)
   
-  const { feed, targetUserId } = getFeedParams()
-  const { data: posts, isLoading, error } = usePosts(feed, targetUserId)
+  // Select the appropriate query based on feed type
+  const currentQuery = feedType === 'public' ? publicFeedQuery : 
+                      feedType === 'personal' ? personalPostsQuery : 
+                      orgPostsQuery
+  
+  const { data: posts, isLoading, error } = currentQuery
   
   const handleDeletePost = (postId: string) => {
     if (confirm('Are you sure you want to delete this post?')) {

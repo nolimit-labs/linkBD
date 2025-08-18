@@ -6,25 +6,24 @@ import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import { useTogglePostLike, useUser } from '@/api'
 import { cn } from '@/lib/utils'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { useSession } from '@/lib/auth-client'
+import { rpcClient } from '@/api'
+import { Link } from '@tanstack/react-router'
+
+type Post = Awaited<
+  ReturnType<
+    Awaited<ReturnType<typeof rpcClient.api.posts.$get>>['json']
+  >
+>[number]
 
 interface PostCardProps {
-  post: {
-    id: string
-    userId: string
-    content: string
-    imageUrl?: string
-    likesCount: number
-    hasLiked: boolean
-    visibility: 'public' | 'organization' | 'private'
-    createdAt: string
-  }
+  post: Post
   onEdit?: () => void
   onDelete?: () => void
 }
@@ -33,13 +32,13 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
   const { data: author } = useUser(post.userId)
   const { data: session } = useSession()
   const toggleLike = useTogglePostLike()
-  
+
   const isOwner = session?.user?.id === post.userId
-  
+
   const handleLike = () => {
     toggleLike.mutate(post.id)
   }
-  
+
   const getVisibilityIcon = () => {
     switch (post.visibility) {
       case 'public':
@@ -50,7 +49,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         return <Lock className="h-3 w-3" />
     }
   }
-  
+
   const getVisibilityLabel = () => {
     switch (post.visibility) {
       case 'public':
@@ -61,12 +60,16 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         return 'Private'
     }
   }
-  
+
   return (
     <Card className="w-full">
       <CardHeader>
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
+          <Link 
+            to="/profile/$id" 
+            params={{ id: post.organizationId || post.userId }}
+            className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
+          >
             <Avatar className="h-10 w-10">
               <AvatarImage src={author?.user?.avatarUrl || ''} />
               <AvatarFallback>
@@ -87,7 +90,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                 {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
               </p>
             </div>
-          </div>
+          </Link>
           {isOwner && (onEdit || onDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -111,20 +114,20 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
           )}
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-0">
         <p className="text-sm whitespace-pre-wrap">{post.content}</p>
         {post.imageUrl && (
           <div className="mt-4">
-            <img 
-              src={post.imageUrl} 
-              alt="Post image" 
+            <img
+              src={post.imageUrl}
+              alt="Post image"
               className="rounded-lg max-w-full h-auto object-cover max-h-96"
             />
           </div>
         )}
       </CardContent>
-      
+
       <CardFooter className="pt-0">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-4">
@@ -138,20 +141,20 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                 post.hasLiked && "text-red-500"
               )}
             >
-              <Heart 
+              <Heart
                 className={cn(
                   "h-4 w-4",
                   post.hasLiked && "fill-current"
-                )} 
+                )}
               />
               <span className="text-xs">{post.likesCount}</span>
             </Button>
-            
+
             <Button variant="ghost" size="sm" className="flex items-center space-x-1">
               <MessageCircle className="h-4 w-4" />
               <span className="text-xs">Comment</span>
             </Button>
-            
+
             <Button variant="ghost" size="sm" className="flex items-center space-x-1">
               <Share className="h-4 w-4" />
               <span className="text-xs">Share</span>

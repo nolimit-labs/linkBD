@@ -15,20 +15,39 @@ const postSchema = z.object({
 
 
 const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
-  // Get posts based on context (public feed, user posts, or org posts)
+  // Get feed (public posts for discovery)
+  .get('/feed', authMiddleware, async (c) => {
+    const { userId } = c.get('session');
+
+    // Get public feed
+    const postList = await postModel.getPublicPosts();
+
+    // Map download URLs for posts that have images and check likes
+    const postsWithDetails = await Promise.all(
+      postList.map(async (post) => ({
+        ...post,
+        imageUrl: await generateDownloadURL(post.imageKey),
+        hasLiked: await postModel.hasUserLikedPost(post.id, userId)
+      }))
+    );
+
+    return c.json(postsWithDetails);
+  })
+
+  // Get posts for specific user or organization
   .get('/', authMiddleware, async (c) => {
     const { userId, activeOrganizationId } = c.get('session');
-    const { feed, userId: targetUserId } = c.req.query();
+    const { userId: targetUserId, organizationId } = c.req.query();
 
     let postList;
-    if (feed === 'public') {
-      // Get public feed
-      postList = await postModel.getPublicPosts();
-    } else if (targetUserId) {
+    if (targetUserId) {
       // Get specific user's posts
       postList = await postModel.getPostsByUserId(targetUserId);
+    } else if (organizationId) {
+      // Get specific organization posts
+      postList = await postModel.getOrgPosts(organizationId);
     } else if (activeOrganizationId) {
-      // Get organization posts
+      // Get current organization posts
       postList = await postModel.getOrgPosts(activeOrganizationId);
     } else {
       // Get user's own posts

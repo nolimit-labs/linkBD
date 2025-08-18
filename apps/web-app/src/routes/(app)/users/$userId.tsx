@@ -43,7 +43,7 @@ function UserProfilePage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-start gap-6">
             <Avatar className="h-24 w-24">
-              <AvatarImage src={user.avatarUrl} />
+              <AvatarImage src={user.avatarUrl || undefined} />
               <AvatarFallback className="text-2xl">
                 {user.name?.charAt(0) || '?'}
               </AvatarFallback>

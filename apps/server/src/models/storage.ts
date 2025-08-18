@@ -1,16 +1,10 @@
 import { db } from '../db';
 import { storage } from '../db/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { r2 } from '../lib/storage';
-
-const BUCKET_NAME = 'os-saas-starter-1';
 
 // =====================================================================
 // Storage Model
 // =====================================================================
-
 
 // Create a new file record in the database
 export async function createFileRecord(data: {

@@ -1,0 +1,57 @@
+# Page snapshot
+
+```yaml
+- main:
+  - img "LinkBD Logo"
+  - list:
+    - listitem:
+      - link "Feed":
+        - /url: /feed
+        - img
+        - text: Feed
+    - listitem:
+      - link "Search":
+        - /url: /search
+        - img
+        - text: Search
+    - listitem:
+      - link "Images":
+        - /url: /images
+        - img
+        - text: Images
+    - listitem:
+      - link "Settings":
+        - /url: /settings
+        - img
+        - text: Settings
+    - listitem:
+      - button "Upgrade":
+        - img
+        - text: Upgrade
+  - img
+  - paragraph: Test User
+  - paragraph: Personal Account
+  - main:
+    - button "Toggle Sidebar":
+      - img
+      - text: Toggle Sidebar
+    - img
+    - textbox "Search people..."
+    - button "Toggle theme":
+      - img
+      - img
+      - text: Toggle theme
+    - img
+    - main:
+      - heading "Public Feed" [level=1]
+      - paragraph: Connect with the Bangladeshi diaspora community
+      - button "Public"
+      - button "My Posts"
+      - button "New Post":
+        - img
+        - text: New Post
+      - paragraph: No posts in the public feed yet. Be the first to share something!
+- region "Notifications alt+T"
+- button "Open Tanstack query devtools":
+  - img
+```

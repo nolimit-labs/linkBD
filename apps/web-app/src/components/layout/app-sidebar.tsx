@@ -18,7 +18,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Logo } from "@/components/layout/logo"
-import { UserProfileBox } from "@/components/layout/user-profile-box"
+import { CurrentAccountBox } from "@/components/layout/current-account-box"
 import {
   Link
 
@@ -88,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <UserProfileBox />
+        <CurrentAccountBox />
       </SidebarFooter>
     </Sidebar>
   )

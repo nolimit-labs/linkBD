@@ -1,14 +1,14 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { UserCheck, Mail, Lock } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
+import { GoogleIcon } from '@/lib/icons';
 import { signIn } from '@/lib/auth-client';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useNavigate } from '@tanstack/react-router';
 
 const signinSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -19,7 +19,6 @@ type SigninFormData = z.infer<typeof signinSchema>;
 
 export function SigninForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   const form = useForm<SigninFormData>({
     resolver: zodResolver(signinSchema),
@@ -29,24 +28,6 @@ export function SigninForm() {
     },
   });
 
-  const handleGuestLogin = async () => {
-    try {
-      setIsLoading(true);
-      const result = await signIn.anonymous();
-
-      if (result.error) {
-        toast.error(result.error.message);
-        return;
-      }
-
-      navigate({ to: '/feed' });
-    } catch (error) {
-      console.error('Error signing in:', error);
-      toast.error('Failed to sign in as guest');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const onSubmit = async (data: SigninFormData) => {
     try {
@@ -68,6 +49,23 @@ export function SigninForm() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSignInWithGoogle = async () => {
+
+    const result = await signIn.social({
+      provider: 'google',
+      callbackURL: '/feed',
+    });
+
+      if (result.error) {
+        toast.error(result.error.message);
+        return;
+      }
+
+      if (result.data) {
+        toast.success('Signed in with Google');
+      }
   };
 
   return (
@@ -110,16 +108,21 @@ export function SigninForm() {
         {isLoading ? 'Signing in...' : 'Sign In'}
       </Button>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={handleGuestLogin}
-        className="w-full"
-        disabled={isLoading}
-      >
-        <UserCheck className="h-4 w-4 mr-2" />
-        {isLoading ? 'Signing in...' : 'Continue as Guest'}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="px-2 text-muted-foreground">Or sign in with</span>
+        </div>
+      </div>
+
+      <Button type="button" variant="outline" className="w-full" disabled={isLoading} onClick={handleSignInWithGoogle}>
+        <GoogleIcon className="mr-2 h-4 w-4" />
+        {isLoading ? 'Signing in with Google...' : 'Sign In with Google'}
       </Button>
+
+
     </form>
   );
 }

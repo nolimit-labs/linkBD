@@ -6,6 +6,7 @@ import { organizationClient } from 'better-auth/client/plugins';
 import { stripeClient } from "@better-auth/stripe/client"
 
 const authClient = createAuthClient({
+
   plugins: [
     anonymousClient(), 
     organizationClient(),
