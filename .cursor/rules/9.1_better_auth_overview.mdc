@@ -29,7 +29,7 @@ Better Auth is a TypeScript-first authentication framework providing type-safe A
 - All API calls require organization context via `orgMiddleware`
 
 ### Authentication Flow
-1. **Login** - Currently anonymous/guest only
+1. **Login** - Login with email and password or social login
 2. **Session Check** - Routes validate user + organization
 3. **API Protection** - Middleware extracts userId & organizationId
 4. **Organization Selection** - Required before accessing app features
@@ -43,7 +43,6 @@ Better Auth is a TypeScript-first authentication framework providing type-safe A
 ```typescript
 useSession() // Current user
 useActiveOrganization() // Active org
-signIn.anonymous() // Guest login
 signOut() // Logout
 ```
 

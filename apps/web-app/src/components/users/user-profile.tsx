@@ -10,7 +10,6 @@ interface UserProfileProps {
     email: string
     avatarUrl?: string
     createdAt: string
-    isAnonymous?: boolean
     postCount?: number
   }
 }
@@ -42,9 +41,6 @@ export function UserProfile({ user }: UserProfileProps) {
           </div>
         </div>
         
-        {user.isAnonymous && (
-          <Badge variant="secondary">Guest User</Badge>
-        )}
       </div>
     </div>
   )

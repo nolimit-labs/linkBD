@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db"; // your drizzle instance
-import { anonymous, organization } from "better-auth/plugins"
+import { organization } from "better-auth/plugins"
 import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 import { SUBSCRIPTION_PLANS, DEFAULT_PLAN_NAME } from "./db/admin/plans/data";
@@ -12,6 +12,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const isDevelopment = process.env.NODE_ENV === 'development';
+const isStaging = process.env.NODE_ENV === 'staging';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const enableEmailAndPassword = isDevelopment || isStaging;
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
@@ -29,7 +33,14 @@ export const auth = betterAuth({
         provider: "pg", // or "mysql", "sqlite"
     }),
     emailAndPassword: {
-        enabled: true
+        enabled: enableEmailAndPassword
+    },
+    socialProviders: {
+        google: {
+            enabled: true,
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        },
     },
     databaseHooks: {
         user: {
@@ -50,7 +61,9 @@ export const auth = betterAuth({
         },
     },
     plugins: [
-        organization(),
+        organization({
+            organizationLimit: 1,
+        }),
         stripe({
             stripeClient,
             stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,

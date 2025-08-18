@@ -35,7 +35,8 @@ export function getEnvironmentConfig(): EnvironmentConfig {
 export const env = {
   appUrl: import.meta.env.VITE_BASE_URL,
   isDevelopment: import.meta.env.DEV,
-  isProduction: import.meta.env.PROD,
+  isStaging: import.meta.env.NODE_ENV === 'staging',
+  isProduction: import.meta.env.NODE_ENV === 'production',
 };
 
 /**

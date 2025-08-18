@@ -87,8 +87,8 @@ function SearchPage() {
               {searchResults.users.map((user) => (
                 <Link
                   key={user.id}
-                  to="/users/$userId"
-                  params={{ userId: user.id }}
+                  to="/profile/$id"
+                  params={{ id: user.id }}
                   className="block"
                 >
                   <Card className="hover:shadow-md transition-shadow">

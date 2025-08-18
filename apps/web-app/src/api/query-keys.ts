@@ -6,14 +6,17 @@ export const queryKeys = {
     subscription: ['user', 'subscription'] as const,
   },
   posts: {
-    all: (organizationId?: string, feed?: string, userId?: string) => {
+    all: (organizationId?: string, userId?: string) => {
       const key = ['posts'];
-      if (feed) key.push(feed);
       if (organizationId) key.push('org', organizationId);
       if (userId) key.push('user', userId);
       return key as const;
     },
+    byAuthor: (authorId: string) => ['posts', 'author', authorId] as const,
     single: (id: string) => ['posts', id] as const,
+  },
+  feed: {
+    public: () => ['feed', 'public'] as const,
   },
   users: {
     single: (id: string) => ['users', id] as const,
@@ -34,5 +37,8 @@ export const queryKeys = {
   organization: {
     subscription: (organizationId?: string) => 
       organizationId ? ['organization', 'subscription', organizationId] : ['organization', 'subscription'] as const,
+  },
+  profile: {
+    detail: (id: string) => ['profile', id] as const,
   },
 } as const

@@ -1,34 +1,14 @@
-import { usePosts, useDeletePost } from '@/api'
+import { useFeed, useDeletePost } from '@/api'
 import { PostCard } from './post-card'
 import { Loader2 } from 'lucide-react'
 import { useSession } from '@/lib/auth-client'
-import { useActiveOrganization } from '@/lib/auth-client'
 
-interface PostsFeedViewProps {
-  feedType: 'public' | 'personal' | 'organization'
-}
-
-export function PostsFeedView({ feedType }: PostsFeedViewProps) {
+export function PostsFeedView() {
   const { data: session } = useSession()
-  const { data: activeOrg } = useActiveOrganization()
   const deletePost = useDeletePost()
   
-  // Determine query parameters based on feed type
-  const getFeedParams = () => {
-    switch (feedType) {
-      case 'public':
-        return { feed: 'public' as const, targetUserId: undefined }
-      case 'personal':
-        return { feed: undefined, targetUserId: session?.user?.id }
-      case 'organization':
-        return { feed: 'organization' as const, targetUserId: undefined }
-      default:
-        return { feed: 'public' as const, targetUserId: undefined }
-    }
-  }
-  
-  const { feed, targetUserId } = getFeedParams()
-  const { data: posts, isLoading, error } = usePosts(feed, targetUserId)
+  // Always use public feed
+  const { data: posts, isLoading, error } = useFeed()
   
   const handleDeletePost = (postId: string) => {
     if (confirm('Are you sure you want to delete this post?')) {
@@ -54,22 +34,9 @@ export function PostsFeedView({ feedType }: PostsFeedViewProps) {
   }
   
   if (!posts || posts.length === 0) {
-    const getEmptyMessage = () => {
-      switch (feedType) {
-        case 'public':
-          return 'No posts in the public feed yet. Be the first to share something!'
-        case 'personal':
-          return 'You haven\'t created any posts yet. Share your first post!'
-        case 'organization':
-          return `No posts from ${activeOrg?.name} yet. Start a conversation!`
-        default:
-          return 'No posts to show.'
-      }
-    }
-    
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">{getEmptyMessage()}</p>
+        <p className="text-muted-foreground">No posts in the feed yet. Be the first to share something!</p>
       </div>
     )
   }

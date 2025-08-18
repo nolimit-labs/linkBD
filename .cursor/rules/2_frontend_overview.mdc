@@ -53,8 +53,7 @@ This section details the organization of the React frontend application.
     *   **Real-time Updates**: Queries automatically refetch on window focus and data mutations
     *   **Type Safety**: Full type inference from backend Hono routes
 
--   **Authentication (`apps/web-app/src/lib/auth-client.ts`)**: Better Auth client configuration:
-    *   **Plugins**: Anonymous auth for guest login
+-   **Authentication (`apps/web-app/src/lib/auth-client.ts`)**: Better Auth client configuration
 
 ---
 

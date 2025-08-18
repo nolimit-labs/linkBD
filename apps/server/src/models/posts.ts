@@ -1,6 +1,47 @@
 import { db } from '../db';
-import { posts, likes } from '../db/schema';
+import { posts, likes, user, organization } from '../db/schema';
 import { eq, and, desc, isNull, sql } from 'drizzle-orm';
+
+
+// ===============================
+// Queries
+// ===============================
+
+// Get all public posts for the feed with author information
+export async function getPublicPosts(limit = 50, offset = 0) {
+  return await db
+    .select({
+      // Post fields
+      id: posts.id,
+      userId: posts.userId,
+      organizationId: posts.organizationId,
+      content: posts.content,
+      imageKey: posts.imageKey,
+      likesCount: posts.likesCount,
+      visibility: posts.visibility,
+      createdBy: posts.createdBy,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+      
+      // Author fields - organization when userId is null, user when organizationId is null
+      author: {
+        id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
+        name: sql<string>`COALESCE(${organization.name}, ${user.name})`.as('author_name'),
+        image: sql<string | null>`COALESCE(${organization.logo}, ${user.image})`.as('author_image'),
+        type: sql<'user' | 'organization'>`CASE 
+          WHEN ${posts.userId} IS NULL THEN 'organization'
+          ELSE 'user'
+        END`.as('author_type')
+      }
+    })
+    .from(posts)
+    .leftJoin(user, eq(posts.userId, user.id))
+    .leftJoin(organization, eq(posts.organizationId, organization.id))
+    .where(eq(posts.visibility, 'public'))
+    .orderBy(desc(posts.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
 
 export async function getPostsByUserId(userId: string) {
   return await db
@@ -51,6 +92,10 @@ export async function getPostById(postId: string, userId: string, organizationId
   
   return null; // No access
 }
+
+// ===============================
+// Mutations
+// ===============================
 
 export async function createPost(data: {
   userId: string;
@@ -168,16 +213,6 @@ export async function updatePostImage(postId: string, userId: string, imageKey: 
   return updated;
 }
 
-// Get all public posts for the feed
-export async function getPublicPosts(limit = 50, offset = 0) {
-  return await db
-    .select()
-    .from(posts)
-    .where(eq(posts.visibility, 'public'))
-    .orderBy(desc(posts.createdAt))
-    .limit(limit)
-    .offset(offset);
-}
 
 // Check if a user has liked a post
 export async function hasUserLikedPost(postId: string, userId: string) {

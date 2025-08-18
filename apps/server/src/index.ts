@@ -5,6 +5,7 @@ import { logger } from 'hono/logger'
 import postsRoutes from './routes/posts'
 import { auth } from './auth'
 import userRoutes from './routes/user'
+import profileRoutes from './routes/profile'
 import storageRoutes from './routes/storage'
 import searchRoutes from './routes/search'
 import { prettyJSON } from 'hono/pretty-json'
@@ -59,6 +60,7 @@ app.all('/api/auth/*', async (c) => {
 // Mount route handlers and create routes for RPC
 const routes = app
   .route('/api/user', userRoutes)
+  .route('/api/profile', profileRoutes)
   .route('/api/posts', postsRoutes)
   .route('/api/storage', storageRoutes)
   .route('/api/search', searchRoutes)

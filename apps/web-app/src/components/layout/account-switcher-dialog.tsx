@@ -40,9 +40,9 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Switch Profile</DialogTitle>
+          <DialogTitle>Switch Account</DialogTitle>
           <DialogDescription>
-            Choose between your personal account and organizations
+            Choose between your personal account and business accounts
           </DialogDescription>
         </DialogHeader>
         

@@ -5,20 +5,29 @@ import { toast } from 'sonner';
 import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
-// Get posts based on context
-export const usePosts = (feed?: 'public' | 'user', targetUserId?: string) => {
-  const { data: activeOrg } = useActiveOrganization();
-  const organizationId = activeOrg?.id;
-  
+// Get public feed for discovery
+export const useFeed = () => {
   return useQuery({
-    queryKey: queryKeys.posts.all(organizationId, feed, targetUserId),
+    queryKey: queryKeys.feed.public(),
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (feed) params.append('feed', feed);
-      if (targetUserId) params.append('userId', targetUserId);
+      const response = await rpcClient.api.posts.feed.$get();
       
+      if (!response.ok) {
+        throw new Error('Failed to fetch feed');
+      }
+      
+      return response.json();
+    },
+  });
+};
+
+// Get posts for specific author (user or organization)
+export const useGetPostsByAuthor = (authorId: string) => {
+  return useQuery({
+    queryKey: queryKeys.posts.byAuthor(authorId),
+    queryFn: async () => {
       const response = await rpcClient.api.posts.$get({
-        query: params.size > 0 ? Object.fromEntries(params) : undefined,
+        query: { authorId },
       });
       
       if (!response.ok) {
@@ -27,6 +36,7 @@ export const usePosts = (feed?: 'public' | 'user', targetUserId?: string) => {
       
       return response.json();
     },
+    enabled: !!authorId,
   });
 };
 
@@ -97,6 +107,7 @@ export const useCreatePost = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
       toast.success('Post created successfully');
     },
     onError: (error) => {
@@ -168,6 +179,7 @@ export const useTogglePostLike = () => {
       // Invalidate post queries to refresh like status
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.single(postId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
     },
   });
 };
@@ -197,6 +209,7 @@ export const useDeletePost = () => {
       
       // Invalidate list queries
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
     },
   });
 };
@@ -264,6 +277,7 @@ export const useRemovePostImage = () => {
     onSuccess: (updatedPost) => {
       queryClient.setQueryData(queryKeys.posts.single(updatedPost.id), updatedPost);
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
       toast.success('Image removed successfully');
     },
     onError: (error) => {

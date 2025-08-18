@@ -21,7 +21,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified")
     .$defaultFn(() => false)
     .notNull(),
-  image: text("image"), // R2 file key, also stored in storage table. References that. 
+  image: text("image"), // R2 file key, stored in storage table but no FK to avoid circular reference 
   createdAt: timestamp("created_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -133,7 +133,6 @@ export const subscription = pgTable("subscription", {
 });
 
 
-
 // =====================================================================
 // Application Schema
 // =====================================================================
@@ -142,14 +141,15 @@ export const subscription = pgTable("subscription", {
 export const posts = pgTable('posts', {
   id: text('id').primaryKey(),
   userId: text('user_id')
-    .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
   organizationId: text('organization_id')
     .references(() => organization.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
-  imageKey: text('image_key'), // nullable, stores R2 file key
+  imageKey: text('image_key'), // R2 file key, stored in storage table
   likesCount: integer('likes_count').notNull().default(0),
-  visibility: text('visibility').notNull().default('public'), // public, organization, private
+  visibility: text('visibility').notNull().default('public'),
+  createdBy: text('created_by')
+    .references(() => user.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at')
     .defaultNow()
     .notNull(),
@@ -158,6 +158,8 @@ export const posts = pgTable('posts', {
     .notNull(),
 }, (table) => ({
   userIdIdx: index('idx_posts_user_id').on(table.userId),
+  organizationIdIdx: index('idx_posts_organization_id').on(table.organizationId),
+  createdByIdx: index('idx_posts_created_by').on(table.createdBy),
   createdAtIdx: index('idx_posts_created_at').on(table.createdAt),
   visibilityIdx: index('idx_posts_visibility').on(table.visibility),
 }));

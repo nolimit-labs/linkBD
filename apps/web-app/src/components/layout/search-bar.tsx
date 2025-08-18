@@ -117,8 +117,8 @@ export function SearchBar({
                             {users.map((user) => (
                                 <Link
                                     key={user.id}
-                                    to="/users/$userId"
-                                    params={{ userId: user.id }}
+                                    to="/profile/$id"
+                                    params={{ id: user.id }}
                                     onClick={handleUserClick}
                                     className="flex items-center gap-3 py-3 px-3 hover:bg-muted/50 transition-colors"
                                 >
