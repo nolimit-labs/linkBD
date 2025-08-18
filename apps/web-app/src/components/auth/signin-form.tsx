@@ -66,10 +66,6 @@ export function SigninForm() {
         toast.error(result.error.message);
         return;
       }
-
-      if (result.data) {
-        toast.success('Signed in with Google');
-      }
   };
 
   return (

@@ -68,10 +68,6 @@ export function SignupForm() {
       toast.error(result.error.message);
       return;
     }
-    
-    if (result.data) {
-      toast.success('Signed up with Google');
-    }
   };
 
 

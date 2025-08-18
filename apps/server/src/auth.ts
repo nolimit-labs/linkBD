@@ -61,7 +61,9 @@ export const auth = betterAuth({
         },
     },
     plugins: [
-        organization(),
+        organization({
+            organizationLimit: 1,
+        }),
         stripe({
             stripeClient,
             stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
