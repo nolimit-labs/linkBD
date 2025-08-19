@@ -1,4 +1,4 @@
-import { User, Building, ChevronsUpDown } from "lucide-react"
+import { User, Building, ChevronsUpDown, UserCircle } from "lucide-react"
 import { useCurrentUser } from "@/api/user"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization } from "@/lib/auth-client"
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useState } from "react"
 import { AccountSwitcher } from "@/components/layout/account-switcher-dialog"
+import { Link } from "@tanstack/react-router"
 
 // Used for displaying current account (user or organization) with a popover
 
@@ -73,6 +74,38 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
 
           {/* Menu Items */}
           <div className="space-y-1">
+            {/* View My Profile */}
+            {user?.id && (
+              <Link to="/profile/$id" params={{ id: user.id }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                >
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  View My Profile
+                </Button>
+              </Link>
+            )}
+
+            {/* View Organization Profile */}
+            {activeOrg && (
+              <Link to="/profile/$id" params={{ id: activeOrg.id }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                >
+                  <Building className="mr-2 h-4 w-4" />
+                  View {activeOrg.name} Profile
+                </Button>
+              </Link>
+            )}
+
+            {/* Separator if we have profile links */}
+            {(user?.id || activeOrg) && <Separator className="my-2" />}
+
+            {/* Switch Account */}
             <Button
               variant="ghost"
               size="sm"

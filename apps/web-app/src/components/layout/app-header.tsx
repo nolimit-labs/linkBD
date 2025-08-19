@@ -15,7 +15,7 @@ export function AppHeader() {
         <SearchBar
           showDropdown={true}
           maxResults={3}
-          placeholder="Search people..."
+          placeholder="Search people and businesses..."
         />
       </div>
 

@@ -43,7 +43,7 @@ export async function getUserProfile(userId: string) {
   };
 }
 
-// Search users by name or email
+// Search users by name only
 export async function searchUsers(query: string, limit = 20, offset = 0) {
   const searchPattern = `%${query}%`;
   
@@ -51,17 +51,11 @@ export async function searchUsers(query: string, limit = 20, offset = 0) {
     .select({
       id: user.id,
       name: user.name,
-      email: user.email,
       image: user.image,
       createdAt: user.createdAt,
     })
     .from(user)
-    .where(
-      or(
-        ilike(user.name, searchPattern),
-        ilike(user.email, searchPattern)
-      )
-    )
+    .where(ilike(user.name, searchPattern))
     .orderBy(user.name)
     .limit(limit)
     .offset(offset);

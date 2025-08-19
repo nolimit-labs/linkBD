@@ -9,7 +9,6 @@ import { rpcClient } from './rpc-client';
 // Delete organization
 export const useDeleteOrganization = () => {
   const queryClient = useQueryClient();
-  const router = useRouter();
   
   return useMutation({
     mutationFn: async (organizationId: string) => {
@@ -32,19 +31,20 @@ export const useDeleteOrganization = () => {
   });
 };
 
-export const useOrganizationSubscription = () => {
-  const { data: activeOrg } = useActiveOrganization();
-  const organizationId = activeOrg?.id;
-
+// Get all organizations with limit
+export const useOrganizations = (limit: number = 10) => {
   return useQuery({
-    queryKey: queryKeys.organization.subscription(organizationId),
+    queryKey: ['organizations', 'list', limit],
     queryFn: async () => {
-      const { data: subscriptions, error } = await subscription.list({ query: { referenceId: organizationId } })
-      if (error) {
-        throw new Error('Failed to get subscriptions');
+      const response = await rpcClient.api.organizations.$get({
+        query: { limit: String(limit) }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch organizations');
       }
-      return subscriptions;
+      
+      return response.json();
     },
-    enabled: !!organizationId,
   });
 };
