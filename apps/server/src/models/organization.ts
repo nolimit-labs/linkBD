@@ -39,6 +39,8 @@ export async function updateOrg(
     name?: string; 
     slug?: string;
     logo?: string | null;
+    imageKey?: string | null;
+    description?: string | null;
     metadata?: string | null;
     stripeCustomerId?: string | null;
   }

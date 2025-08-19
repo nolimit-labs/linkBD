@@ -66,6 +66,16 @@ export const auth = betterAuth({
     plugins: [
         organization({
             organizationLimit: 1,
+            schema: {
+                organization: {
+                    additionalFields: {
+                        imageKey: {
+                            type: "string",
+                            required: false,
+                        },
+                    },
+                },
+            },
         }),
         stripe({
             stripeClient,
