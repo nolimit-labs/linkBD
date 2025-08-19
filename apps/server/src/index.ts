@@ -12,43 +12,45 @@ import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
 import organizationsRoutes from './routes/organizations'
 import dotenv from 'dotenv'
+import { rateLimiter } from 'hono-rate-limiter'
+import { createHash } from 'crypto'
 
 dotenv.config()
 
 // Initialize Hono app
 const app = new Hono()
 
-// Simple rate limiting store
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+// Creating Rate Limiter
+const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 
-// Custom rate limiting middleware
-const rateLimit = async (c: any, next: any) => {
-  const ip = c.req.header('CF-Connecting-IP') || 
-             c.req.header('X-Forwarded-For') || 
-             c.req.header('X-Real-IP') || 
-             'unknown'
-  
-  const now = Date.now()
-  const windowMs = 15 * 60 * 1000 // 15 minutes
-  const limit = 100 // 100 requests per window
-  
-  const key = `rate_limit:${ip}`
-  const current = rateLimitStore.get(key)
-  
-  if (!current || now > current.resetTime) {
-    // New window or expired window
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
-  } else if (current.count >= limit) {
-    // Rate limit exceeded
-    return c.json({ error: 'Too many requests, please try again later' }, 429)
-  } else {
-    // Increment count
-    current.count++
-    rateLimitStore.set(key, current)
-  }
-  
-  await next()
-}
+const keyGenerator = (c: any) => {
+  // if you’ve put your Better-Auth session on context earlier:
+  const userId = c.get?.('session')?.userId as string | undefined;
+  if (userId) return `uid:${userId}`;
+
+  // programmatic callers: x-api-key or Authorization
+  const apiKey = c.req.header('x-api-key') || c.req.header('authorization');
+  if (apiKey) return `key:${sha(apiKey)}`;
+
+  // last resort: client IP (trust headers from *your* proxy/CDN)
+  const xfwd = c.req.header('x-forwarded-for');
+  const first = xfwd?.split(',')[0]?.trim();
+  const ip =
+    first ||
+    c.req.header('cf-connecting-ip') ||
+    c.req.header('x-real-ip') ||
+    'unknown';
+
+  return `ip:${ip}`;
+};
+
+// Build the limiter (memory store by default; great for dev/single instance)
+const limiter = rateLimiter({
+  windowMs: 60_000,              // 1 minute window
+  limit: 100,                    // 100 req/min
+  standardHeaders: 'draft-7',    // adds RateLimit-* headers
+  keyGenerator,
+});
 
 // Parse CORS origins properly (same logic as auth.ts)
 const corsOrigins = process.env.CORS_ORIGINS
@@ -60,8 +62,10 @@ app.use('*', logger())
 app.use('*', prettyJSON())
 app.use('*', secureHeaders())
 
-// Rate limiting middleware
-app.use('*', rateLimit)
+app.use('*', async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next();
+  return limiter(c, next);
+});
 
 app.use('*', cors({
   origin: corsOrigins, // Allow multiple origins

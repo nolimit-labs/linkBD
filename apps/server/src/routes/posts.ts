@@ -37,7 +37,6 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       }))
     );
 
-    console.log('postsWithDetails', postsWithDetails);
     return c.json(postsWithDetails);
   })
 
