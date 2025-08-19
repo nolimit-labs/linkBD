@@ -9,22 +9,16 @@
 
 :{$PORT} {
 	# Proxy API requests to backend
-	@api {
-		path /api/*
-        method POST GET PUT DELETE OPTIONS
-
-	}
+	@api path /api/*
 	handle @api {
 		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
 		header Access-Control-Allow-Headers "Content-Type, Authorization"
 		header Access-Control-Allow-Credentials "true"
-		header Access-Control-Allow-Origin "*"
 
 		reverse_proxy {$BACKEND_URL} {
 			header_up Host {upstream_hostport}
 			header_up X-Real-IP {remote_host}
             header_up Origin "${RAILWAY_PRIVATE_DOMAIN}"
-
 		}
 	}
 
