@@ -18,7 +18,7 @@
 		reverse_proxy {$BACKEND_URL} {
 			header_up Host {upstream_hostport}
 			header_up X-Real-IP {remote_host}
-            header_up Origin "${RAILWAY_PRIVATE_DOMAIN}"
+            header_up Origin {>Origin}
 		}
 	}
 
