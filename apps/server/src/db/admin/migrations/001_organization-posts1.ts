@@ -18,7 +18,7 @@
 import { sql, and, isNotNull } from 'drizzle-orm';
 import { db } from '../../index';
 import { posts } from '../../schema';
-import { log } from '../cli/utils/logger';
+import { log } from '../cli/utils/logger'; // TODO: Remove this
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import * as schema from '../../schema';
 
