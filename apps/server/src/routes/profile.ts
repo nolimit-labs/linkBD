@@ -31,13 +31,14 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
       const orgInfo = await orgModel.getOrgById(profileId);
       
       if (orgInfo) {
-        // Generate logo URL if organization has a logo
-        const imageUrl = await generateDownloadURL(orgInfo.logo);
+        // Generate logo URL if organization has a logo or imageKey
+        const imageUrl = await generateDownloadURL(orgInfo.imageKey || orgInfo.logo);
         
         return c.json({
           id: orgInfo.id,
           name: orgInfo.name,
           image: imageUrl,
+          description: orgInfo.description || null,
           type: 'organization' as const,
           createdAt: orgInfo.createdAt
         });

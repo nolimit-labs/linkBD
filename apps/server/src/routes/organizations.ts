@@ -29,7 +29,7 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
       const organizationsWithImages = await Promise.all(
         organizations.map(async (org) => ({
           ...org,
-          imageUrl: await generateDownloadURL(org.logo),
+          imageUrl: await generateDownloadURL(org.imageKey || org.logo),
         }))
       );
 
@@ -42,15 +42,41 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
     }
   })
   
+  // Get organization by ID
+  .get('/:id', authMiddleware, async (c) => {
+    const organizationId = c.req.param('id');
+
+    try {
+      const org = await orgModel.getOrgById(organizationId);
+      
+      if (!org) {
+        return c.json({ error: 'Organization not found' }, 404);
+      }
+
+      // Generate image URL if imageKey exists
+      const imageUrl = org.imageKey 
+        ? await generateDownloadURL(org.imageKey)
+        : null;
+
+      return c.json({ 
+        ...org,
+        imageUrl 
+      });
+    } catch (error) {
+      console.error('Failed to fetch organization:', error);
+      return c.json({ error: 'Failed to fetch organization' }, 500);
+    }
+  })
+  
   // Update organization
   .patch('/:id', authMiddleware, zValidator('json', updateSchema), async (c) => {
-    const user = c.get('user');
+    const { userId } = c.get('session');
     const organizationId = c.req.param('id');
     const updateData = c.req.valid('json');
 
     try {
       // Check if user is admin of the organization
-      const userRole = await orgModel.getUserRoleInOrganization(user.id, organizationId);
+      const userRole = await orgModel.getUserRoleInOrganization(userId, organizationId);
       
       if (userRole !== 'admin' && userRole !== 'owner') {
         return c.json({ error: 'You do not have permission to update this organization' }, 403);

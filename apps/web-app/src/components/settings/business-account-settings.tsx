@@ -7,7 +7,7 @@ import { useActiveOrganization } from '@/lib/auth-client'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmationDialog } from '@/components/layout/confirmation-dialog'
-import { useDeleteOrganization, useUpdateOrganization, useUploadFile } from '@/api'
+import { useDeleteOrganization, useUpdateOrganization, useUploadFile, useOrganization } from '@/api'
 import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -15,7 +15,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { generateDownloadURL } from '@/lib/storage'
 
 const businessFormSchema = z.object({
   name: z.string().min(1, 'Business name is required').max(100, 'Business name is too long'),
@@ -26,8 +25,8 @@ type BusinessFormData = z.infer<typeof businessFormSchema>
 
 export function BusinessAccountSettings() {
   const { data: activeOrg } = useActiveOrganization()
+  const { data: orgDetails } = useOrganization(activeOrg?.id)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -38,21 +37,20 @@ export function BusinessAccountSettings() {
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessFormSchema),
     defaultValues: {
-      name: activeOrg?.name || '',
-      description: (activeOrg as any)?.description || '',
+      name: '',
+      description: '',
     },
   })
   
-  // Generate image URL when activeOrg changes
+  // Update form when organization data loads
   useEffect(() => {
-    const loadImageUrl = async () => {
-      if ((activeOrg as any)?.imageKey) {
-        const url = await generateDownloadURL((activeOrg as any).imageKey)
-        setImageUrl(url)
-      }
+    if (orgDetails) {
+      form.reset({
+        name: orgDetails.name || '',
+        description: orgDetails.description || '',
+      })
     }
-    loadImageUrl()
-  }, [activeOrg])
+  }, [orgDetails, form])
 
   const { formState: { isDirty, isSubmitting } } = form
 
@@ -102,10 +100,6 @@ export function BusinessAccountSettings() {
         imageKey: uploadResult.key,
       })
       
-      // Update local image URL
-      const url = await generateDownloadURL(uploadResult.key)
-      setImageUrl(url)
-      
       toast.success('Business image updated successfully')
     } catch (error) {
       console.error('Failed to upload image:', error)
@@ -144,7 +138,7 @@ export function BusinessAccountSettings() {
               <Label>Business Image</Label>
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
-                  <AvatarImage src={imageUrl || undefined} />
+                  <AvatarImage src={orgDetails?.imageUrl || undefined} />
                   <AvatarFallback>
                     <Building2 className="h-10 w-10" />
                   </AvatarFallback>

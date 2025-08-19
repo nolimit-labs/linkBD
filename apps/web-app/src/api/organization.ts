@@ -29,6 +29,27 @@ export const useOrganizations = (limit: number = 10) => {
   });
 };
 
+// Get organization by ID
+export const useOrganization = (organizationId: string | undefined) => {
+  return useQuery({
+    queryKey: ['organizations', organizationId],
+    queryFn: async () => {
+      if (!organizationId) throw new Error('Organization ID is required');
+      
+      const response = await rpcClient.api.organizations[':id'].$get({
+        param: { id: organizationId }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch organization');
+      }
+      
+      return response.json();
+    },
+    enabled: !!organizationId,
+  });
+};
+
 // Update organization
 type UpdateOrganizationInput = {
   id: string;
