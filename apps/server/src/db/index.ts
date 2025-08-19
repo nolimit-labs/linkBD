@@ -9,12 +9,6 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is not set');
 }
 
-let caCert = process.env.PG_CA_CERT;
-if (!caCert) {
-  throw new Error('PG_CA_CERT is not set');
-}
- caCert = caCert.replace(/\\n/g, "\n")
-
 // Create postgres connection pool
 const pool = new Pool({
   connectionString,
