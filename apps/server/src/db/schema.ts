@@ -83,7 +83,7 @@ export const organization = pgTable("organization", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   slug: text("slug").unique(),
-  logo: text("logo"),
+  logo: text("logo"), // Unused
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
   stripeCustomerId: text("stripe_customer_id").unique(), // Manually added this field

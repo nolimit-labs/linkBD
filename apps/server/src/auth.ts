@@ -85,7 +85,7 @@ export const auth = betterAuth({
             console.log(`[better-auth] [${level}] ${msg}`, ...args)
         },
     },
-    trustedOrigins: ["*"],
+    trustedOrigins: trustedOrigins,
 });
 
 export type Session = typeof auth.$Infer.Session.session;
