@@ -13,7 +13,7 @@ if (!connectionString) {
 const pool = new Pool({
   connectionString,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false, // This is ok we use Railway Private Networking
   }
 });
 
