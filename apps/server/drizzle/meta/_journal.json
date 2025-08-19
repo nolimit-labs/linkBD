@@ -15,6 +15,13 @@
       "when": 1755479485929,
       "tag": "0001_same_diamondback",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1755640819759,
+      "tag": "0002_cuddly_night_thrasher",
+      "breakpoints": true
     }
   ]
 }

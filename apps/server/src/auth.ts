@@ -66,6 +66,16 @@ export const auth = betterAuth({
     plugins: [
         organization({
             organizationLimit: 1,
+            schema: {
+                organization: {
+                    additionalFields: {
+                        imageKey: {
+                            type: "string",
+                            required: false,
+                        },
+                    },
+                },
+            },
         }),
         stripe({
             stripeClient,
@@ -85,7 +95,7 @@ export const auth = betterAuth({
             console.log(`[better-auth] [${level}] ${msg}`, ...args)
         },
     },
-    trustedOrigins: ["*"],
+    trustedOrigins: trustedOrigins,
 });
 
 export type Session = typeof auth.$Infer.Session.session;

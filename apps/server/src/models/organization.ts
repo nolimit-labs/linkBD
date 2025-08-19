@@ -39,6 +39,8 @@ export async function updateOrg(
     name?: string; 
     slug?: string;
     logo?: string | null;
+    imageKey?: string | null;
+    description?: string | null;
     metadata?: string | null;
     stripeCustomerId?: string | null;
   }
@@ -118,6 +120,8 @@ export async function searchOrganizations(query: string, limit = 20, offset = 0)
       name: organization.name,
       slug: organization.slug,
       logo: organization.logo,
+      imageKey: organization.imageKey,
+      description: organization.description,
       createdAt: organization.createdAt,
     })
     .from(organization)

@@ -52,7 +52,7 @@ const searchRoutes = new Hono<{ Variables: AuthVariables }>()
       const organizationsWithImages = await Promise.all(
         organizations.map(async (org) => ({
           ...org,
-          imageUrl: await generateDownloadURL(org.logo),
+          imageUrl: await generateDownloadURL(org.imageKey || org.logo),
           type: 'organization' as const
         }))
       );

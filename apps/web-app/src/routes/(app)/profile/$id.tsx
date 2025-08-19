@@ -67,6 +67,19 @@ function ProfilePage() {
               {/* Divider */}
               <div className="border-t" />
 
+              {/* About Section for Organizations */}
+              {isOrganization && (profile as any).description && (
+                <>
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-semibold">About</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {(profile as any).description}
+                    </p>
+                  </div>
+                  <div className="border-t" />
+                </>
+              )}
+
               {/* Profile Details */}
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
