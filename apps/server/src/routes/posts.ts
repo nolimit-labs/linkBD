@@ -28,11 +28,16 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     const postsWithDetails = await Promise.all(
       postList.map(async (post) => ({
         ...post,
+        author: {
+          ...post.author,
+          image: await generateDownloadURL(post.author.image)
+        },
         imageUrl: await generateDownloadURL(post.imageKey),
         hasLiked: await postModel.hasUserLikedPost(post.id, userId)
       }))
     );
 
+    console.log('postsWithDetails', postsWithDetails);
     return c.json(postsWithDetails);
   })
 

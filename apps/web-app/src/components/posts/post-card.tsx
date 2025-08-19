@@ -40,28 +40,6 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
     toggleLike.mutate(post.id)
   }
 
-  const getVisibilityIcon = () => {
-    switch (post.visibility) {
-      case 'public':
-        return <Eye className="h-3 w-3" />
-      case 'organization':
-        return <Users className="h-3 w-3" />
-      case 'private':
-        return <Lock className="h-3 w-3" />
-    }
-  }
-
-  const getVisibilityLabel = () => {
-    switch (post.visibility) {
-      case 'public':
-        return 'Public'
-      case 'organization':
-        return 'Organization'
-      case 'private':
-        return 'Private'
-    }
-  }
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -82,10 +60,6 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                 <h4 className="text-sm font-semibold">
                   {author?.name || 'Unknown User'}
                 </h4>
-                <Badge variant="secondary" className="flex items-center gap-1 text-xs">
-                  {getVisibilityIcon()}
-                  {getVisibilityLabel()}
-                </Badge>
               </div>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}

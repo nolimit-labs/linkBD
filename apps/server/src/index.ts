@@ -18,20 +18,57 @@ dotenv.config()
 // Initialize Hono app
 const app = new Hono()
 
-const corsOrigin = process.env.CORS_ORIGINS || 'http://localhost:3001'
+// Simple rate limiting store
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+
+// Custom rate limiting middleware
+const rateLimit = async (c: any, next: any) => {
+  const ip = c.req.header('CF-Connecting-IP') || 
+             c.req.header('X-Forwarded-For') || 
+             c.req.header('X-Real-IP') || 
+             'unknown'
+  
+  const now = Date.now()
+  const windowMs = 15 * 60 * 1000 // 15 minutes
+  const limit = 100 // 100 requests per window
+  
+  const key = `rate_limit:${ip}`
+  const current = rateLimitStore.get(key)
+  
+  if (!current || now > current.resetTime) {
+    // New window or expired window
+    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs })
+  } else if (current.count >= limit) {
+    // Rate limit exceeded
+    return c.json({ error: 'Too many requests, please try again later' }, 429)
+  } else {
+    // Increment count
+    current.count++
+    rateLimitStore.set(key, current)
+  }
+  
+  await next()
+}
+
+// Parse CORS origins properly (same logic as auth.ts)
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:3001', 'http://localhost:3000'];
 
 // Middleware
 app.use('*', logger())
 app.use('*', prettyJSON())
 app.use('*', secureHeaders())
-app.use('*', cors(
-  {
-  origin: [corsOrigin], // Allow our frontend
+
+// Rate limiting middleware
+app.use('*', rateLimit)
+
+app.use('*', cors({
+  origin: corsOrigins, // Allow multiple origins
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowHeaders: ['*'],
-  credentials: true, // This is the key fix!
-}
-))
+  credentials: true,
+}))
 
 
 // Health check endpoint - moved to /api/health
@@ -42,14 +79,6 @@ app.get('/api/health', (c) => {
     timestamp: new Date().toISOString()
   })
 })
-
-// app.use("/api/auth/*", async (c, next) => {
-//   if (c.req.method === "POST") {
-//     const body = await c.req.json().catch(() => ({}));
-//     console.log("⮑ Better-Auth inbound", c.req.path, body);   // shows referenceId
-//   }
-//   await next();
-// });
 
 // Auth routes from BetterAuth
 app.all('/api/auth/*', async (c) => {
