@@ -63,27 +63,6 @@ export function useUpdateUser() {
   });
 }
 
-// General search (now only searches users)
-export const useSearch = (query: string) => {
-  return useQuery({
-    queryKey: queryKeys.search.all(query, 'users'),
-    queryFn: async () => {
-      const response = await rpcClient.api.search.$get({
-        query: {
-          q: query,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      return response.json();
-    },
-    enabled: !!query && query.length > 0,
-  });
-};
-
 // User subscriptions
 export function useUserSubscriptions() {
   return useQuery({

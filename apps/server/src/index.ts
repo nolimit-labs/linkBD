@@ -10,7 +10,7 @@ import storageRoutes from './routes/storage'
 import searchRoutes from './routes/search'
 import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
-
+import organizationsRoutes from './routes/organizations'
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -64,6 +64,7 @@ const routes = app
   .route('/api/posts', postsRoutes)
   .route('/api/storage', storageRoutes)
   .route('/api/search', searchRoutes)
+  .route('/api/organizations', organizationsRoutes)
 
 // Export AppType for RPC client usage in client 
 export type AppType = typeof routes

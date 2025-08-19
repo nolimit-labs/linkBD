@@ -4,7 +4,7 @@ import { useSearch } from '@/api'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Search as SearchIcon, Loader2, Users } from 'lucide-react'
+import { Search as SearchIcon, Loader2, Users, Building2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SearchBarProps {
@@ -22,7 +22,7 @@ export function SearchBar({
     showDropdown = false,
     maxResults = 3,
     className,
-    placeholder = "Search people..."
+    placeholder = "Search people and businesses..."
 }: SearchBarProps) {
     const [query, setQuery] = useState('')
     const [isOpen, setIsOpen] = useState(false)
@@ -33,7 +33,8 @@ export function SearchBar({
     const { data: searchResults, isLoading } = useSearch(debouncedQuery)
 
     const users = searchResults?.users?.slice(0, maxResults) || []
-    const hasResults = users.length > 0
+    const organizations = searchResults?.organizations?.slice(0, maxResults) || []
+    const hasResults = users.length > 0 || organizations.length > 0
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -107,42 +108,81 @@ export function SearchBar({
 
                     {!isLoading && hasResults && (
                         <>
-                            <div className="py-2 px-3 border-b bg-muted/30">
-                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                                    <Users className="h-4 w-4" />
-                                    People ({users.length})
-                                </div>
-                            </div>
-
-                            {users.map((user) => (
-                                <Link
-                                    key={user.id}
-                                    to="/profile/$id"
-                                    params={{ id: user.id }}
-                                    onClick={handleUserClick}
-                                    className="flex items-center gap-3 py-3 px-3 hover:bg-muted/50 transition-colors"
-                                >
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={user.avatarUrl || undefined} />
-                                        <AvatarFallback className="text-xs">
-                                            {user.name?.charAt(0) || '?'}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm truncate">{user.name}</p>
-                                        <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                            {/* People Section */}
+                            {users.length > 0 && (
+                                <>
+                                    <div className="py-2 px-3 border-b bg-muted/30">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                            <Users className="h-4 w-4" />
+                                            People ({users.length})
+                                        </div>
                                     </div>
-                                </Link>
-                            ))}
 
-                            {searchResults && searchResults.users.length > maxResults && (
+                                    {users.map((user) => (
+                                        <Link
+                                            key={user.id}
+                                            to="/profile/$id"
+                                            params={{ id: user.id }}
+                                            onClick={handleUserClick}
+                                            className="flex items-center gap-3 py-3 px-3 hover:bg-muted/50 transition-colors"
+                                        >
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={user.imageUrl || undefined} />
+                                                <AvatarFallback className="text-xs">
+                                                    {user.name?.charAt(0) || '?'}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate">{user.name}</p>
+                                                <p className="text-xs text-muted-foreground truncate">Person</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </>
+                            )}
+
+                            {/* Organizations Section */}
+                            {organizations.length > 0 && (
+                                <>
+                                    <div className="py-2 px-3 border-b bg-muted/30">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                            <Building2 className="h-4 w-4" />
+                                            Businesses ({organizations.length})
+                                        </div>
+                                    </div>
+
+                                    {organizations.map((org) => (
+                                        <Link
+                                            key={org.id}
+                                            to="/profile/$id"
+                                            params={{ id: org.id }}
+                                            onClick={handleUserClick}
+                                            className="flex items-center gap-3 py-3 px-3 hover:bg-muted/50 transition-colors"
+                                        >
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={org.imageUrl || undefined} />
+                                                <AvatarFallback className="text-xs">
+                                                    <Building2 className="h-4 w-4" />
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate">{org.name}</p>
+                                                <p className="text-xs text-muted-foreground truncate">Business</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </>
+                            )}
+
+                            {/* View All Results Link */}
+                            {searchResults && ((searchResults.users.length > maxResults) || (searchResults.organizations.length > maxResults)) && (
                                 <Link
                                     to="/search"
                                     search={{ q: debouncedQuery }}
                                     onClick={handleUserClick}
                                     className="block py-3 px-3 text-center text-sm text-primary hover:bg-muted/50 transition-colors border-t"
                                 >
-                                    View all {searchResults.users.length} results
+                                    View all results
                                 </Link>
                             )}
                         </>

@@ -17,6 +17,7 @@ import { Route as appSettingsRouteImport } from './routes/(app)/settings'
 import { Route as appSearchRouteImport } from './routes/(app)/search'
 import { Route as appImagesRouteImport } from './routes/(app)/images'
 import { Route as appFeedRouteImport } from './routes/(app)/feed'
+import { Route as appBusinessesRouteImport } from './routes/(app)/businesses'
 import { Route as appUsersUserIdRouteImport } from './routes/(app)/users/$userId'
 import { Route as appProfileIdRouteImport } from './routes/(app)/profile/$id'
 
@@ -59,6 +60,11 @@ const appFeedRoute = appFeedRouteImport.update({
   path: '/feed',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appBusinessesRoute = appBusinessesRouteImport.update({
+  id: '/businesses',
+  path: '/businesses',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const appUsersUserIdRoute = appUsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -72,6 +78,7 @@ const appProfileIdRoute = appProfileIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof appRouteRouteWithChildren
+  '/businesses': typeof appBusinessesRoute
   '/feed': typeof appFeedRoute
   '/images': typeof appImagesRoute
   '/search': typeof appSearchRoute
@@ -83,6 +90,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof appRouteRouteWithChildren
+  '/businesses': typeof appBusinessesRoute
   '/feed': typeof appFeedRoute
   '/images': typeof appImagesRoute
   '/search': typeof appSearchRoute
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/(app)': typeof appRouteRouteWithChildren
+  '/(app)/businesses': typeof appBusinessesRoute
   '/(app)/feed': typeof appFeedRoute
   '/(app)/images': typeof appImagesRoute
   '/(app)/search': typeof appSearchRoute
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/businesses'
     | '/feed'
     | '/images'
     | '/search'
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/businesses'
     | '/feed'
     | '/images'
     | '/search'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/(app)'
+    | '/(app)/businesses'
     | '/(app)/feed'
     | '/(app)/images'
     | '/(app)/search'
@@ -207,6 +219,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appFeedRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/businesses': {
+      id: '/(app)/businesses'
+      path: '/businesses'
+      fullPath: '/businesses'
+      preLoaderRoute: typeof appBusinessesRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/users/$userId': {
       id: '/(app)/users/$userId'
       path: '/users/$userId'
@@ -225,6 +244,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface appRouteRouteChildren {
+  appBusinessesRoute: typeof appBusinessesRoute
   appFeedRoute: typeof appFeedRoute
   appImagesRoute: typeof appImagesRoute
   appSearchRoute: typeof appSearchRoute
@@ -234,6 +254,7 @@ interface appRouteRouteChildren {
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
+  appBusinessesRoute: appBusinessesRoute,
   appFeedRoute: appFeedRoute,
   appImagesRoute: appImagesRoute,
   appSearchRoute: appSearchRoute,

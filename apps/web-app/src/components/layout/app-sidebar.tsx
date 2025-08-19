@@ -6,6 +6,7 @@ import {
   Settings2,
   Search,
   Users,
+  Building2,
 } from "lucide-react"
 
 import {
@@ -24,8 +25,6 @@ import {
 
 } from "@tanstack/react-router"
 import { useUserSubscriptions } from "@/api"
-import { useActiveOrganization } from "@/lib/auth-client"
-import { UpgradeUserSubscriptionDialog } from "@/components/pricing/upgrade-user-dialog"
 import { env } from "@/lib/env"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -57,6 +56,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
+              <Link to="/businesses" className="flex items-center gap-2">
+                <Building2 className="size-4" />
+                <span>Businesses</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
           {displayImagesLink && (
           <SidebarMenuItem>
             <SidebarMenuButton asChild className="text-2xl font-semibold pl-6">
@@ -77,7 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
 
           {/* Fix this when better auth fixes their stripe integration */}
-          <SidebarMenuItem>
+          {/* <SidebarMenuItem>
             {!isUserPro ? (
               <UpgradeUserSubscriptionDialog>
                 <SidebarMenuButton className="text-2xl font-semibold pl-6">
@@ -86,7 +93,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuButton>
               </UpgradeUserSubscriptionDialog>
             ) : null}
-          </SidebarMenuItem>
+          </SidebarMenuItem> */}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
