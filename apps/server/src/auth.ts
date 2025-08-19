@@ -18,6 +18,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 const enableEmailAndPassword = isDevelopment || isStaging;
 
 const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
+if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is required');
+}
 
 // Doesn't work with trustedOrigins, fix later
 const trustedOrigins = process.env.CORS_ORIGINS
@@ -77,12 +80,12 @@ export const auth = betterAuth({
         }),
     ],
     logger: {
-        level: "debug",
+        level: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
         log: (level, msg, ...args) => {
             console.log(`[better-auth] [${level}] ${msg}`, ...args)
         },
     },
-    trustedOrigins: ["*"],
+    trustedOrigins: trustedOrigins,
 });
 
 export type Session = typeof auth.$Infer.Session.session;
