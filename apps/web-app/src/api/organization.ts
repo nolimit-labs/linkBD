@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useRouter } from '@tanstack/react-router';
 import { queryKeys } from './query-keys';
 import { rpcClient } from './rpc-client';
+import { useUploadFile } from './storage';
 import type { InferRequestType, InferResponseType } from 'hono/client';
 
 
@@ -50,26 +51,44 @@ export const useOrganization = (organizationId: string | undefined) => {
   });
 };
 
+
+// ================================
+// Mutations
+// ================================
+
 // Update organization
 type UpdateOrganizationInput = {
   id: string;
   name?: string;
   description?: string;
   imageKey?: string;
+  imageFile?: File; // Add support for file upload
 };
 
-// ================================
-// Mutations
-// ================================
 
 export const useUpdateOrganization = () => {
   const queryClient = useQueryClient();
+  const uploadFile = useUploadFile();
   
   return useMutation({
-    mutationFn: async ({ id, ...data }: UpdateOrganizationInput) => {
+    mutationFn: async ({ id, imageFile, ...data }: UpdateOrganizationInput) => {
+      let imageKey = data.imageKey;
+      
+      // If an image file is provided, upload it first using existing hook
+      if (imageFile) {
+        const uploadResult = await uploadFile.mutateAsync(imageFile);
+        imageKey = uploadResult.fileKey;
+      }
+      
+      // Update organization with all data including image key if uploaded
+      const updateData: any = { ...data };
+      if (imageKey) {
+        updateData.imageKey = imageKey;
+      }
+      
       const response = await rpcClient.api.organizations[':id'].$patch({
         param: { id },
-        json: data,
+        json: updateData,
       });
       
       if (!response.ok) {

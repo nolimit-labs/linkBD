@@ -7,7 +7,7 @@ import { useActiveOrganization } from '@/lib/auth-client'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { ConfirmationDialog } from '@/components/layout/confirmation-dialog'
-import { useDeleteOrganization, useUpdateOrganization, useUploadFile, useOrganization } from '@/api'
+import { useDeleteOrganization, useUpdateOrganization, useOrganization } from '@/api'
 import { useState, useRef, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -27,12 +27,10 @@ export function BusinessAccountSettings() {
   const { data: activeOrg } = useActiveOrganization()
   const { data: orgDetails } = useOrganization(activeOrg?.id)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   const deleteOrganization = useDeleteOrganization()
   const updateOrganization = useUpdateOrganization()
-  const uploadFile = useUploadFile()
   
   const form = useForm<BusinessFormData>({
     resolver: zodResolver(businessFormSchema),
@@ -89,23 +87,15 @@ export function BusinessAccountSettings() {
       return
     }
 
-    setIsUploadingImage(true)
     try {
-      // Upload the file
-      const uploadResult = await uploadFile.mutateAsync(file)
-      
-      // Update organization with new image key
+      // Use the unified update mutation with image upload
       await updateOrganization.mutateAsync({
         id: activeOrg.id,
-        imageKey: uploadResult.key,
+        imageFile: file,
       })
-      
-      toast.success('Business image updated successfully')
     } catch (error) {
       console.error('Failed to upload image:', error)
       toast.error('Failed to upload image')
-    } finally {
-      setIsUploadingImage(false)
     }
   }
   
@@ -156,10 +146,10 @@ export function BusinessAccountSettings() {
                     variant="outline"
                     size="sm"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploadingImage}
+                    disabled={updateOrganization.isPending}
                   >
                     <Camera className="h-4 w-4 mr-2" />
-                    {isUploadingImage ? 'Uploading...' : 'Change Image'}
+                    {updateOrganization.isPending ? 'Uploading...' : 'Change Image'}
                   </Button>
                   <p className="text-xs text-muted-foreground mt-1">
                     JPG, PNG or GIF. Max 5MB.
