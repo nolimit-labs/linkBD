@@ -27,7 +27,7 @@ export async function getPublicPosts(limit = 50, offset = 0) {
       author: {
         id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
         name: sql<string>`COALESCE(${organization.name}, ${user.name})`.as('author_name'),
-        image: sql<string | null>`COALESCE(${organization.logo}, ${user.image})`.as('author_image'),
+        image: sql<string | null>`COALESCE(${organization.imageKey}, ${organization.logo}, ${user.image})`.as('author_image'),
         type: sql<'user' | 'organization'>`CASE 
           WHEN ${posts.userId} IS NULL THEN 'organization'
           ELSE 'user'

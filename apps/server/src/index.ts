@@ -12,26 +12,67 @@ import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
 import organizationsRoutes from './routes/organizations'
 import dotenv from 'dotenv'
+import { rateLimiter } from 'hono-rate-limiter'
+import { createHash } from 'crypto'
 
 dotenv.config()
 
 // Initialize Hono app
 const app = new Hono()
 
-const corsOrigin = process.env.CORS_ORIGINS || 'http://localhost:3001'
+// Creating Rate Limiter
+const sha = (s: string) => createHash('sha256').update(s).digest('hex');
+
+const keyGenerator = (c: any) => {
+  // if you’ve put your Better-Auth session on context earlier:
+  const userId = c.get?.('session')?.userId as string | undefined;
+  if (userId) return `uid:${userId}`;
+
+  // programmatic callers: x-api-key or Authorization
+  const apiKey = c.req.header('x-api-key') || c.req.header('authorization');
+  if (apiKey) return `key:${sha(apiKey)}`;
+
+  // last resort: client IP (trust headers from *your* proxy/CDN)
+  const xfwd = c.req.header('x-forwarded-for');
+  const first = xfwd?.split(',')[0]?.trim();
+  const ip =
+    first ||
+    c.req.header('cf-connecting-ip') ||
+    c.req.header('x-real-ip') ||
+    'unknown';
+
+  return `ip:${ip}`;
+};
+
+// Build the limiter (memory store by default; great for dev/single instance)
+const limiter = rateLimiter({
+  windowMs: 60_000,              // 1 minute window
+  limit: 100,                    // 100 req/min
+  standardHeaders: 'draft-7',    // adds RateLimit-* headers
+  keyGenerator,
+});
+
+// Parse CORS origins properly (same logic as auth.ts)
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
+  : ['http://localhost:3001', 'http://localhost:3000'];
 
 // Middleware
 app.use('*', logger())
 app.use('*', prettyJSON())
 app.use('*', secureHeaders())
-app.use('*', cors(
-  {
-  origin: [corsOrigin], // Allow our frontend
+
+app.use('*', async (c, next) => {
+  if (c.req.method === 'OPTIONS') return next();
+  return limiter(c, next);
+});
+
+app.use('*', cors({
+  origin: corsOrigins, // Allow multiple origins
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowHeaders: ['*'],
-  credentials: true, // This is the key fix!
-}
-))
+  credentials: true,
+}))
 
 
 // Health check endpoint - moved to /api/health
@@ -42,14 +83,6 @@ app.get('/api/health', (c) => {
     timestamp: new Date().toISOString()
   })
 })
-
-// app.use("/api/auth/*", async (c, next) => {
-//   if (c.req.method === "POST") {
-//     const body = await c.req.json().catch(() => ({}));
-//     console.log("⮑ Better-Auth inbound", c.req.path, body);   // shows referenceId
-//   }
-//   await next();
-// });
 
 // Auth routes from BetterAuth
 app.all('/api/auth/*', async (c) => {

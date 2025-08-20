@@ -74,6 +74,8 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
     const organizationId = c.req.param('id');
     const updateData = c.req.valid('json');
 
+    console.log('updateData', updateData);
+
     try {
       // Check if user is admin of the organization
       const userRole = await orgModel.getUserRoleInOrganization(userId, organizationId);
