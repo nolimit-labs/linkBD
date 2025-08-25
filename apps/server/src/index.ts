@@ -123,18 +123,11 @@ app.onError((err, c) => {
   }, 500)
 })
 
-// Start the server
-const port = process.env.PORT || 3002
-console.log(`📝 linkBD API starting on port ${port}`)
+const port = Number(process.env.PORT) || 3005;
+console.log(`📝 Simple Todo App API starting on port ${port}`);
 
-serve({
+export default {
   fetch: app.fetch,
-  hostname: '::',
-  port: port as number,
-}, (info) => {
-  console.log(`🚀 Server is running on http://localhost:${info.port}`)
-  console.log(`📊 Health check: http://localhost:${info.port}/api/health`)
-  console.log(`📝 API info: http://localhost:${info.port}/api`)
-})
-
-export default app 
+  port,
+  hostname: '::'
+};

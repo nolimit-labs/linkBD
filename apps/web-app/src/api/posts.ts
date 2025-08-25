@@ -5,27 +5,6 @@ import { toast } from 'sonner';
 import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
-// Get posts feed for current account, uses pagination (deprecated)
-export const useGetPostsFeed = () => {
-  return useQuery({
-    queryKey: queryKeys.feed.public(),
-    queryFn: async () => {
-      const response = await rpcClient.api.posts.feed.$get({
-        query: {
-          limit: '4',
-          sortBy: 'newest',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch feed');
-      }
-      
-      return response.json();
-    },
-  });
-};
-
 // Infinite scroll version of posts feed
 export const useInfinitePostsFeed = (limit = 10) => {
   return useInfiniteQuery({
