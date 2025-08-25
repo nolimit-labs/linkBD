@@ -1,21 +1,19 @@
 
 interface LogoProps {
 	className?: string;
-	textSize?: string;
-	priority?: boolean;
 }
 
-// Logo component renders the app name "TodoApp" with "Todo" in primary color and "App" in secondary color.
-// The words "Todo" and "App" are displayed side by side (horizontally), not stacked.
-// Accepts optional className, width, height, and priority props for styling and accessibility.
-export function Logo({ className, textSize = "text-2xl" }: LogoProps) {
+/**
+ * Logo component for displaying the LinkBD logo.
+ * Uses Tailwind classes for sizing. Default size is h-10 w-10.
+ * Pass custom Tailwind classes via className to override.
+ */
+export function Logo({ className = "h-10 w-10" }: LogoProps) {
 	return (
-		<span
-			className={`inline-flex flex-row items-center leading-none select-none ${className ?? ''}`}
-			aria-label="TodoApp Logo"
-		>
-			<span className={`${textSize} font-bold text-primary`}>Todo</span>
-			<span className={`${textSize} font-bold text-secondary`}>App</span>
-		</span>
+		<img
+			src='/logo.svg'
+			alt="LinkBD Logo"
+			className={className}
+		/>
 	);
 }

@@ -48,8 +48,8 @@ function SignIn() {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="flex flex-col items-center justify-center mb-2">
-              <Logo className="mx-auto" textSize='text-5xl'/>
-              <Badge className="px-4 py-1 rounded-full mt-4 bg-primary text-primary-foreground text-lg">
+              <Logo className="mx-auto" />
+              <Badge className="px-4 py-1 rounded-full bg-primary text-primary-foreground text-xl w-full">
                 Admin Panel
               </Badge>
             </div>

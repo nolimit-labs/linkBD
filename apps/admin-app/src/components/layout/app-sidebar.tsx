@@ -35,8 +35,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
         <div className="flex flex-col items-center">
-          <Logo textSize="text-5xl" className="mx-auto mb-2 mt-2" />
-          <Badge className="mb-4 mt-4 px-2 py-1 w-full rounded-full bg-primary text-primary-foreground text-xl">
+          <Logo className="mx-auto mb-2 mt-2" />
+          <Badge className="mb-4 px-2 py-1 w-full rounded-full bg-primary text-primary-foreground text-xl">
             Admin Panel
           </Badge>
         </div>
