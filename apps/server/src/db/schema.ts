@@ -28,7 +28,10 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-  isAnonymous: boolean("is_anonymous"), // From Better-Auth Plugin: Anonymous
+    role: text("role"),
+    banned: boolean("banned"), // From Better-Auth Plugin: Admin
+    banReason: text("ban_reason"), // From Better-Auth Plugin: Admin
+    banExpires: timestamp("ban_expires"), // From Better-Auth Plugin: Admin
   stripeCustomerId: text("stripe_customer_id"), // From Better-Auth Plugin: Stripe
 });
 
@@ -43,8 +46,9 @@ export const session = pgTable("session", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+    impersonatedBy: text("impersonated_by"), // From Better-Auth Plugin: Admin
   activeOrganizationId: text("active_organization_id")
-    .references(() => organization.id, { onDelete: "cascade" }),
+    .references(() => organization.id, { onDelete: "cascade" }), // From Better-Auth Plugin: Organization
 });
 
 export const account = pgTable("account", {
@@ -88,7 +92,7 @@ export const organization = pgTable("organization", {
   description: text("description"), // Custom field for organization description
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
-  stripeCustomerId: text("stripe_customer_id").unique(), // Manually added this field
+  stripeCustomerId: text("stripe_customer_id").unique(), // Custom field for organization stripe customer id (unused for now)
 });
 
 // From Better-Auth Plugin: Organization
@@ -136,7 +140,7 @@ export const subscription = pgTable("subscription", {
 
 
 // =====================================================================
-// Application Schema
+// Main Application Schema Tables
 // =====================================================================
 
 // Posts table - social posts for the community
@@ -164,6 +168,16 @@ export const posts = pgTable('posts', {
   createdByIdx: index('idx_posts_created_by').on(table.createdBy),
   createdAtIdx: index('idx_posts_created_at').on(table.createdAt),
   visibilityIdx: index('idx_posts_visibility').on(table.visibility),
+  
+  // Pagination performance indexes
+  visibilityCreatedAtIdx: index('idx_posts_visibility_created_at')
+    .on(table.visibility, table.createdAt.desc()),
+  userVisibilityCreatedAtIdx: index('idx_posts_user_visibility_created_at')
+    .on(table.userId, table.visibility, table.createdAt.desc()),
+  orgVisibilityCreatedAtIdx: index('idx_posts_org_visibility_created_at')
+    .on(table.organizationId, table.visibility, table.createdAt.desc()),
+  likesCountCreatedAtIdx: index('idx_posts_likes_count_created_at')
+    .on(table.likesCount.desc(), table.createdAt.desc()),
 }));
 
 // Likes table - track who liked what post
@@ -198,6 +212,20 @@ export const storage = pgTable('storage', {
   organizationIdIdx: index('idx_storage_organization_id').on(table.organizationId),
   createdAtIdx: index('idx_storage_created_at').on(table.createdAt),
 }));
+
+// =====================================================================
+// Admin Schema Tables
+// =====================================================================
+
+export const migrationRuns = pgTable('migration_runs', {
+  id: text('id').primaryKey(),
+  migrationFile: text('migration_file').notNull(),
+  status: text('status').notNull(), // 'running', 'completed', 'failed', 'rolled_back'
+  startedAt: timestamp('started_at').notNull(),
+  completedAt: timestamp('completed_at'),
+  error: text('error'),
+  runBy: text('run_by').references(() => user.id),
+});
 
 // =====================================================================
 // TypeScript type exports

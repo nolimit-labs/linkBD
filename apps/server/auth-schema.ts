@@ -20,6 +20,10 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role"),
+  banned: boolean("banned"),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
   stripeCustomerId: text("stripe_customer_id"),
 });
 
@@ -34,6 +38,7 @@ export const session = pgTable("session", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
+  impersonatedBy: text("impersonated_by"),
   activeOrganizationId: text("active_organization_id"),
 });
 
@@ -75,7 +80,8 @@ export const organization = pgTable("organization", {
   logo: text("logo"),
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
-  stripeCustomerId: text("stripe_customer_id").unique(),
+  imageKey: text("image_key"),
+  description: text("description"),
 });
 
 export const member = pgTable("member", {

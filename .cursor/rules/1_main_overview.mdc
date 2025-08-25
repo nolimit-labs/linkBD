@@ -18,6 +18,9 @@ The `apps` directory contains all applications
 
 - `apps/server` is the Backend Server - Hono.js API with PostgreSQL database
 - `apps/web-app` is the Frontend App - React application for social networking and job board features
+- `apps/admin-app` is the Admin App - React application for admin management (manage user, run migrations, etc.)
+- `apps/mobile-app` is the Mobile App - React Native application for social networking and job board features
+- `apps/e2e-tests` is the E2E Tests - Playwright tests for the application
 
 - **Shared Types** - Full type safety between frontend and backend via Hono RPC
 

@@ -19,13 +19,13 @@ const uploadRequestSchema = z.object({
 const storageRoute = new Hono<{ Variables: AuthVariables }>()
   // Gets user or organization uploaded files
   .get('/', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
 
     try {
       // Get files from database based on organization context
-      const files = activeOrganizationId
-        ? await storageModel.getOrgFiles(activeOrganizationId)
-        : await storageModel.getUserFiles(userId);
+      const files = session.activeOrganizationId
+        ? await storageModel.getOrgFiles(session.activeOrganizationId)
+        : await storageModel.getUserFiles(user.id);
 
       // Map download URLs for each file
       const filesWithUrls = await Promise.all(
@@ -45,7 +45,7 @@ const storageRoute = new Hono<{ Variables: AuthVariables }>()
 
   // Generate presigned URL for file upload
   .post('/upload-url', authMiddleware, zValidator('json', uploadRequestSchema), async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const { fileName, fileType, fileSize } = c.req.valid('json');
 
     // Validate file type (images only)
@@ -55,21 +55,21 @@ const storageRoute = new Hono<{ Variables: AuthVariables }>()
     }
 
     // Generate storage path based on context (user or org)
-    const fileKey = r2.generateStoragePath(userId, activeOrganizationId, fileName);
+    const fileKey = r2.generateStoragePath(user.id, session.activeOrganizationId, fileName);
 
     try {
       // Create database record first
       const fileRecord = await storageModel.createFileRecord({
         fileKey,
-        userId,
-        organizationId: activeOrganizationId,
+        userId: user.id,
+        organizationId: session.activeOrganizationId,
         filename: fileName,
         mimeType: fileType,
         size: fileSize,
       });
 
       // Generate presigned URL for R2 upload
-      const uploadUrl = await r2.generateUploadURL(fileKey, fileType, fileSize, userId, activeOrganizationId, fileName);
+      const uploadUrl = await r2.generateUploadURL(fileKey, fileType, fileSize, user.id, session.activeOrganizationId, fileName);
 
       return c.json({
         uploadUrl,
@@ -88,12 +88,12 @@ const storageRoute = new Hono<{ Variables: AuthVariables }>()
   .post('/download-url', authMiddleware, zValidator('json', z.object({
     fileKey: z.string().min(1)
   })), async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const { fileKey } = c.req.valid('json');
 
     try {
       // Validate file access through database
-      const file = await storageModel.getFileByFileKey(fileKey, userId, activeOrganizationId);
+      const file = await storageModel.getFileByFileKey(fileKey, user.id, session.activeOrganizationId);
       if (!file) {
         return c.json({ error: 'File not found or access denied' }, 404);
       }
@@ -117,12 +117,12 @@ const storageRoute = new Hono<{ Variables: AuthVariables }>()
 
   // Delete a file
   .delete('/:fileKey', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const fileKey = c.req.param('fileKey');
 
     try {
       // Validate file access
-      const file = await storageModel.getFileByFileKey(fileKey, userId, activeOrganizationId);
+      const file = await storageModel.getFileByFileKey(fileKey, user.id, session.activeOrganizationId);
       if (!file) {
         return c.json({ error: 'File not found or access denied' }, 404);
       }

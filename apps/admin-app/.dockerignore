@@ -1,0 +1,19 @@
+**/node_modules
+**/dist
+**/.env
+**/.env.local
+**/.env.*.local
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/.DS_Store
+**/*.log
+.git
+.gitignore
+**/.vscode
+**/.idea
+# Exclude server app since we only need client
+apps/server/node_modules
+apps/server/dist
+apps/server/.env*

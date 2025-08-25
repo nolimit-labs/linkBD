@@ -1,16 +1,21 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { rpcClient } from './rpc-client';
 import { queryKeys } from './query-keys';
 import { toast } from 'sonner';
 import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
-// Get public feed for discovery
-export const useFeed = () => {
+// Get posts feed for current account, uses pagination (deprecated)
+export const useGetPostsFeed = () => {
   return useQuery({
     queryKey: queryKeys.feed.public(),
     queryFn: async () => {
-      const response = await rpcClient.api.posts.feed.$get();
+      const response = await rpcClient.api.posts.feed.$get({
+        query: {
+          limit: '4',
+          sortBy: 'newest',
+        },
+      });
       
       if (!response.ok) {
         throw new Error('Failed to fetch feed');
@@ -18,6 +23,33 @@ export const useFeed = () => {
       
       return response.json();
     },
+  });
+};
+
+// Infinite scroll version of posts feed
+export const useInfinitePostsFeed = (limit = 10) => {
+  return useInfiniteQuery({
+    queryKey: ['posts', 'feed', 'infinite', limit],
+    queryFn: async ({ pageParam }) => {
+      const response = await rpcClient.api.posts.feed.$get({
+        query: {
+          cursor: pageParam,
+          limit: limit.toString(),
+          sortBy: 'popular', // Used in order by clause, popular posts first
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch feed');
+      }
+      
+      return response.json();
+    },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -108,6 +140,7 @@ export const useCreatePost = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed', 'infinite'] });
       toast.success('Post created successfully');
     },
     onError: (error) => {
@@ -180,6 +213,7 @@ export const useTogglePostLike = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.single(postId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed', 'infinite'] });
     },
   });
 };
@@ -210,6 +244,7 @@ export const useDeletePost = () => {
       // Invalidate list queries
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed', 'infinite'] });
     },
   });
 };
@@ -278,6 +313,7 @@ export const useRemovePostImage = () => {
       queryClient.setQueryData(queryKeys.posts.single(updatedPost.id), updatedPost);
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
+      queryClient.invalidateQueries({ queryKey: ['posts', 'feed', 'infinite'] });
       toast.success('Image removed successfully');
     },
     onError: (error) => {

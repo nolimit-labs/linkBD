@@ -7,7 +7,82 @@ alwaysApply: false
 
 Follow these best practices when working on the linkBD backend to ensure code quality, type safety, and maintainability.
 
-## 1. Hono RPC Method Chaining with Documentation
+## 1. Schema-First Database Approach with Drizzle
+
+**CRITICAL**: Always define database schema changes, indexes, and constraints in the Drizzle schema file FIRST before implementing any data access logic.
+
+### Why This Matters
+- Drizzle generates optimized migrations automatically from schema changes
+- Schema serves as single source of truth for database structure
+- Type safety across the entire application from database to frontend
+- Proper indexing defined at schema level ensures optimal performance
+- Avoids manual migration scripts that can become inconsistent
+
+### ✅ Correct Schema-First Approach
+```typescript
+// 1. FIRST: Define schema changes in src/db/schema.ts
+export const posts = pgTable('posts', {
+  id: text('id').primaryKey(),
+  content: text('content').notNull(),
+  visibility: text('visibility').notNull().default('public'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  likesCount: integer('likes_count').notNull().default(0),
+}, (table) => ({
+  // Define indexes directly in schema for pagination
+  visibilityCreatedAtIdx: index('idx_posts_visibility_created_at')
+    .on(table.visibility, table.createdAt.desc()),
+  createdAtIdx: index('idx_posts_created_at')
+    .on(table.createdAt.desc()),
+  likesCountIdx: index('idx_posts_likes_count')
+    .on(table.likesCount.desc()),
+}));
+
+// 2. THEN: Tell the user to run the mgiration
+```
+
+### ❌ Incorrect Approaches
+```typescript
+// ❌ NEVER create manual migration files for schema changes
+// ❌ NEVER add indexes via raw SQL when they should be in schema
+// ❌ NEVER implement data access without schema definition first
+
+// Wrong: Manual migration file
+async function addIndexes() {
+  await db.execute(sql`CREATE INDEX ...`); // ❌ Should be in schema
+}
+```
+
+### Database Index Best Practices
+```typescript
+// Pagination indexes (essential for performance)
+visibilityCreatedAtIdx: index('idx_posts_visibility_created_at')
+  .on(table.visibility, table.createdAt.desc()),
+
+// User-specific queries
+userVisibilityIdx: index('idx_posts_user_visibility')
+  .on(table.userId, table.visibility),
+
+// Composite indexes for complex queries
+userVisibilityCreatedAtIdx: index('idx_posts_user_visibility_created_at')
+  .on(table.userId, table.visibility, table.createdAt.desc()),
+```
+
+### Schema Change Workflow
+1. **Schema Definition**: Add/modify tables in `schema.ts`
+2. **Index Planning**: Define indexes for expected query patterns
+3. **Generate Migration**: `npm run db:generate`
+4. **Review Migration**: Check generated SQL before applying
+5. **Apply Migration**: `npm run db:migrate`
+6. **Implement Logic**: Write models and routes using new schema
+
+### When to Use Custom Migrations
+Only use custom migration scripts in `src/db/admin/migrations/` for:
+- **Data transformations** (not schema changes)
+- **One-time data fixes** or cleanup
+- **Complex data seeding** that can't be handled by schema defaults
+- **Multi-step data operations** that require business logic
+
+## 2. Hono RPC Method Chaining with Documentation
 
 **CRITICAL**: All route handlers MUST use method chaining to maintain end-to-end type safety AND include documentation comments above each endpoint.
 
@@ -66,7 +141,7 @@ const routes = app
 export type AppType = typeof routes  // Critical for frontend type safety
 ```
 
-## 2. Model Functions vs Route Handlers
+## 3. Model Functions vs Route Handlers
 
 ### Model Functions (in `models/` directory)
 - Handle all database operations and business logic
@@ -108,9 +183,9 @@ export async function getPostById(postId: string, userId: string) {
 })
 ``` 
 
-## 3. Custom Data Migration Standards
+## 4. Custom Data Migration Standards
 
-For new tables or new fields in a table, we can use the dirzzle generated migration scripts. However, for complex migrations, we can use the custom migration scripts in `src/db/admin/migrations/`.
+We've already established to use drizzle for schema changes where the orm is used. However, for complex migrations, we can use the custom migration scripts in `src/db/admin/migrations/`.
 
 **STANDARD**: All custom data migration scripts in `src/db/admin/migrations/` MUST follow a standardized naming convention and structure.
 
