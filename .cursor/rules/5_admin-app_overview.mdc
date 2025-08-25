@@ -1,0 +1,66 @@
+---
+description: 
+globs: apps/admin-app/**
+alwaysApply: false
+---
+# Admin App Overview
+
+---
+
+## Package: `apps/admin-app`
+
+This is the admin app for the TodoApp in the `apps/admin-app` directory. It uses TanStack Router for routing. 
+
+---
+
+## Tech Stack
+  - TypeScript
+  - React
+  - TanStack Router - File-based routing with flat structure
+  - TanStack Query - Server state management and caching
+  - Hono RPC Client - Type-safe API calls
+  - Better Auth Client - Authentication and session management
+  - shadcn/ui - UI primitives
+  - Tailwind CSS v4
+  - Vite - Build tool
+  - pnpm package manager
+
+---
+
+## Client Application Structure (`apps/web-app`)
+
+This section details the organization of the React frontend application.
+
+-   **Provider Setup (`apps/admin-app/src/main.tsx`)**: The application entry point configures essential providers:
+    *   **Authentication**: Better Auth is configured for session management.
+    *   **`QueryClientProvider`**: Provides TanStack Query functionality for server state management and caching.
+    *   **`RouterProvider`**: Manages client-side routing using TanStack Router's file-based routing system.
+
+-   **Routing (`apps/admin-app/src/routes`)**: Manages navigation using TanStack Router's file-based routing:
+    *   **App Route Group (`(admin)`)**: Parent group containing authenticated application routes
+        *   **Todo Routes**: Simple todo management - `/todos` for todo list, `/settings` for user settings
+    *   **Authentication Routes**: Login and onboarding pages
+    *   **Route Protection**: Centralized auth checks in `(admin)/route.tsx`
+
+-   **Components (`apps/admin-app/src/components`)**: Central repository for all React components:
+    *   **UI Primitives (`ui/`)**: Foundational components from shadcn/ui library
+    *   **Layout Components (`layout/`)**: Page structure components including `AppHeader`
+    *   **Feature Components**: Simple todo components - `todos/` for todo management
+
+-   **Data Fetching & API Interaction**: Frontend-backend communication patterns:
+    *   **Hono RPC Client (`apps/admin-app/src/api/rpc-client.ts`)**: Type-safe client for API calls
+    *   **Query Hooks (`apps/admin-app/src/api/`)**: TanStack Query hooks for todos and user management
+    *   **Real-time Updates**: Queries automatically refetch on window focus and data mutations
+    *   **Type Safety**: Full type inference from backend Hono routes
+
+-   **Authentication (`apps/admin-app/src/lib/auth-client.ts`)**: Better Auth client configuration:
+
+---
+
+## Rules
+- Use CSS variables for colors to maintain a unified theme. Do not use hardcoded colors unless I explicitly ask for it.
+- Use UI primitives from the `components/ui` directory when creating components
+- All component file names must be in kebab-case (e.g., `create-todo-dialog.tsx`)
+- Do not use `useMemo` and `useReducer` unless absolutely necessary
+- Follow existing patterns in the `api/` directory when creating new query hooks
+

@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "./db"; // your drizzle instance
-import { organization } from "better-auth/plugins"
+import { organization, admin } from "better-auth/plugins"
 import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 import { SUBSCRIPTION_PLANS, DEFAULT_PLAN_NAME } from "./db/admin/plans/data";
@@ -11,18 +11,23 @@ import * as organizationModel from "./models/organization";
 import dotenv from "dotenv";
 dotenv.config();
 
+// Environment variables
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isStaging = process.env.NODE_ENV === 'staging';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Enable features based on environment
 const enableEmailAndPassword = isDevelopment || isStaging;
+const enableCrossSubDomainCookies = isProduction || isStaging;
 
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!)
-if (!process.env.STRIPE_SECRET_KEY) {
-    throw new Error('STRIPE_SECRET_KEY is required');
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY!;
+if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is not set');
 }
 
-// Doesn't work with trustedOrigins, fix later
+const stripeClient = new Stripe(stripeSecretKey)
+
 const trustedOrigins = process.env.CORS_ORIGINS
     ? process.env.CORS_ORIGINS.split(',').map(origin => origin.trim())
     : ['http://localhost:3001', 'http://localhost:3000'];
@@ -64,12 +69,17 @@ export const auth = betterAuth({
         },
     },
     plugins: [
+        admin(),
         organization({
             organizationLimit: 1,
             schema: {
                 organization: {
                     additionalFields: {
                         imageKey: {
+                            type: "string",
+                            required: false,
+                        },
+                        description: {
                             type: "string",
                             required: false,
                         },
@@ -90,12 +100,19 @@ export const auth = betterAuth({
         }),
     ],
     logger: {
-        level: process.env.NODE_ENV === 'production' ? 'error' : 'debug',
+        level: isProduction ? 'error' : 'debug',
         log: (level, msg, ...args) => {
             console.log(`[better-auth] [${level}] ${msg}`, ...args)
         },
     },
     trustedOrigins: trustedOrigins,
+    advanced: {
+        // names simplified; use the cookie option block your version exposes
+        crossSubDomainCookies: {
+          enabled: enableCrossSubDomainCookies,
+          domain: ".linkbd.io"  // note the leading dot
+        }
+    }
 });
 
-export type Session = typeof auth.$Infer.Session.session;
+export type Session = typeof auth.$Infer.Session;

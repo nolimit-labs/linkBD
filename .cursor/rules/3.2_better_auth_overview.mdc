@@ -30,7 +30,6 @@ It uses the following configuration:
 - **Database**: Postgres via Drizzle adapter
 - **Authentication**: Email/password + anonymous/guest login
 - **Plugins**: 
-  - `anonymous()` - Guest users
   - `organization()` - Multi-tenancy with custom `stripeCustomerId` field
   - `stripe()` - Payment/subscription management
 - **Hooks**: Auto-assign default subscription on user/org creation

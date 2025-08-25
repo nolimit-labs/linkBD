@@ -1,15 +1,60 @@
 import { db } from '../db';
 import { posts, likes, user, organization } from '../db/schema';
-import { eq, and, desc, isNull, sql } from 'drizzle-orm';
+import { eq, and, desc, isNull, sql, lt, gt, count, asc } from 'drizzle-orm';
 
 
 // ===============================
 // Queries
 // ===============================
 
-// Get all public posts for the feed with author information
-export async function getPublicPosts(limit = 50, offset = 0) {
-  return await db
+// Enhanced pagination options for posts
+export interface PaginationOptions {
+  limit?: number;
+  cursor?: string; // ISO timestamp for cursor-based pagination
+  direction?: 'after' | 'before';
+  sortBy?: 'newest' | 'oldest' | 'popular';
+}
+
+// Getting Public Posts for Feed using cursor based pagination
+export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
+  const { 
+    limit = 20, 
+    cursor, 
+    direction = 'after',
+    sortBy = 'newest'
+  } = options;
+
+  // Build where conditions
+  let whereConditions = [eq(posts.visibility, 'public')];
+  
+  // Add cursor-based filtering
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (direction === 'after') {
+      whereConditions.push(lt(posts.createdAt, cursorDate));
+    } else {
+      whereConditions.push(gt(posts.createdAt, cursorDate));
+    }
+  }
+
+  // Build base query with combined where conditions and sorting
+  let orderByClause;
+  switch (sortBy) {
+    case 'newest':
+      orderByClause = [desc(posts.createdAt)];
+      break;
+    case 'oldest':
+      orderByClause = [asc(posts.createdAt)];
+      break;
+    case 'popular':
+      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
+      break;
+    default:
+      orderByClause = [desc(posts.createdAt)];
+  }
+
+  // Fetch one extra to determine if there are more results
+  const results = await db
     .select({
       // Post fields
       id: posts.id,
@@ -37,11 +82,38 @@ export async function getPublicPosts(limit = 50, offset = 0) {
     .from(posts)
     .leftJoin(user, eq(posts.userId, user.id))
     .leftJoin(organization, eq(posts.organizationId, organization.id))
-    .where(eq(posts.visibility, 'public'))
-    .orderBy(desc(posts.createdAt))
-    .limit(limit)
-    .offset(offset);
+    .where(and(...whereConditions))
+    .orderBy(...orderByClause)
+    .limit(limit + 1);
+  
+  const hasMore = results.length > limit;
+  const posts_data = results.slice(0, limit);
+  
+  // Generate next cursor from last post
+  const nextCursor = posts_data.length > 0 ? 
+    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
+
+  return {
+    posts: posts_data,
+    pagination: {
+      hasMore,
+      nextCursor,
+      limit,
+      count: posts_data.length
+    }
+  };
 }
+
+// Get total count of public posts (for metadata)
+export async function getPublicPostsCount() {
+  const result = await db
+    .select({ count: count() })
+    .from(posts)
+    .where(eq(posts.visibility, 'public'));
+    
+  return result[0]?.count || 0;
+}
+
 
 export async function getPostsByUserId(userId: string) {
   return await db

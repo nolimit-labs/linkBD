@@ -14,6 +14,7 @@ import organizationsRoutes from './routes/organizations'
 import dotenv from 'dotenv'
 import { rateLimiter } from 'hono-rate-limiter'
 import { createHash } from 'crypto'
+import adminRoutes from './routes/admin'
 
 dotenv.config()
 
@@ -98,6 +99,7 @@ const routes = app
   .route('/api/storage', storageRoutes)
   .route('/api/search', searchRoutes)
   .route('/api/organizations', organizationsRoutes)
+  .route('/api/admin', adminRoutes)
 
 // Export AppType for RPC client usage in client 
 export type AppType = typeof routes

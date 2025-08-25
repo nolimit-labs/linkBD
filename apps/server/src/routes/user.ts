@@ -10,13 +10,13 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
 
   // Get current user profile
   .get('/profile', authMiddleware, async (c) => {
-    const { userId } = c.get('session');
-    if (!userId) {
+    const { user } = c.get('session');
+    if (!user) {
       return c.json({ error: 'Not authenticated' }, 401);
     }
 
     try {
-      const currentUser = await userModel.getUserProfile(userId);
+      const currentUser = await userModel.getUserProfile(user.id);
 
       if (!currentUser) {
         return c.json({ error: 'User not found' }, 404);
@@ -42,14 +42,14 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
     name: z.string().min(1).max(100).optional(),
     image: z.string().nullable().optional(), // File key from storage or null to remove
   })), async (c) => {
-    const { userId } = c.get('session');
-    if (!userId) {
+    const { user } = c.get('session');
+    if (!user) {
       return c.json({ error: 'Not authenticated' }, 401);
     }
     const validatedData = c.req.valid('json');
 
     try {
-      const updatedUser = await userModel.updateUser(userId, validatedData);
+      const updatedUser = await userModel.updateUser(user.id, validatedData);
 
       if (!updatedUser) {
         return c.json({ error: 'User not found' }, 404);

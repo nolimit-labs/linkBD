@@ -42,6 +42,14 @@ export const SUBSCRIPTION_PLANS: ExtendedStripePlan[] = [
     },
     isActive: true,
   },
+  {
+    name: 'pro_complementary',
+    limits: {
+      posts: 20,
+      files: 20,
+    },
+    isActive: true,
+  },
 ];
 
 export const DEFAULT_PLAN_NAME = 'free';

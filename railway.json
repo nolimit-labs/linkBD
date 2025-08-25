@@ -18,6 +18,24 @@
       "deployOutputs": ["apps/web-app/dist", "apps/web-app/Caddyfile"]
     },
 
+    "build-admin-app": {
+      "inputs": [
+        {
+          "step": "install-all"
+        }
+      ],
+      "commands": [
+        {
+          "cmd": "if [ \"$DEPLOY_TARGET\" = \"ADMIN-APP\" ]; then pnpm run build:admin-app; fi",
+          "shell": "sh"
+        }
+      ],
+      "deployOutputs": [
+        "apps/admin-app/dist",
+        "apps/admin-app/Caddyfile"
+      ]
+    },
+
     "build-server": {
       "inputs": [{ "step": "install-all" }],
       "commands": [
@@ -38,6 +56,9 @@
     "base": { "image": "ghcr.io/railwayapp/railpack-runtime:latest" },
 
     "variables": {
+      "RAILPACK_PACKAGES": {
+        "type": "string"
+      },
       "DEPLOY_TARGET": {
         "type": "string"
       },
@@ -49,12 +70,21 @@
       }
     },
 
-    "startCommand": "if [ \"$DEPLOY_TARGET\" = \"SERVER\" ]; then cd apps/server && node dist/index.js; else caddy run --config /app/apps/web-app/Caddyfile; fi",
+    "startCommand": "if [ \"$DEPLOY_TARGET\" = \"SERVER\" ]; then cd apps/server && pnpm run start; elif [ \"$DEPLOY_TARGET\" = \"ADMIN-APP\" ]; then caddy run --config /app/apps/admin-app/Caddyfile; else caddy run --config /app/apps/web-app/Caddyfile; fi",
 
     "inputs": [
       {
         "step": "build-web",
-        "include": ["apps/web-app/dist", "apps/web-app/Caddyfile"]
+        "include": [
+          "apps/web-app/dist", "apps/web-app/Caddyfile"
+        ]
+      },
+      {
+        "step": "build-admin-app",
+        "include": [
+          "apps/admin-app/dist",
+          "apps/admin-app/Caddyfile"
+        ]
       },
       {
         "step": "build-server",

@@ -70,7 +70,7 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
   
   // Update organization
   .patch('/:id', authMiddleware, zValidator('json', updateSchema), async (c) => {
-    const { userId } = c.get('session');
+    const { user } = c.get('session');
     const organizationId = c.req.param('id');
     const updateData = c.req.valid('json');
 
@@ -78,7 +78,7 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
 
     try {
       // Check if user is admin of the organization
-      const userRole = await orgModel.getUserRoleInOrganization(userId, organizationId);
+      const userRole = await orgModel.getUserRoleInOrganization(user.id, organizationId);
       
       if (userRole !== 'admin' && userRole !== 'owner') {
         return c.json({ error: 'You do not have permission to update this organization' }, 403);

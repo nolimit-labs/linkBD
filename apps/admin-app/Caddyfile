@@ -1,0 +1,40 @@
+{
+    admin off
+    auto_https off # railway handles https for us
+    log {
+        format json
+    }
+}
+
+
+:{$PORT} {
+	# Proxy API requests to backend
+	@api path /api/*
+
+	handle @api {
+		header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+		header Access-Control-Allow-Headers "Content-Type, Authorization"
+		header Access-Control-Allow-Credentials "true"
+
+		reverse_proxy {$BACKEND_URL} {
+			header_up Host {upstream_hostport}
+			header_up X-Real-IP {remote_host}
+
+		}
+	}
+
+	# Serve the static files
+	handle {
+		root * /app/apps/admin-app/dist
+
+		# Enable gzip compression
+		encode gzip
+
+		# SPA routing - serve index.html for all routes
+		try_files {path} /index.html
+
+		# File server
+		file_server
+	}
+
+} 

@@ -16,33 +16,50 @@ const postSchema = z.object({
 });
 
 
-const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
-  // Get feed (public posts for discovery)
-  .get('/feed', authMiddleware, async (c) => {
-    const { userId } = c.get('session');
+const paginationSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.string().optional().transform(val => val ? parseInt(val) : 20),
+  direction: z.enum(['after', 'before']).optional().default('after'),
+  sortBy: z.enum(['newest', 'oldest', 'popular']).optional().default('newest'),
+});
 
-    // Get public feed
-    const postList = await postModel.getPublicPosts();
+const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
+
+  // Get feed (public posts for discovery) with pagination
+  .get('/feed', authMiddleware, zValidator('query', paginationSchema), async (c) => {
+    const { user } = c.get('session');
+    const { cursor, limit, direction, sortBy } = c.req.valid('query');
+
+    // Get paginated public feed
+    const result = await postModel.getPublicPostsPaginated({
+      cursor,
+      limit,
+      direction,
+      sortBy
+    });
 
     // Map download URLs for posts that have images and check likes
     const postsWithDetails = await Promise.all(
-      postList.map(async (post) => ({
+      result.posts.map(async (post) => ({
         ...post,
         author: {
           ...post.author,
           image: await generateDownloadURL(post.author.image)
         },
         imageUrl: await generateDownloadURL(post.imageKey),
-        hasLiked: await postModel.hasUserLikedPost(post.id, userId)
+        hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
       }))
     );
 
-    return c.json(postsWithDetails);
+    return c.json({
+      posts: postsWithDetails,
+      pagination: result.pagination
+    });
   })
 
   // Get posts for specific user or organization
   .get('/', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const { authorId } = c.req.query();
 
     let postList;
@@ -86,7 +103,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       postList.map(async (post) => ({
         ...post,
         imageUrl: await generateDownloadURL(post.imageKey),
-        hasLiked: await postModel.hasUserLikedPost(post.id, userId)
+        hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
       }))
     );
 
@@ -95,14 +112,14 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Create a new post (with subscription limit check)
   .post('/', authMiddleware, subscriptionLimitMiddleware, zValidator('json', postSchema), async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const body = await c.req.json();
 
     const created = await postModel.createPost({
-      userId,
+      userId: user.id,
       content: body.content,
       imageKey: body.imageKey,
-      organizationId: activeOrganizationId,
+      organizationId: session.activeOrganizationId,
       visibility: body.visibility,
     });
 
@@ -111,10 +128,10 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Get a specific post by ID
   .get('/:id', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const postId = c.req.param('id');
 
-    const post = await postModel.getPostById(postId, userId, activeOrganizationId);
+    const post = await postModel.getPostById(postId, user.id, session.activeOrganizationId);
 
     if (!post) {
       return c.json({ error: 'Post not found' }, 404);
@@ -124,7 +141,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     const postWithDetails = {
       ...post,
       imageUrl: await generateDownloadURL(post.imageKey),
-      hasLiked: await postModel.hasUserLikedPost(post.id, userId)
+      hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
     };
 
     return c.json(postWithDetails);
@@ -132,11 +149,11 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Update a post
   .put('/:id', authMiddleware, zValidator('json', postSchema), async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const postId = c.req.param('id');
     const body = await c.req.json();
 
-    const updated = await postModel.updatePost(postId, userId, body, activeOrganizationId);
+    const updated = await postModel.updatePost(postId, user.id, body, session.activeOrganizationId);
 
     if (!updated) {
       return c.json({ error: 'Post not found or unauthorized' }, 404);
@@ -146,7 +163,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     const updatedWithDetails = {
       ...updated,
       imageUrl: await generateDownloadURL(updated.imageKey),
-      hasLiked: await postModel.hasUserLikedPost(updated.id, userId)
+      hasLiked: await postModel.hasUserLikedPost(updated.id, user.id)
     };
 
     return c.json(updatedWithDetails);
@@ -154,20 +171,20 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Toggle post like
   .patch('/:id/like', authMiddleware, async (c) => {
-    const { userId } = c.get('session');
+    const { user } = c.get('session');
     const postId = c.req.param('id');
 
-    const liked = await postModel.togglePostLike(postId, userId);
+    const liked = await postModel.togglePostLike(postId, user.id);
 
     return c.json({ liked });
   })
 
   // Delete a post
   .delete('/:id', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const postId = c.req.param('id');
 
-    const deleted = await postModel.deletePost(postId, userId, activeOrganizationId);
+    const deleted = await postModel.deletePost(postId, user.id, session.activeOrganizationId);
 
     if (!deleted) {
       return c.json({ error: 'Post not found or unauthorized' }, 404);
@@ -178,11 +195,11 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Update post image
   .patch('/:id/image', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const postId = c.req.param('id');
     const { imageKey } = await c.req.json();
 
-    const updated = await postModel.updatePostImage(postId, userId, imageKey, activeOrganizationId);
+    const updated = await postModel.updatePostImage(postId, user.id, imageKey, session.activeOrganizationId);
 
     if (!updated) {
       return c.json({ error: 'Post not found or unauthorized' }, 404);
@@ -192,7 +209,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     const updatedWithDetails = {
       ...updated,
       imageUrl: await generateDownloadURL(updated.imageKey),
-      hasLiked: await postModel.hasUserLikedPost(updated.id, userId)
+      hasLiked: await postModel.hasUserLikedPost(updated.id, user.id)
     };
 
     return c.json(updatedWithDetails);
@@ -200,10 +217,10 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Remove post image
   .delete('/:id/image', authMiddleware, async (c) => {
-    const { userId, activeOrganizationId } = c.get('session');
+    const { session, user } = c.get('session');
     const postId = c.req.param('id');
 
-    const updated = await postModel.updatePostImage(postId, userId, null, activeOrganizationId);
+    const updated = await postModel.updatePostImage(postId, user.id, null, session.activeOrganizationId);
 
     if (!updated) {
       return c.json({ error: 'Post not found or unauthorized' }, 404);
