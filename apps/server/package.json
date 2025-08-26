@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "bun --hot src/index.ts",
-    "build": "bun build src/index.ts --outdir=dist --format=esm --sourcemap --target=node --external:@aws-sdk/* --external:pg --external:better-sqlite3 --external:stripe --external:drizzle-orm",
+    "build": "NODE_ENV=production bun build src/index.ts --outdir=dist --format=esm --sourcemap --target=node --external:@aws-sdk/* --external:pg --external:better-sqlite3 --external:stripe --external:drizzle-orm",
     "start": "bun dist/index.js",
     "type-check": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
