@@ -59,6 +59,9 @@
       "RAILPACK_PACKAGES": {
         "type": "string"
       },
+      "NODE_ENV": {
+        "type": "string"
+      },
       "DEPLOY_TARGET": {
         "type": "string"
       },

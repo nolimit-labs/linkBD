@@ -1,22 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { View, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { authClient } from '@/lib/auth-client';
-import { useTodos } from '@/api/todos';
 import { Text } from '~/components/ui/text';
 import { useSession } from '~/api/auth';
+import { useInfinitePostsFeed } from '~/api/posts';
+import { PostCard } from '~/components/posts/post-card';
 
 export default function TodosScreen() {
   // Authentication & session
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
-  // Data hooks
-  const { data: todos = [], isLoading, error, refetch } = useTodos();
+  // Posts feed with infinite scroll
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    refetch,
+    isRefetching,
+  } = useInfinitePostsFeed(10);
 
-  // Local state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  // Flatten all pages of posts into a single array
+  const posts = data?.pages.flatMap(page => page.posts) || [];
 
   // Redirect if unauthenticated
   useEffect(() => {
@@ -38,16 +45,55 @@ export default function TodosScreen() {
 
   if (!session) return null;
 
+  // Render individual post item using PostCard component
+  const renderPost = ({ item }: { item: any }) => <PostCard post={item} />;
+
+  // Handle load more when reaching end of list
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-background"
     >
-      <View className="flex-1 px-6 py-4 mt-4">
-
-<View>
-  <Text>Todos</Text>
-</View>
+      <View className="flex-1">
+        <FlatList
+          data={posts}
+          renderItem={renderPost}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 16 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching}
+              onRefresh={refetch}
+            />
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListEmptyComponent={
+            isLoading ? (
+              <View className="flex-1 items-center justify-center py-10">
+                <ActivityIndicator size="large" />
+                <Text className="text-muted-foreground mt-2">Loading posts...</Text>
+              </View>
+            ) : (
+              <View className="flex-1 items-center justify-center py-10">
+                <Text className="text-muted-foreground">No posts yet</Text>
+              </View>
+            )
+          }
+          ListFooterComponent={
+            isFetchingNextPage ? (
+              <View className="py-4 items-center">
+                <ActivityIndicator size="small" />
+              </View>
+            ) : null
+          }
+        />
       </View>
     </KeyboardAvoidingView>
   );

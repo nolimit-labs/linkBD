@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, TextInput, ActivityIndicator, TouchableOpacity, ColorValue, ScrollView } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { authClient } from '~/lib/auth-client';
@@ -7,6 +7,8 @@ import { Text } from '~/components/ui/text';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '~/lib/use-theme-colors';
 import { Logo } from '~/components/logo';
+import * as Linking from 'expo-linking';
+import { useSession } from '~/api/auth';
 
 type ErrorShape = { error?: { message?: string } };
 const hasError = (value: unknown): value is Required<ErrorShape> => {
@@ -20,6 +22,14 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+
+  // If a session exists (e.g., after social login completes via deep link), redirect
+  useEffect(() => {
+    if (session?.data) {
+      router.replace('/todos');
+    }
+  }, [session, router]);
 
   const handleLogin = async () => {
     try {
@@ -28,9 +38,40 @@ export default function SignInScreen() {
       const result = await authClient.signIn.email({ email, password });
       if (hasError(result) && result.error) {
         setError(result.error.message || 'Failed to sign in');
+        console.log('Sign in failed', result.error.message);
         return;
       }
-      router.replace('/(app)/todos');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const getSession = await authClient.getSession();
+      if (getSession.data) {
+        router.replace('/(app)/todos');
+      }
+    } catch {
+      setError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsLoading(true);
+      const deepLink = Linking.createURL('/todos');
+      const result = await authClient.signIn.social({
+        provider: 'google',
+        // callbackURL: 'linkbd://todos',
+      });
+      if (hasError(result) && result.error) {
+        setError(result.error.message || 'Failed to sign in');
+        console.log('Sign in failed', result.error.message);
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const session = await authClient.getSession();
+      if (session.data) {
+        console.log('Session', session.data);
+        router.replace('/todos');
+      }
     } catch {
       setError('Login failed. Please try again.');
     } finally {
@@ -98,6 +139,26 @@ export default function SignInScreen() {
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text className="text-primary-foreground font-bold text-lg">Sign In</Text>
+              )}
+            </Button>
+
+            {/* Divider */}
+            <View className="flex-row items-center my-6">
+              <View className="flex-1 h-[1px] bg-muted-foreground/20" />
+              <Text className="mx-4 text-muted-foreground text-sm">or</Text>
+              <View className="flex-1 h-[1px] bg-muted-foreground/20" />
+            </View>
+
+            {/* Google Sign In Button */}
+            <Button
+              className="bg-background/80 border-2 border-input shadow-xl rounded-2xl py-4"
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#4285F4" />
+              ) : (
+                <Text className="text-foreground font-bold text-lg">Sign in with Google</Text>
               )}
             </Button>
 
