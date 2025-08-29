@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import postsRoutes from './routes/posts'
@@ -123,18 +122,15 @@ app.onError((err, c) => {
   }, 500)
 })
 
-// Start the server
-const port = process.env.PORT || 3002
-console.log(`📝 linkBD API starting on port ${port}`)
+const port = Number(process.env.PORT) || 3005;
+console.log(`📝 linkBD API starting on port ${port}`);
 
-serve({
+console.log('NODE_ENV', process.env.NODE_ENV);
+
+
+export default {
   fetch: app.fetch,
+  port,
   hostname: '::',
-  port: port as number,
-}, (info) => {
-  console.log(`🚀 Server is running on http://localhost:${info.port}`)
-  console.log(`📊 Health check: http://localhost:${info.port}/api/health`)
-  console.log(`📝 API info: http://localhost:${info.port}/api`)
-})
+};
 
-export default app 

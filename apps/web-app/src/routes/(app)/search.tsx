@@ -44,6 +44,8 @@ function SearchPage() {
           <div className="max-w-2xl">
             <SearchBar
               showDropdown={false}
+              enableDebouncedNavigate={true}
+              debounceMs={300}
               placeholder="Search for people and businesses by name..."
               className="w-full"
             />

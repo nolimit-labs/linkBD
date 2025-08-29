@@ -5,6 +5,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "build:web-app": "pnpm run build --filter=@repo/web-app",
+    "build:admin-app": "pnpm run build --filter=@repo/admin-app",
     "build:server": "pnpm run build --filter=@repo/server",
     "start:server": "node apps/server/dist/index.js",
     "lint": "turbo run lint",

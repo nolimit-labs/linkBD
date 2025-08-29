@@ -16,17 +16,23 @@ interface SearchBarProps {
     className?: string
     /** Placeholder text */
     placeholder?: string
+    /** When not using dropdown, navigate to /search with debounced query updates */
+    enableDebouncedNavigate?: boolean
+    /** Debounce delay in ms for both dropdown fetching and navigation */
+    debounceMs?: number
 }
 
 export function SearchBar({
     showDropdown = false,
     maxResults = 3,
     className,
-    placeholder = "Search people and businesses..."
+    placeholder = "Search people and businesses...",
+    enableDebouncedNavigate = false,
+    debounceMs = 300,
 }: SearchBarProps) {
     const [query, setQuery] = useState('')
     const [isOpen, setIsOpen] = useState(false)
-    const debouncedQuery = useDebounce(query, 300)
+    const debouncedQuery = useDebounce(query, debounceMs)
     const navigate = useNavigate()
     const searchRef = useRef<HTMLDivElement>(null)
 
@@ -66,6 +72,20 @@ export function SearchBar({
             })
         }
     }
+
+    // Debounced navigation when typing in the header search bar
+    useEffect(() => {
+        if (!showDropdown && enableDebouncedNavigate) {
+            const trimmed = debouncedQuery.trim()
+            navigate({
+                to: '/search',
+                search: trimmed ? { q: trimmed } : {},
+                replace: true,
+            })
+        }
+        // Only react to debouncedQuery changes to avoid rapid navigation
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [debouncedQuery])
 
     const handleUserClick = () => {
         setIsOpen(false)
