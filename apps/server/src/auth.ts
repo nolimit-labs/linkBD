@@ -7,7 +7,7 @@ import Stripe from "stripe";
 import { SUBSCRIPTION_PLANS, DEFAULT_PLAN_NAME } from "./db/admin/plans/data";
 import { assignDefaultSubscriptionForUser, assignDefaultSubscriptionForOrg, hasActiveSubscription } from "./models/subscriptions";
 import * as organizationModel from "./models/organization";
-
+import { expo } from "@better-auth/expo";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -70,6 +70,7 @@ export const auth = betterAuth({
     },
     plugins: [
         admin(),
+        expo(),
         organization({
             organizationLimit: 1,
             schema: {

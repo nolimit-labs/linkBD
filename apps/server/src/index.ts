@@ -1,5 +1,4 @@
 import { Hono } from 'hono'
-import { serve } from '@hono/node-server'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import postsRoutes from './routes/posts'
@@ -124,10 +123,14 @@ app.onError((err, c) => {
 })
 
 const port = Number(process.env.PORT) || 3005;
-console.log(`📝 Simple Todo App API starting on port ${port}`);
+console.log(`📝 linkBD API starting on port ${port}`);
+
+console.log('NODE_ENV', process.env.NODE_ENV);
+
 
 export default {
   fetch: app.fetch,
   port,
-  hostname: '::'
+  hostname: '::',
 };
+
