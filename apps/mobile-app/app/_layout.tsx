@@ -1,7 +1,7 @@
 import '~/global.css';
 
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as React from 'react';
 import { Appearance, Platform, View } from 'react-native';
@@ -9,9 +9,10 @@ import { NAV_THEME } from '~/lib/constants';
 import { useColorScheme } from '~/lib/useColorScheme';
 import { PortalHost } from '@rn-primitives/portal';
 import { ThemeToggle } from '~/components/ThemeToggle';
+import RootNavigator from '~/components/layout/root-navigator';
 import { setAndroidNavigationBar } from '~/lib/android-navigation-bar';
 import { QueryProvider } from '~/providers/query-provider';
-import { lightColors, darkColors } from '~/lib/theme-colors';
+
 
 const LIGHT_THEME: Theme = {
   ...DefaultTheme,
@@ -41,33 +42,7 @@ export default function RootLayout() {
     <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
       <QueryProvider>
         <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-        <Stack>
-          <Stack.Screen
-            name='index'
-            options={{
-              title: 'Home',
-              headerRight: () => <ThemeToggle />,
-            }}
-          />
-          <Stack.Screen
-            name='(auth)/sign-in'
-            options={{
-              headerTitle: 'Sign In',
-            }}
-          />
-          <Stack.Screen
-            name='(auth)/sign-up'
-            options={{
-              headerTitle: 'Sign Up',
-            }}
-          />
-          <Stack.Screen
-            name='(app)'
-            options={{
-              headerShown: false,
-            }}
-          />
-        </Stack>
+        <RootNavigator />
         <PortalHost />
       </QueryProvider>
     </ThemeProvider>

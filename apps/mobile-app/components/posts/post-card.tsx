@@ -11,6 +11,7 @@ type Post = {
     id: string;
     name: string;
     type: "user" | "organization";
+    isOfficial?: boolean;
   };
   imageUrl: string | null;
   hasLiked: boolean;
@@ -65,7 +66,16 @@ export function PostCard({ post }: PostCardProps) {
             </View>
           )}
           <View className="flex-1">
-            <Text className="font-semibold text-foreground">{post.author.name}</Text>
+            <View className="flex-row items-center">
+              <Text className="font-semibold text-foreground">{post.author.name}</Text>
+              {post.author.isOfficial && (
+                <View className="ml-1 bg-primary px-2 py-0.5 rounded-md">
+                  <Text className="text-primary-foreground text-xs font-medium">
+                    Official
+                  </Text>
+                </View>
+              )}
+            </View>
             <View className="flex-row items-center">
               <Text className="text-xs text-muted-foreground">
                 {post.author.type === 'organization' ? '🏢 Organization' : 'User'}

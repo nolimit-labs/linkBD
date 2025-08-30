@@ -16,7 +16,7 @@ Concise overview of the mobile app package.
 ## Structure
 - `app/` Expo Router screens (NativeWind enabled via `global.css`)
   - `(auth)/` unauthenticated routes: `sign-in.tsx`, `sign-up.tsx` (uses `lib/auth-client.ts`; on success, navigate to `(app)`)
-  - `(app)/` authenticated routes: `todos.tsx` (protect with `authClient.useSession`; unauthenticated → redirect to `(auth)`)
+  - `(app)/` authenticated routes: `feed.tsx` (protect with `authClient.useSession`; unauthenticated → redirect to `(auth)`)
   - `_layout.tsx` (imports `~/global.css`), `+not-found.tsx` and sets up providers
 - `api/` networking via centralized `rpc-client.ts`
 - `lib/` shared libs (e.g., `auth-client.ts`, `icons/`, `utils.ts`, `useColorScheme.tsx`, `constants.ts`)

@@ -125,9 +125,6 @@ app.onError((err, c) => {
 const port = Number(process.env.PORT) || 3005;
 console.log(`📝 linkBD API starting on port ${port}`);
 
-console.log('NODE_ENV', process.env.NODE_ENV);
-
-
 export default {
   fetch: app.fetch,
   port,

@@ -18,13 +18,10 @@ export default function ProfileIndexScreen() {
   const { data: profile, isLoading: profileLoading } = useGetProfile(userId);
   const { data: userPosts, isLoading: postsLoading } = useGetPostsByAuthor(userId);
 
-  console.log('Session', session);
-
-
   const handleSignOut = async () => {
     await authClient.signOut();
-    router.replace('/(auth)/sign-in');
-    queryClient.invalidateQueries();
+    queryClient.invalidateQueries({ queryKey: ['session'] });
+    router.replace('/');
   };
 
   if (sessionLoading || profileLoading) {
@@ -40,7 +37,7 @@ export default function ProfileIndexScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-background px-6">
         <Text className="text-xl font-semibold mb-2">Not signed in</Text>
-        <Button onPress={() => router.replace('/(auth)/sign-in')}>
+        <Button onPress={() => router.replace('/')}>
           <Text>Sign In</Text>
         </Button>
       </View>

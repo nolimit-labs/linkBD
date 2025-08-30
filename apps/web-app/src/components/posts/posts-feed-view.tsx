@@ -19,6 +19,7 @@ export function PostsFeedView() {
     isFetchingNextPage 
   } = useInfinitePostsFeed(4)
   
+  console.log('data', data)
   // Flatten all pages into a single posts array
   const posts = data?.pages.flatMap(page => page.posts) || []
   

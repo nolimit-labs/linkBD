@@ -25,15 +25,6 @@ export default function TodosScreen() {
   // Flatten all pages of posts into a single array
   const posts = data?.pages.flatMap(page => page.posts) || [];
 
-  // Redirect if unauthenticated
-  useEffect(() => {
-    if (!isPending && !session) {
-      router.replace('/(auth)/sign-in');
-    }
-  }, [isPending, session, router]);
-
-
-
 
   if (isPending || (!session && isPending)) {
     return (
