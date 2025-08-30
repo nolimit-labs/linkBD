@@ -6,6 +6,7 @@ import { zValidator } from '@hono/zod-validator'
 import * as postModel from '../models/posts';
 import * as userModel from '../models/user';
 import * as orgModel from '../models/organization';
+import * as subscriptionModel from '../models/subscriptions';
 import { generateDownloadURL } from '../lib/storage';
 // import { Session } from 'better-auth';
 
@@ -38,17 +39,23 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       sortBy
     });
 
-    // Map download URLs for posts that have images and check likes
+    // Map download URLs for posts that have images, check likes, and add subscription data
     const postsWithDetails = await Promise.all(
-      result.posts.map(async (post) => ({
-        ...post,
-        author: {
-          ...post.author,
-          image: await generateDownloadURL(post.author.image)
-        },
-        imageUrl: await generateDownloadURL(post.imageKey),
-        hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
-      }))
+      result.posts.map(async (post) => {
+        // Get subscription data for the author
+        const authorSubscription = await subscriptionModel.getUserActiveSubscription(post.author.id);
+        
+        return {
+          ...post,
+          author: {
+            ...post.author,
+            image: await generateDownloadURL(post.author.image),
+            subscriptionPlan: authorSubscription?.plan || 'free'
+          },
+          imageUrl: await generateDownloadURL(post.imageKey),
+          hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
+        };
+      })
     );
 
     return c.json({
@@ -70,11 +77,14 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     if (userInfo) {
       // It's a user ID
       postList = await postModel.getPostsByUserId(authorId);
+      const authorSubscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
       const author = {
         id: userInfo.id,
         name: userInfo.name,
         image: userInfo.image,
-        type: 'user' as const
+        type: 'user' as const,
+        isOfficial: userInfo.isOfficial || false,
+        subscriptionPlan: authorSubscription?.plan || 'free'
       };
       postList = postList.map(post => ({ ...post, author }));
     } else {
@@ -84,11 +94,14 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       if (orgInfo) {
         // It's an organization ID
         postList = await postModel.getOrgPosts(authorId);
+        const orgSubscription = await subscriptionModel.getUserActiveSubscription(orgInfo.id);
         const author = {
           id: orgInfo.id,
           name: orgInfo.name,
           image: orgInfo.logo,
-          type: 'organization' as const
+          type: 'organization' as const,
+          isOfficial: orgInfo.isOfficial || false,
+          subscriptionPlan: orgSubscription?.plan || 'free'
         };
         postList = postList.map(post => ({ ...post, author }));
       } else {

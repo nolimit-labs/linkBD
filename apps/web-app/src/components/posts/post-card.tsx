@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, MoreHorizontal, Eye, Users, Lock } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreVertical, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -20,7 +20,7 @@ type Post = Awaited<
   ReturnType<
     Awaited<ReturnType<typeof rpcClient.api.posts.feed.$get>>['json']
   >
->[number]
+>['posts'][number]
 
 interface PostCardProps {
   post: Post
@@ -41,7 +41,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full gap-0">
       <CardHeader>
         <div className="flex items-start justify-between">
           <Link 
@@ -49,28 +49,40 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
             params={{ id: author?.id || post.userId || '' }}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-12 w-12">
               <AvatarImage src={author?.image || ''} />
               <AvatarFallback>
                 {author?.name?.charAt(0) || '?'}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col">
+
+            { /* Name and Badges */ }
+            <div className="flex flex-col pb-4">
               <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold">
+                <h4 className="text-xl font-semibold">
                   {author?.name || 'Unknown User'}
                 </h4>
+                {author?.isOfficial && (
+                  <Badge variant="default" className="text-sm">
+                    Official
+                  </Badge>
+                )}
+                {(author?.subscriptionPlan === 'pro' || 
+                  author?.subscriptionPlan === 'pro_complementary') && (
+                  <Badge variant="default" className="text-sm bg-secondary text-secondary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg">
+                    Premium
+                  </Badge>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
-              </p>
             </div>
           </Link>
+
+          { /* Edit and Delete if Owner */ }
           {isOwner && (onEdit || onDelete) && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-background/70 text-xl" side="bottom">
@@ -90,8 +102,8 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+      <CardContent className="pt-0 pl-21 pb-6">
+        <p className="text-base whitespace-pre-wrap">{post.content}</p>
         {post.imageUrl && (
           <div className="mt-4">
             <img
@@ -103,7 +115,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
         )}
       </CardContent>
 
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 pl-20">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center space-x-4">
             <Button
@@ -134,6 +146,10 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
               <Share className="h-4 w-4" />
               <span className="text-xs">Share</span>
             </Button>
+
+            <span className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+            </span>
           </div>
         </div>
       </CardFooter>

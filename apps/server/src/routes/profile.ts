@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { authMiddleware, type AuthVariables } from '../middleware/auth.js';
 import * as userModel from '../models/user.js';
 import * as orgModel from '../models/organization.js';
+import * as subscriptionModel from '../models/subscriptions.js';
 import { generateDownloadURL } from '../lib/storage';
 
 const profileRoutes = new Hono<{ Variables: AuthVariables }>()
@@ -18,11 +19,16 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
         // Generate avatar URL if user has an image
         const imageUrl = await generateDownloadURL(userInfo.image);
         
+        // Get subscription data
+        const subscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
+        
         return c.json({
           id: userInfo.id,
           name: userInfo.name,
           image: imageUrl,
           type: 'user' as const,
+          isOfficial: userInfo.isOfficial || false,
+          subscriptionPlan: subscription?.plan || 'free',
           createdAt: userInfo.createdAt
         });
       }
@@ -34,12 +40,17 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
         // Generate logo URL if organization has a logo or imageKey
         const imageUrl = await generateDownloadURL(orgInfo.imageKey || orgInfo.logo);
         
+        // Get subscription data
+        const subscription = await subscriptionModel.getUserActiveSubscription(orgInfo.id);
+        
         return c.json({
           id: orgInfo.id,
           name: orgInfo.name,
           image: imageUrl,
           description: orgInfo.description || null,
           type: 'organization' as const,
+          isOfficial: orgInfo.isOfficial || false,
+          subscriptionPlan: subscription?.plan || 'free',
           createdAt: orgInfo.createdAt
         });
       }

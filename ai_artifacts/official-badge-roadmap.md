@@ -1,160 +1,253 @@
-# Official Badge System Roadmap
-**Feature:** Verification badges for organizations and users  
-**Priority:** Medium  
-**Estimated Timeline:** 2-3 weeks  
+# Feed Badge System Roadmap
+**Feature:** Display badges for official team members and premium subscribers in feed  
+**Priority:** High  
+**Estimated Timeline:** 1 week  
 
 ## Overview
-Create a verification system that allows admins to mark organizations (and later users) as "official" with a visible badge on their profiles.
+Add visual badges next to user/organization names in the feed to indicate:
+1. **Official Badge** (🔴) - linkBD team members and official organizations (using primary/red color)
+2. **Premium Badge** (✓) - Users/organizations on pro or pro_complementary plans
 
-## Phase 1: Database Schema & Backend (Week 1)
+## Phase 1: Backend Implementation (2-3 days)
 
 ### 1.1 Database Schema Updates
-- [ ] Add `isVerified` boolean field to organizations table
-- [ ] Add `verifiedAt` timestamp field for audit trail
-- [ ] Add `verifiedBy` field (admin user ID who verified)
-- [ ] Create migration script for existing organizations
+- [ ] Add `isOfficial` boolean field to users table (for linkBD team members)
+- [ ] Add `isOfficial` boolean field to organizations table (for official organizations)
+- [ ] Ensure subscription plan information is available in post queries
 
-### 1.2 Backend API Endpoints
-- [ ] Add verification field to organization model
-- [ ] Update organization routes to include verification status
-- [ ] Create admin-only endpoint to toggle verification
-- [ ] Update search results to include verification status
-- [ ] Update profile endpoint to return verification status
+### 1.2 API Updates
+- [ ] Update `/api/posts/feed` to include:
+  - Author's `isOfficial` status
+  - Author's subscription plan (pro/pro_complementary)
+- [ ] Update post author data structure to include badge information
+- [ ] Ensure efficient querying with proper joins/includes
 
-### 1.3 Admin Permission System
-- [ ] Create admin role/permission system
-- [ ] Add middleware to check admin permissions
-- [ ] Secure verification endpoints for admin-only access
+### 1.3 Data Structure
+```typescript
+// Post author structure with badge info
+interface PostAuthor {
+  id: string;
+  name: string;
+  image: string | null;
+  type: 'user' | 'organization';
+  isOfficial?: boolean;  // New field
+  subscriptionPlan?: 'free' | 'pro' | 'pro_complementary';  // New field
+}
+```
 
-## Phase 2: Frontend UI Components (Week 2)
+## Phase 2: Frontend Implementation (2-3 days)
 
-### 2.1 Badge Component
-- [ ] Create reusable `VerificationBadge` component
-- [ ] Design badge icon (checkmark in circle)
-- [ ] Add hover tooltip explaining verification
-- [ ] Support different sizes (small, medium, large)
+### 2.1 Badge Components
 
-### 2.2 Profile Integration
-- [ ] Add badge to organization profile cards
-- [ ] Display badge in business listings
-- [ ] Show badge in search results
-- [ ] Add badge to business directory
+#### Create Badge Icons
+```tsx
+// OfficialBadge.tsx - Red diamond for linkBD team (using primary color)
+export function OfficialBadge({ size = 16 }) {
+  return (
+    <span 
+      className="text-primary ml-1" 
+      title="Official linkBD Team"
+    >
+      🔴
+    </span>
+  );
+}
 
-### 2.3 Admin Interface
-- [ ] Create admin panel for managing verifications
-- [ ] Add verification toggle in business settings (admin-only)
-- [ ] Show verification history/audit trail
+// PremiumBadge.tsx - Checkmark for premium users
+export function PremiumBadge({ size = 16 }) {
+  return (
+    <span 
+      className="text-green-500 ml-1" 
+      title="Premium Member"
+    >
+      ✓
+    </span>
+  );
+}
+```
 
-## Phase 3: Polish & Testing (Week 3)
+### 2.2 Update PostCard Component
 
-### 3.1 Visual Design
-- [ ] Finalize badge design with design system colors
-- [ ] Ensure accessibility (proper contrast, alt text)
-- [ ] Responsive design for mobile/desktop
-- [ ] Animation for badge appearance
+#### Web App (`apps/web-app/src/components/posts/post-card.tsx`)
+- [ ] Import badge components
+- [ ] Add logic to display badges based on author data
+- [ ] Position badges next to author name
 
-### 3.2 User Experience
-- [ ] Add verification request process for organizations
-- [ ] Email notifications for verification status changes
-- [ ] Help documentation for verification process
+```tsx
+// Example implementation
+<div className="flex items-center gap-1">
+  <h4 className="text-sm font-semibold">
+    {author?.name || 'Unknown User'}
+  </h4>
+  {author?.isOfficial && <OfficialBadge />}
+  {author?.subscriptionPlan === 'pro' && <PremiumBadge />}
+  {author?.subscriptionPlan === 'pro_complementary' && <PremiumBadge />}
+</div>
+```
 
-### 3.3 Testing & Deployment
-- [ ] Unit tests for verification logic
-- [ ] Integration tests for API endpoints
-- [ ] Manual testing of UI components
-- [ ] Deploy to staging environment
+#### Mobile App (`apps/mobile-app/components/posts/post-card.tsx`)
+- [ ] Implement same badge logic for React Native
+- [ ] Use emoji or react-native-svg for icons
+- [ ] Ensure proper styling and spacing
 
-## Technical Implementation Details
+```tsx
+// Example React Native implementation
+<View className="flex-row items-center">
+  <Text className="font-semibold text-foreground">{post.author.name}</Text>
+  {post.author.isOfficial && (
+    <Text className="ml-1 text-primary">🔴</Text>
+  )}
+  {(post.author.subscriptionPlan === 'pro' || 
+    post.author.subscriptionPlan === 'pro_complementary') && (
+    <Text className="ml-1 text-green-500">✓</Text>
+  )}
+</View>
+```
 
-### Database Schema Changes
+### 2.3 Tooltip/Hover Information
+- [ ] Add hover tooltips on web to explain badge meaning
+- [ ] Consider press-and-hold tooltip for mobile
+
+## Phase 3: Admin Tools (1-2 days)
+
+### 3.1 Admin Interface
+- [ ] Create admin endpoint to toggle `isOfficial` status
+- [ ] Add UI in admin panel to manage official status
+- [ ] Audit trail for official status changes
+
+### 3.2 Admin Permissions
+```typescript
+// Only super admins can toggle official status
+PATCH /api/admin/users/:id/official
+PATCH /api/admin/organizations/:id/official
+```
+
+## Implementation Steps
+
+### Step 1: Database Migration
 ```sql
-ALTER TABLE organization ADD COLUMN is_verified BOOLEAN DEFAULT FALSE;
-ALTER TABLE organization ADD COLUMN verified_at TIMESTAMP NULL;
-ALTER TABLE organization ADD COLUMN verified_by TEXT NULL;
+-- Add official status to users
+ALTER TABLE users ADD COLUMN is_official BOOLEAN DEFAULT FALSE;
+
+-- Add official status to organizations  
+ALTER TABLE organization ADD COLUMN is_official BOOLEAN DEFAULT FALSE;
+
+-- Index for performance
+CREATE INDEX idx_users_is_official ON users(is_official);
+CREATE INDEX idx_organization_is_official ON organization(is_official);
 ```
 
-### API Endpoints
+### Step 2: Update Post Queries
+```typescript
+// Include badge data in post queries
+const posts = await db.query.posts.findMany({
+  with: {
+    author: {
+      columns: {
+        id: true,
+        name: true,
+        image: true,
+        isOfficial: true,
+      },
+    },
+    organization: {
+      columns: {
+        id: true,
+        name: true,
+        imageUrl: true,
+        isOfficial: true,
+      },
+    },
+  },
+});
+
+// Add subscription data from Better Auth
+const postsWithSubscriptions = await Promise.all(
+  posts.map(async (post) => {
+    const subscription = await getSubscriptionForUser(post.userId);
+    return {
+      ...post,
+      author: {
+        ...post.author,
+        subscriptionPlan: subscription?.plan || 'free',
+      },
+    };
+  })
+);
 ```
-GET /api/organizations/:id - Include verification status
-PATCH /api/admin/organizations/:id/verify - Admin only
-PATCH /api/admin/organizations/:id/unverify - Admin only
-GET /api/admin/organizations/verification-requests - Pending requests
-```
 
-### Component Structure
-```
-VerificationBadge/
-├── index.tsx - Main component
-├── types.ts - TypeScript types
-├── styles.ts - Styled components
-└── VerificationBadge.stories.tsx - Storybook stories
-```
+### Step 3: Testing Checklist
+- [ ] Official badge shows for linkBD team members
+- [ ] Premium badge shows for pro subscribers
+- [ ] Premium badge shows for pro_complementary subscribers
+- [ ] No badges show for free users
+- [ ] Badges appear correctly in both web and mobile
+- [ ] Performance impact is minimal
+- [ ] Tooltips work on hover (web)
 
-## Future Enhancements (Phase 4+)
+## Visual Design Specifications
 
-### User Verification
-- [ ] Extend system to support user verification
-- [ ] Different badge types (business, individual, government)
-- [ ] Verification levels (basic, premium, government)
+### Badge Placement
+- Position: Immediately after name, with 4px spacing
+- Size: 16px on desktop, 14px on mobile
+- Color: 
+  - Official: Primary/Red (using bg-primary class)
+  - Premium: Green (#10B981)
 
-### Advanced Features
-- [ ] Verification criteria checklist
-- [ ] Automated verification for certain domains
-- [ ] Verification analytics and reporting
-- [ ] API for third-party verification services
+### Badge Priority
+If user has both official and premium status:
+1. Show official badge first
+2. Show premium badge second
 
-### Integration Features
-- [ ] Verification status in API responses
-- [ ] Webhook notifications for verification changes
-- [ ] Bulk verification tools for admins
+## Future Enhancements
 
-## Implementation Priority
+### Phase 4: Extended Features
+- [ ] Different badge levels (Silver, Gold, Platinum)
+- [ ] Custom badges for special events or achievements
+- [ ] Badge animations on first appearance
+- [ ] Badge statistics in user profile
+- [ ] Verified organization badges (separate from official)
 
-### Must Have (MVP)
-1. Database schema with `isVerified` field
-2. Backend API to toggle verification (admin only)
-3. Frontend badge component
-4. Badge display on organization profiles
+### Phase 5: Badge Management
+- [ ] User badge showcase on profile
+- [ ] Badge history and timeline
+- [ ] Badge notifications when earned
+- [ ] Badge removal/expiration system
 
-### Should Have
-1. Admin permission system
-2. Verification audit trail
-3. Badge in search results and listings
-4. Hover tooltips with explanation
-
-### Nice to Have
-1. Verification request process
-2. Email notifications
-3. Admin dashboard for managing verifications
-4. Analytics and reporting
+## Success Metrics
+- [ ] Badge visibility in feed (100% render rate)
+- [ ] Correct badge assignment (0% error rate)
+- [ ] Page load performance (<50ms added latency)
+- [ ] User recognition of badge meanings (survey)
 
 ## Technical Considerations
 
-### Security
-- Verification endpoints must be admin-only
-- Rate limiting on verification requests
-- Audit logging for all verification changes
-
 ### Performance
-- Cache verification status for fast lookups
-- Optimize queries to include verification in bulk operations
-- Consider CDN for badge icons
+- Include badge data in initial query (avoid N+1)
+- Cache subscription status for 5 minutes
+- Use CSS for badge styling (not images)
 
-### Scalability
-- Design schema to support multiple verification types
-- Consider future expansion to user verification
-- Plan for potential verification automation
+### Security
+- Official status can only be set by super admins
+- Subscription status verified server-side
+- No client-side badge manipulation
 
-## Success Metrics
-- [ ] Number of verified organizations
-- [ ] Admin satisfaction with verification tools
-- [ ] User recognition of verified badges
-- [ ] Reduced fake/spam organization profiles
+### Mobile Considerations
+- Use system emojis for consistent rendering
+- Test on both iOS and Android
+- Ensure badges don't wrap to new line
 
-## Risks & Mitigation
-- **Risk:** Badge abuse or fake verification
-  - **Mitigation:** Strong admin-only controls, audit trails
-- **Risk:** Performance impact of additional queries
-  - **Mitigation:** Proper indexing and caching
-- **Risk:** User confusion about verification criteria
-  - **Mitigation:** Clear documentation and help text
+## Rollout Plan
+1. **Day 1-2:** Backend implementation and testing
+2. **Day 3-4:** Frontend web implementation
+3. **Day 5:** Mobile app implementation
+4. **Day 6:** Admin tools and documentation
+5. **Day 7:** Testing and deployment
+
+## Risk Mitigation
+- **Risk:** Performance degradation in feed
+  - **Solution:** Optimize queries, add indexes
+- **Risk:** Badge confusion
+  - **Solution:** Clear tooltips and help documentation
+- **Risk:** Badge abuse
+  - **Solution:** Server-side validation, admin-only controls

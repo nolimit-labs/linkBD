@@ -22,11 +22,8 @@ export default function AppLayout() {
   useEffect(() => {
     if (status !== 'success' || isFetching) return; // wait until fully settled
     if (!session?.data) {
-      console.log('No session, redirecting to sign-in', session);
-      router.replace('/(auth)/sign-in');
-    } else {
-      console.log('Session found, redirecting to todos', session);
-      router.replace('/(app)/todos');
+      console.log('No session, redirecting to sign-in');
+      router.replace('/');
     }
   }, [status, isFetching, session, router]);
 
@@ -38,12 +35,13 @@ export default function AppLayout() {
     );
   }
 
-  if (!session?.data?.session) return null;
+  if (!session?.data) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       {/* @ts-ignore Drawer types are incompatible with React 19 types in our setup */}
       <Drawer
+        initialRouteName="feed"
         screenOptions={{
           headerShown: true,
           headerStyle: {
@@ -57,7 +55,7 @@ export default function AppLayout() {
         drawerContent={(props) => <AppDrawerContent {...props} />}
       >
         <Drawer.Screen
-          name="todos"
+          name="feed"
           options={{
             title: 'Feed',
             drawerLabel: 'Feed',

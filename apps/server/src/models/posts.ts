@@ -76,7 +76,8 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
         type: sql<'user' | 'organization'>`CASE 
           WHEN ${posts.userId} IS NULL THEN 'organization'
           ELSE 'user'
-        END`.as('author_type')
+        END`.as('author_type'),
+        isOfficial: sql<boolean>`COALESCE(${organization.isOfficial}, ${user.isOfficial}, false)`.as('author_is_official')
       }
     })
     .from(posts)

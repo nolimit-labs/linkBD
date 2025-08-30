@@ -38,8 +38,7 @@ This section details the organization of the React frontend application.
 
 -   **Routing (`apps/admin-app/src/routes`)**: Manages navigation using TanStack Router's file-based routing:
     *   **App Route Group (`(admin)`)**: Parent group containing authenticated application routes
-        *   **Todo Routes**: Simple todo management - `/todos` for todo list, `/settings` for user settings
-    *   **Authentication Routes**: Login and onboarding pages
+    *   **Users pages**: `/users` for user list
     *   **Route Protection**: Centralized auth checks in `(admin)/route.tsx`
 
 -   **Components (`apps/admin-app/src/components`)**: Central repository for all React components:
