@@ -1,13 +1,14 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, ImageIcon, X, Building2, User } from 'lucide-react'
+import { Plus, ImageIcon, X, Building2, User, Clock, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog'
-import { useCreatePost } from '@/api'
+import { useCreatePost, usePostLimits } from '@/api'
 import { Label } from '@/components/ui/label'
 import { useActiveOrganization } from '@/lib/auth-client'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function NewPostDialog() {
   const [open, setOpen] = useState(false)
@@ -17,6 +18,16 @@ export function NewPostDialog() {
   const [visibility, setVisibility] = useState<'public' | 'organization' | 'private'>('public')
   const createPostWithImage = useCreatePost()
   const { data: activeOrg } = useActiveOrganization()
+  const { data: limits, isLoading: limitsLoading } = usePostLimits()
+  
+  // Calculate display values for reset time
+  const getResetTimeDisplay = () => {
+    if (!limits?.hoursUntilReset) return '';
+    const hours = limits.hoursUntilReset;
+    if (hours === 1) return 'in 1 hour';
+    if (hours < 24) return `in ${hours} hours`;
+    return 'tomorrow';
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -89,6 +100,36 @@ export function NewPostDialog() {
             </Badge>
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Post Limits Display */}
+        {limits && (
+          <Alert className={limits.hasReachedDailyLimit ? 'border-destructive' : ''}>
+            <AlertDescription className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {limits.hasReachedDailyLimit ? (
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                ) : (
+                  <Clock className="h-4 w-4" />
+                )}
+                <span className="text-sm">
+                  {limits.hasReachedDailyLimit ? (
+                    <>Daily limit reached. Resets {getResetTimeDisplay()}</>
+                  ) : (
+                    <>
+                      {limits.remainingToday} of {limits.dailyLimit} posts remaining today
+                    </>
+                  )}
+                </span>
+              </div>
+              {!limits.hasReachedDailyLimit && (
+                <span className="text-xs text-muted-foreground">
+                  Resets {getResetTimeDisplay()}
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="content" className="block text-sm font-medium mb-2">
@@ -160,8 +201,12 @@ export function NewPostDialog() {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={!content.trim() || createPostWithImage.isPending}>
-              {createPostWithImage.isPending ? 'Posting...' : 'Create Post'}
+            <Button 
+              type="submit" 
+              disabled={!content.trim() || createPostWithImage.isPending || limits?.hasReachedDailyLimit}
+            >
+              {createPostWithImage.isPending ? 'Posting...' : 
+               limits?.hasReachedDailyLimit ? 'Limit Reached' : 'Create Post'}
             </Button>
           </div>
         </form>

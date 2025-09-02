@@ -72,7 +72,7 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
       author: {
         id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
         name: sql<string>`COALESCE(${organization.name}, ${user.name})`.as('author_name'),
-        image: sql<string | null>`COALESCE(${organization.imageKey}, ${organization.logo}, ${user.image})`.as('author_image'),
+        image: sql<string | null>`COALESCE(${organization.imageKey}, ${user.image})`.as('author_image'),
         type: sql<'user' | 'organization'>`CASE 
           WHEN ${posts.userId} IS NULL THEN 'organization'
           ELSE 'user'
@@ -105,44 +105,152 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
   };
 }
 
-// Get total count of public posts (for metadata)
-export async function getPublicPostsCount() {
-  const result = await db
-    .select({ count: count() })
+export async function getUserPostsPaginated(userId: string, options: PaginationOptions = {}) {
+  const { 
+    limit = 20, 
+    cursor, 
+    direction = 'after',
+    sortBy = 'newest'
+  } = options;
+
+  // Build where conditions
+  let whereConditions = [eq(posts.userId, userId)];
+  
+  // Add cursor-based filtering
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (direction === 'after') {
+      whereConditions.push(lt(posts.createdAt, cursorDate));
+    } else {
+      whereConditions.push(gt(posts.createdAt, cursorDate));
+    }
+  }
+
+  // Build sorting
+  let orderByClause;
+  switch (sortBy) {
+    case 'newest':
+      orderByClause = [desc(posts.createdAt)];
+      break;
+    case 'oldest':
+      orderByClause = [asc(posts.createdAt)];
+      break;
+    case 'popular':
+      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
+      break;
+    default:
+      orderByClause = [desc(posts.createdAt)];
+  }
+
+  // Fetch one extra to determine if there are more results
+  const results = await db
+    .select({
+      id: posts.id,
+      userId: posts.userId,
+      organizationId: posts.organizationId,
+      content: posts.content,
+      imageKey: posts.imageKey,
+      likesCount: posts.likesCount,
+      visibility: posts.visibility,
+      createdBy: posts.createdBy,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt
+    })
     .from(posts)
-    .where(eq(posts.visibility, 'public'));
-    
-  return result[0]?.count || 0;
+    .where(and(...whereConditions))
+    .orderBy(...orderByClause)
+    .limit(limit + 1);
+  
+  const hasMore = results.length > limit;
+  const posts_data = results.slice(0, limit);
+  
+  // Generate next cursor from last post
+  const nextCursor = posts_data.length > 0 ? 
+    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
+
+  return {
+    posts: posts_data,
+    pagination: {
+      hasMore,
+      nextCursor,
+      limit,
+      count: posts_data.length
+    }
+  };
 }
 
+export async function getOrgPostsPaginated(organizationId: string, options: PaginationOptions = {}) {
+  const { 
+    limit = 20, 
+    cursor, 
+    direction = 'after',
+    sortBy = 'newest'
+  } = options;
 
-export async function getPostsByUserId(userId: string) {
-  return await db
-    .select()
-    .from(posts)
-    .where(eq(posts.userId, userId))
-    .orderBy(desc(posts.createdAt));
-}
+  // Build where conditions
+  let whereConditions = [eq(posts.organizationId, organizationId)];
+  
+  // Add cursor-based filtering
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (direction === 'after') {
+      whereConditions.push(lt(posts.createdAt, cursorDate));
+    } else {
+      whereConditions.push(gt(posts.createdAt, cursorDate));
+    }
+  }
 
-export async function getUserPosts(userId: string) {
-  // Get personal posts (where organizationId is null)
-  return await db
-    .select()
-    .from(posts)
-    .where(and(
-      eq(posts.userId, userId),
-      isNull(posts.organizationId)
-    ))
-    .orderBy(desc(posts.createdAt));
-}
+  // Build sorting
+  let orderByClause;
+  switch (sortBy) {
+    case 'newest':
+      orderByClause = [desc(posts.createdAt)];
+      break;
+    case 'oldest':
+      orderByClause = [asc(posts.createdAt)];
+      break;
+    case 'popular':
+      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
+      break;
+    default:
+      orderByClause = [desc(posts.createdAt)];
+  }
 
-export async function getOrgPosts(organizationId: string) {
-  // Get organization posts
-  return await db
-    .select()
+  // Fetch one extra to determine if there are more results
+  const results = await db
+    .select({
+      id: posts.id,
+      userId: posts.userId,
+      organizationId: posts.organizationId,
+      content: posts.content,
+      imageKey: posts.imageKey,
+      likesCount: posts.likesCount,
+      visibility: posts.visibility,
+      createdBy: posts.createdBy,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt
+    })
     .from(posts)
-    .where(eq(posts.organizationId, organizationId))
-    .orderBy(desc(posts.createdAt));
+    .where(and(...whereConditions))
+    .orderBy(...orderByClause)
+    .limit(limit + 1);
+  
+  const hasMore = results.length > limit;
+  const posts_data = results.slice(0, limit);
+  
+  // Generate next cursor from last post
+  const nextCursor = posts_data.length > 0 ? 
+    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
+
+  return {
+    posts: posts_data,
+    pagination: {
+      hasMore,
+      nextCursor,
+      limit,
+      count: posts_data.length
+    }
+  };
 }
 
 export async function getPostById(postId: string, userId: string, organizationId?: string | null) {
@@ -170,6 +278,49 @@ export async function getPostById(postId: string, userId: string, organizationId
 // Mutations
 // ===============================
 
+export async function createUserPost(data: {
+  userId: string;
+  content: string;
+  imageKey?: string;
+  visibility?: 'public' | 'organization' | 'private';
+}) {
+  const newPost = {
+    id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    userId: data.userId,
+    organizationId: null,
+    content: data.content,
+    imageKey: data.imageKey,
+    visibility: data.visibility || 'public',
+    likesCount: 0,
+  };
+  
+  const [created] = await db.insert(posts).values(newPost).returning();
+  return created;
+}
+
+export async function createOrgPost(data: {
+  organizationId: string;
+  createdBy: string;
+  content: string;
+  imageKey?: string;
+  visibility?: 'public' | 'organization' | 'private';
+}) {
+  const newPost = {
+    id: `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    userId: null,
+    organizationId: data.organizationId,
+    createdBy: data.createdBy,
+    content: data.content,
+    imageKey: data.imageKey,
+    visibility: data.visibility || 'public',
+    likesCount: 0,
+  };
+  
+  const [created] = await db.insert(posts).values(newPost).returning();
+  return created;
+}
+
+// Legacy function for backward compatibility - will be removed
 export async function createPost(data: {
   userId: string;
   content: string;

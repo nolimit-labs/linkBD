@@ -14,6 +14,7 @@ export const queryKeys = {
     },
     byAuthor: (authorId: string) => ['posts', 'author', authorId] as const,
     single: (id: string) => ['posts', id] as const,
+    limits: () => ['posts', 'limits'] as const,
   },
   feed: {
     public: () => ['feed', 'public'] as const,
@@ -37,6 +38,7 @@ export const queryKeys = {
   organization: {
     subscription: (organizationId?: string) => 
       organizationId ? ['organization', 'subscription', organizationId] : ['organization', 'subscription'] as const,
+    featured: (limit: number) => ['organizations', 'featured', limit] as const,
   },
   profile: {
     detail: (id: string) => ['profile', id] as const,

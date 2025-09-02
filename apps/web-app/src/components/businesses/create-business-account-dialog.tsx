@@ -27,7 +27,7 @@ import { organization } from "@/lib/auth-client"
 import { toast } from "sonner"
 import { useQueryClient } from "@tanstack/react-query"
 
-const createOrganizationSchema = z.object({
+const createBusinessAccountSchema = z.object({
   name: z.string()
     .min(2, "Organization name must be at least 2 characters")
     .max(50, "Organization name must be less than 50 characters"),
@@ -38,26 +38,26 @@ const createOrganizationSchema = z.object({
     .optional(),
 })
 
-type CreateOrganizationFormData = z.infer<typeof createOrganizationSchema>
+type CreateBusinessAccountFormData = z.infer<typeof createBusinessAccountSchema>
 
-interface CreateOrganizationDialogProps {
+interface CreateBusinessAccountDialogProps {
   trigger?: React.ReactNode
 }
 
-export function CreateOrganizationDialog({ trigger }: CreateOrganizationDialogProps) {
+export function CreateBusainessAccountDialog({ trigger }: CreateBusinessAccountDialogProps) {
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const queryClient = useQueryClient()
 
-  const form = useForm<CreateOrganizationFormData>({
-    resolver: zodResolver(createOrganizationSchema),
+  const form = useForm<CreateBusinessAccountFormData>({
+    resolver: zodResolver(createBusinessAccountSchema),
     defaultValues: {
       name: "",
       slug: "",
     },
   })
 
-  const onSubmit = async (data: CreateOrganizationFormData) => {
+  const onSubmit = async (data: CreateBusinessAccountFormData) => {
     setIsLoading(true)
     try {
       const result = await organization.create({

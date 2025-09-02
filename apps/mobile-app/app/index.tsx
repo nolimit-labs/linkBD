@@ -24,13 +24,22 @@ export default function SignInScreen() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { data: session, isPending } = useSession();
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const { data: session, isPending, isError } = useSession();
+
+  // Clear invalid sessions in production
+  React.useEffect(() => {
+    if (isError && session === null) {
+      authClient.signOut().catch(() => {});
+      queryClient.invalidateQueries({ queryKey: ['session'] });
+    }
+  }, [isError, session, queryClient]);
 
   // Check if we should show email login (only in development)
   const isDevelopment = process.env.EXPO_NODE_ENV === 'development';
 
-  // If a session exists, redirect to feed
-  if (session?.data) {
+  // If a valid session exists, redirect to feed
+  if (session?.data?.user?.id && !isPending) {
     return <Redirect href="/(app)/feed" />;
   }
 
@@ -53,7 +62,7 @@ export default function SignInScreen() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true);
-      const result = await authClient.signIn.social({
+      await authClient.signIn.social({
         provider: 'google',
         callbackURL: 'linkbd://(app)/feed',
       });
@@ -64,6 +73,7 @@ export default function SignInScreen() {
       setIsLoading(false);
     }
   };
+
 
   if (isPending) {
     return (
@@ -165,6 +175,7 @@ export default function SignInScreen() {
                 </View>
               )}
             </Button>
+
 
             {/* Error message for production */}
             {error && !isDevelopment ? (

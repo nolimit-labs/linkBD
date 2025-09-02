@@ -12,6 +12,25 @@ import type { InferRequestType, InferResponseType } from 'hono/client';
 // Queries
 // ================================
 
+// Get featured organizations with limit  
+export const useFeaturedOrganizations = (limit: number = 4) => {
+  return useQuery({
+    queryKey: queryKeys.organization.featured(limit),
+    queryFn: async () => {
+      const response = await rpcClient.api.organizations.featured.$get({
+        query: { limit: String(limit) }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch featured organizations');
+      }
+      
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // 5 minute cache
+  });
+};
+
 // Get all organizations with limit
 export const useOrganizations = (limit: number = 10) => {
   return useQuery({

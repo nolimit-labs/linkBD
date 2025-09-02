@@ -96,8 +96,13 @@ export const organization = pgTable("organization", {
   createdAt: timestamp("created_at").notNull(),
   metadata: text("metadata"),
   stripeCustomerId: text("stripe_customer_id").unique(), // Custom field for organization stripe customer id (unused for now)
-  isOfficial: boolean("is_official").$defaultFn(() => false), // Custom field for Official linkBD organization badge
-});
+  isOfficial: boolean("is_official").$defaultFn(() => false), // Custom field for Official linkBD Account badge
+  isFeatured: boolean('is_featured').notNull().default(false), // Custom field for featured Businesses
+  featuredAt: timestamp('featured_at', { withTimezone: true }), // Custom field for featured Businesses
+}, (table) => ({
+  featuredAtIdx: index('idx_organizations_featured_at') // Custom index for featured Businesses
+    .on(table.isFeatured, table.featuredAt.desc()),
+}));
 
 // From Better-Auth Plugin: Organization
 export const member = pgTable("member", {
@@ -182,6 +187,12 @@ export const posts = pgTable('posts', {
     .on(table.organizationId, table.visibility, table.createdAt.desc()),
   likesCountCreatedAtIdx: index('idx_posts_likes_count_created_at')
     .on(table.likesCount.desc(), table.createdAt.desc()),
+    
+  // Daily posting limit performance indexes
+  userCreatedAtIdx: index('idx_posts_user_created_at')
+    .on(table.userId, table.createdAt.desc()),
+  orgCreatedAtIdx: index('idx_posts_org_created_at')
+    .on(table.organizationId, table.createdAt.desc()),
 }));
 
 // Likes table - track who liked what post

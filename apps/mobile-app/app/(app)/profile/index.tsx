@@ -1,14 +1,15 @@
 import React from 'react';
-import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Image, ActivityIndicator } from 'react-native';
 import { authClient } from '~/lib/auth-client';
 import { Card } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
+import { BadgeText } from '~/components/ui/badge';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSession } from '~/api/auth';
 import { useGetProfile, useGetPostsByAuthor } from '~/api/profile';
-import { PostCard } from '~/components/posts/post-card';
+import { InfinitePostsView } from '~/components/posts/infinite-posts-view';
 
 export default function ProfileIndexScreen() {
   const queryClient = useQueryClient();
@@ -16,7 +17,14 @@ export default function ProfileIndexScreen() {
   const userId = session?.data?.user?.id;
 
   const { data: profile, isLoading: profileLoading } = useGetProfile(userId);
-  const { data: userPosts, isLoading: postsLoading } = useGetPostsByAuthor(userId);
+  const { 
+    data: postsData, 
+    isLoading: postsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchPosts
+  } = useGetPostsByAuthor(userId);
 
   const handleSignOut = async () => {
     await authClient.signOut();
@@ -37,8 +45,11 @@ export default function ProfileIndexScreen() {
     return (
       <View className="flex-1 items-center justify-center bg-background px-6">
         <Text className="text-xl font-semibold mb-2">Not signed in</Text>
-        <Button onPress={() => router.replace('/')}>
+        <Button onPress={() => router.replace('/')} className="mb-4">
           <Text>Sign In</Text>
+        </Button>
+        <Button variant="outline" onPress={handleSignOut}>
+          <Text>Sign Out</Text>
         </Button>
       </View>
     );
@@ -58,8 +69,13 @@ export default function ProfileIndexScreen() {
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  return (
-    <ScrollView className="flex-1 bg-background">
+  // Calculate total posts count from all pages
+  const totalPostsCount = postsData?.pages.reduce((total, page) => 
+    total + (page.posts?.length || 0), 0) || 0;
+
+  // Profile header component
+  const ProfileHeader = () => (
+    <>
       <Card className="mx-4 mt-4 p-6 bg-card">
         <View className="items-center">
           {profileData.image ? (
@@ -71,13 +87,27 @@ export default function ProfileIndexScreen() {
           )}
 
           <Text className="text-2xl font-bold text-foreground mb-1">{profileData.name}</Text>
+          
+          {/* Badges */}
+          <View className="flex-row gap-2 mt-2">
+            {profile?.isOfficial && (
+              <BadgeText variant="default">
+                ✓ Official
+              </BadgeText>
+            )}
+            {profile?.subscriptionPlan && profile.subscriptionPlan !== 'free' && (
+              <BadgeText variant="outline">
+                {profile.subscriptionPlan}
+              </BadgeText>
+            )}
+          </View>
         </View>
 
         <View className="h-[1px] bg-border my-4" />
 
         <View className="flex-row justify-around">
           <View className="items-center">
-            <Text className="text-lg font-semibold text-foreground">{userPosts?.length || 0}</Text>
+            <Text className="text-lg font-semibold text-foreground">{totalPostsCount}</Text>
             <Text className="text-sm text-muted-foreground">Posts</Text>
           </View>
           <View className="items-center">
@@ -101,35 +131,26 @@ export default function ProfileIndexScreen() {
         </View>
       </Card>
 
-      <View className="px-4 mt-6 mb-4">
-        <Text className="text-lg font-semibold text-foreground mb-4">My Posts</Text>
-        {postsLoading ? (
-          <View className="items-center py-8">
-            <ActivityIndicator size="small" />
-            <Text className="text-muted-foreground mt-2">Loading posts...</Text>
-          </View>
-        ) : !userPosts || userPosts.length === 0 ? (
-          <Card className="p-6 bg-card">
-            <Text className="text-center text-muted-foreground">You haven't shared any posts yet.</Text>
-          </Card>
-        ) : (
-          <View>
-            {userPosts.map((post: any) => {
-              const postWithAuthor = {
-                ...post,
-                author: post.author || {
-                  id: profileData.id,
-                  name: profileData.name,
-                  image: profileData.image,
-                  type: profileData.type,
-                },
-              };
-              return <PostCard key={post.id} post={postWithAuthor} />;
-            })}
-          </View>
-        )}
+      <View className="mt-6 mb-4 px-4">
+        <Text className="text-lg font-semibold text-foreground">My Posts</Text>
       </View>
-    </ScrollView>
+    </>
+  );
+
+  return (
+    <View className="flex-1 bg-background">
+      <InfinitePostsView
+        data={postsData}
+        isLoading={postsLoading}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        refetch={refetchPosts}
+        emptyMessage="You haven't shared any posts yet."
+        showAuthor={false}
+        ListHeaderComponent={ProfileHeader}
+      />
+    </View>
   );
 }
 
