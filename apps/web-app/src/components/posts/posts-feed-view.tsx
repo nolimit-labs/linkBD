@@ -1,4 +1,4 @@
-import { useInfinitePostsFeed, useDeletePost } from '@/api'
+import { useGetPostsFeed, useDeletePost } from '@/api'
 import { PostCard } from './post-card'
 import { Loader2 } from 'lucide-react'
 import { useSession } from '@/lib/auth-client'
@@ -17,7 +17,7 @@ export function PostsFeedView() {
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage 
-  } = useInfinitePostsFeed(4)
+  } = useGetPostsFeed(4)
   
   console.log('data', data)
   // Flatten all pages into a single posts array
@@ -75,30 +75,32 @@ export function PostsFeedView() {
   }
   
   return (
-    <div className="space-y-6">
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          onDelete={
-            session?.user?.id === post.userId 
-              ? () => handleDeletePost(post.id)
-              : undefined
-          }
-        />
-      ))}
-      
-      {/* Infinite scroll trigger */}
-      <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
-        {isFetchingNextPage && (
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm text-muted-foreground">Loading more posts...</span>
-          </div>
-        )}
-        {!hasNextPage && posts.length > 0 && (
-          <p className="text-sm text-muted-foreground">You've reached the end!</p>
-        )}
+    <div className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+      <div className="space-y-6 p-6">
+        {posts.map((post) => (
+          <PostCard
+            key={post.id}
+            post={post}
+            onDelete={
+              session?.user?.id === post.userId 
+                ? () => handleDeletePost(post.id)
+                : undefined
+            }
+          />
+        ))}
+        
+        {/* Infinite scroll trigger */}
+        <div ref={loadMoreRef} className="h-20 flex items-center justify-center">
+          {isFetchingNextPage && (
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm text-muted-foreground">Loading more posts...</span>
+            </div>
+          )}
+          {!hasNextPage && posts.length > 0 && (
+            <p className="text-sm text-muted-foreground">You've reached the end!</p>
+          )}
+        </div>
       </div>
     </div>
   )

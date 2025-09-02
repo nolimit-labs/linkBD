@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS "idx_posts_user_created_at" ON "posts" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "idx_posts_org_created_at" ON "posts" USING btree ("organization_id","created_at" DESC NULLS LAST);

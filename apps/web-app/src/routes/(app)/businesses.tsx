@@ -1,14 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useSearch, useOrganizations } from '@/api'
+import { useSearch, useOrganizations, useFeaturedOrganizations } from '@/api'
 import { PageHeader } from '@/components/layout/page-header'
 import { SearchBar } from '@/components/layout/search-bar'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { Building2, Loader2, Search as SearchIcon } from 'lucide-react'
+import { Building2, Loader2, Search as SearchIcon, Star } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { useDebounce } from '@/hooks/use-debounce'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
+import { FeaturedBusinessCard } from '@/components/businesses/featured-business-card'
 
 export const Route = createFileRoute('/(app)/businesses')({
   component: BusinessesPage,
@@ -18,17 +20,19 @@ function BusinessesPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedQuery = useDebounce(searchQuery, 300)
 
-  // Get all organizations by default
-  const { data: allOrganizations, isLoading: allLoading } = useOrganizations(10)
+  // Get featured organizations by default
+  const { data: featuredOrgs, isLoading: featuredLoading } = useFeaturedOrganizations(4)
   
   // Search only for organizations when there's a query
   const { data: searchResults, isLoading: searchLoading } = useSearch(debouncedQuery, 'organization')
 
+  // Show logic: search takes priority, then featured
   const businesses = searchQuery 
     ? searchResults?.organizations || []
-    : allOrganizations?.organizations || []
+    : featuredOrgs?.organizations || []
   
-  const isLoading = searchQuery ? searchLoading : allLoading
+  const isLoading = searchQuery ? searchLoading : featuredLoading
+  const showingFeatured = !searchQuery && featuredOrgs?.organizations && featuredOrgs.organizations.length > 0
 
   return (
     <div className="space-y-6">
@@ -72,31 +76,39 @@ function BusinessesPage() {
         {businesses.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold mb-4">
-              {searchQuery ? `Search Results (${businesses.length})` : `All Businesses (${businesses.length})`}
+              {searchQuery 
+                ? `Search Results (${businesses.length})` 
+                : showingFeatured 
+                  ? `Featured Businesses (${businesses.length})`
+                  : `All Businesses (${businesses.length})`}
             </h2>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 md:grid-cols-2">
               {businesses.map((business) => (
-                <Link
-                  key={business.id}
-                  to="/profile/$id"
-                  params={{ id: business.id }}
-                  className="block"
-                >
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col items-center text-center">
-                        <Avatar className="h-20 w-20 mb-4">
-                          <AvatarImage src={business.imageUrl || undefined} />
-                          <AvatarFallback>
-                            <Building2 className="h-10 w-10" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <h3 className="font-semibold text-lg">{business.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">Business </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                showingFeatured ? (
+                  <FeaturedBusinessCard key={business.id} business={business} />
+                ) : (
+                  <Link
+                    key={business.id}
+                    to="/profile/$id"
+                    params={{ id: business.id }}
+                    className="block"
+                  >
+                    <Card className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col items-center text-center">
+                          <Avatar className="h-20 w-20 mb-4">
+                            <AvatarImage src={business.imageUrl || undefined} />
+                            <AvatarFallback>
+                              <Building2 className="h-10 w-10" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <h3 className="font-semibold text-lg">{business.name}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Business</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                )
               ))}
             </div>
           </div>

@@ -86,6 +86,19 @@ export async function getOrgProfileForAdmin(organizationId: string) {
   };
 }
 
+// Update organization featured status (admin only)
+export async function updateOrganizationFeaturedStatus(
+  organizationId: string, 
+  isFeatured: boolean
+) {
+  const updateData = {
+    isFeatured,
+    featuredAt: isFeatured ? new Date() : null,
+  };
+  
+  return await organizationModel.updateOrg(organizationId, updateData);
+}
+
 // =====================================================================
 // Migration Management Functions
 // =====================================================================
@@ -421,3 +434,4 @@ export async function batchDeleteOrphans(type: 'todo' | 'file', ids: string[]) {
     deletedIds: results,
   };
 }
+

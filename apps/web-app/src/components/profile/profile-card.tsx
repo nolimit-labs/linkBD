@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
-import { Calendar, Building2 } from 'lucide-react'
+import { Calendar, Building2, User } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 
 type ProfileCardProps = {
@@ -22,17 +22,17 @@ export function ProfileCard({ profile }: ProfileCardProps) {
   
   return (
     <Card className="sticky">
-      <CardContent className="px-2 pt-2 mx-auto">
+      <CardContent className="px-6">
         <div className="space-y-6">
           {/* Profile Header - Avatar on top centered, Name below left-aligned */}
           <div>
-            <Avatar className="h-64 w-64 mb-6 rounded-lg">
-              <AvatarImage src={profile.image || undefined} className="rounded-lg" />
-              <AvatarFallback className="text-3xl rounded-lg">
+            <Avatar className="h-full w-full max-h-70 max-w-70 mx-auto mb-6 rounded-lg">
+              <AvatarImage src={profile.image || undefined} className="rounded-lg object-cover" />
+              <AvatarFallback className="text-3xl rounded-lg object-cover">
                 {isOrganization ? (
-                  <Building2 className="h-16 w-16" />
+                  <Building2 className="h-full w-full p-20" />
                 ) : (
-                  profile.name?.charAt(0) || '?'
+                  <User className="h-full w-full p-20" />
                 )}
               </AvatarFallback>
             </Avatar>
@@ -62,7 +62,7 @@ export function ProfileCard({ profile }: ProfileCardProps) {
           {profile.description && (
             <div className="space-y-2">
               <h3 className="text-sm font-semibold">About</h3>
-              <p className="text-sm text-muted-foreground">{profile.description}</p>
+              <p className="text-sm text-muted-foreground break-words">{profile.description}</p>
             </div>
           )}
 

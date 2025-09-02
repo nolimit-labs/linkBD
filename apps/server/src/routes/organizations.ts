@@ -3,6 +3,8 @@ import { authMiddleware, type AuthVariables } from '../middleware/auth';
 import { z } from 'zod';
 import { zValidator } from '@hono/zod-validator';
 import * as orgModel from '../models/organization';
+import * as adminModel from '../models/admin';
+import * as subscriptionModel from '../models/subscriptions';
 import { generateDownloadURL } from '../lib/storage';
 
 const listSchema = z.object({
@@ -16,7 +18,41 @@ const updateSchema = z.object({
   imageKey: z.string().optional(),
 });
 
+const featuredSchema = z.object({
+  limit: z.string().optional().transform(val => val ? parseInt(val) : 6),
+});
+
+const featuredStatusSchema = z.object({
+  isFeatured: z.boolean(),
+});
+
 const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
+  // Get featured organizations (limited list)
+  .get('/featured', authMiddleware, zValidator('query', featuredSchema), async (c) => {
+    const { limit } = c.req.valid('query');
+    
+    try {
+      const featuredOrgs = await orgModel.getFeaturedOrganizations(limit);
+      
+      const organizationsWithImages = await Promise.all(
+        featuredOrgs.map(async (org) => {
+          const owner = await orgModel.getOrgOwner(org.id);
+          const subscription = owner ? await subscriptionModel.getUserActiveSubscription(owner.userId) : null;
+          return {
+            ...org,
+            imageUrl: await generateDownloadURL(org.imageKey),
+            subscriptionPlan: subscription?.plan || 'free',
+          };
+        })
+      );
+      
+      return c.json({ organizations: organizationsWithImages });
+    } catch (error) {
+      console.error('Failed to fetch featured organizations:', error);
+      return c.json({ error: 'Failed to fetch featured organizations' }, 500);
+    }
+  })
+  
   // Get list of organizations
   .get('/', authMiddleware, zValidator('query', listSchema), async (c) => {
     const { limit, offset } = c.req.valid('query');
@@ -65,6 +101,31 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
     } catch (error) {
       console.error('Failed to fetch organization:', error);
       return c.json({ error: 'Failed to fetch organization' }, 500);
+    }
+  })
+  
+  // Update featured status (admin only)
+  .patch('/:id/featured', authMiddleware, zValidator('json', featuredStatusSchema), async (c) => {
+    const { user } = c.get('session');
+    const organizationId = c.req.param('id');
+    const { isFeatured } = c.req.valid('json');
+    
+    // TODO: Add admin role check when admin roles are implemented
+    
+    try {
+      const updatedOrg = await adminModel.updateOrganizationFeaturedStatus(
+        organizationId, 
+        isFeatured
+      );
+      
+      if (!updatedOrg) {
+        return c.json({ error: 'Organization not found' }, 404);
+      }
+      
+      return c.json(updatedOrg);
+    } catch (error) {
+      console.error('Failed to update featured status:', error);
+      return c.json({ error: 'Failed to update featured status' }, 500);
     }
   })
   

@@ -18,8 +18,7 @@ export interface ExtendedStripePlan extends StripePlan {
 
 // Strongly typed plan limits interface
 export interface PlanLimits {
-  posts: number;
-  files: number;
+  postsPerDay: number;
 }
 
 
@@ -28,8 +27,7 @@ export const SUBSCRIPTION_PLANS: ExtendedStripePlan[] = [
   {
     name: 'free',
     limits: {
-      posts: 5,
-      files: 5,
+      postsPerDay: 1,
     },
     isActive: true,
   },
@@ -37,16 +35,14 @@ export const SUBSCRIPTION_PLANS: ExtendedStripePlan[] = [
     name: 'pro',
     priceId: STRIPE_PRO_PRICE_ID,
     limits: {
-      posts: 20,
-      files: 20,
+      postsPerDay: 20,
     },
     isActive: true,
   },
   {
     name: 'pro_complementary',
     limits: {
-      posts: 20,
-      files: 20,
+      postsPerDay: 20,
     },
     isActive: true,
   },
@@ -68,8 +64,7 @@ export function getPlanLimits(planName: string): PlanLimits | null {
   if (!plan || !plan.limits) return null;
 
   return {
-    posts: plan.limits.posts,
-    files: plan.limits.files,
+    postsPerDay: plan.limits.postsPerDay,
   };
 }
 

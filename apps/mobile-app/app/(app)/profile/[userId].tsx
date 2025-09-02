@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, ScrollView, Image, ActivityIndicator } from 'react-native';
+import { View, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from '~/components/ui/text';
 import { Card } from '~/components/ui/card';
+import { BadgeText } from '~/components/ui/badge';
 import { useGetProfile, useGetPostsByAuthor } from '~/api/profile';
-import { PostCard } from '~/components/posts/post-card';
+import { InfinitePostsView } from '~/components/posts/infinite-posts-view';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams<{ userId: string }>();
@@ -12,8 +13,15 @@ export default function UserProfileScreen() {
   // Fetch profile data
   const { data: profile, isLoading: profileLoading, error: profileError } = useGetProfile(userId);
   
-  // Fetch user's posts
-  const { data: userPosts, isLoading: postsLoading } = useGetPostsByAuthor(userId);
+  // Fetch user's posts with infinite scroll
+  const { 
+    data: postsData, 
+    isLoading: postsLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchPosts
+  } = useGetPostsByAuthor(userId);
 
   if (profileLoading) {
     return (
@@ -46,9 +54,13 @@ export default function UserProfileScreen() {
     });
   };
 
-  return (
-    <ScrollView className="flex-1 bg-background">
-      {/* Profile Header */}
+  // Calculate total posts count from all pages
+  const totalPostsCount = postsData?.pages.reduce((total, page) => 
+    total + (page.posts?.length || 0), 0) || 0;
+
+  // Profile header component for ListHeaderComponent
+  const ProfileHeader = () => (
+    <>
       <Card className="mx-4 mt-4 p-6 bg-card">
         <View className="items-center">
           {/* Avatar */}
@@ -65,16 +77,37 @@ export default function UserProfileScreen() {
             </View>
           )}
           
-          {/* Name and Type */}
-          <Text className="text-2xl font-bold text-foreground mb-1">
-            {profile.name}
-          </Text>
-          {isOrganization && (
-            <View className="bg-secondary px-3 py-1 rounded-full mb-3">
-              <Text className="text-xs text-secondary-foreground">
-                🏢 Business Account
-              </Text>
+          {/* Name and Badges */}
+          <View className="items-center">
+            <Text className="text-2xl font-bold text-foreground mb-2">
+              {profile.name}
+            </Text>
+            
+            {/* Badges */}
+            <View className="flex-row gap-2 mb-2">
+              {isOrganization && (
+                <BadgeText variant="secondary">
+                  Business
+                </BadgeText>
+              )}
+              {profile.isOfficial && (
+                <BadgeText variant="default">
+                  ✓ Official
+                </BadgeText>
+              )}
+              {profile.subscriptionPlan && profile.subscriptionPlan !== 'free' && (
+                <BadgeText variant="outline">
+                  {profile.subscriptionPlan}
+                </BadgeText>
+              )}
             </View>
+          </View>
+
+          {/* Bio/Description if available (for organizations) */}
+          {isOrganization && 'description' in profile && profile.description && (
+            <Text className="text-sm text-muted-foreground text-center mt-3 px-4">
+              {profile.description}
+            </Text>
           )}
         </View>
 
@@ -85,7 +118,7 @@ export default function UserProfileScreen() {
         <View className="flex-row justify-around">
           <View className="items-center">
             <Text className="text-lg font-semibold text-foreground">
-              {userPosts?.length || 0}
+              {totalPostsCount}
             </Text>
             <Text className="text-sm text-muted-foreground">Posts</Text>
           </View>
@@ -105,43 +138,33 @@ export default function UserProfileScreen() {
             {isOrganization ? 'Established' : 'Joined'} {formatJoinDate(profile.createdAt)}
           </Text>
         </View>
+
+        {/* Follow Button (if not viewing own profile) */}
+        {/* TODO: Add follow functionality */}
       </Card>
 
-      {/* Posts Section */}
-      <View className="px-4 mt-6 mb-4">
-        <Text className="text-lg font-semibold text-foreground mb-4">
-          Posts
+      {/* Posts Section Header */}
+      <View className="mt-6 mb-4 px-4">
+        <Text className="text-lg font-semibold text-foreground">
+          {isOrganization ? 'Updates' : 'Posts'}
         </Text>
-        
-        {postsLoading ? (
-          <View className="items-center py-8">
-            <ActivityIndicator size="small" />
-            <Text className="text-muted-foreground mt-2">Loading posts...</Text>
-          </View>
-        ) : !userPosts || userPosts.length === 0 ? (
-          <Card className="p-6 bg-card">
-            <Text className="text-center text-muted-foreground">
-              {profile.name} hasn't shared any posts yet.
-            </Text>
-          </Card>
-        ) : (
-          <View>
-            {userPosts.map((post: any) => {
-              // Add author information to post if missing
-              const postWithAuthor = {
-                ...post,
-                author: post.author || {
-                  id: profile.id,
-                  name: profile.name,
-                  image: profile.image,
-                  type: profile.type
-                }
-              };
-              return <PostCard key={post.id} post={postWithAuthor} />;
-            })}
-          </View>
-        )}
       </View>
-    </ScrollView>
+    </>
+  );
+
+  return (
+    <View className="flex-1 bg-background">
+      <InfinitePostsView
+        data={postsData}
+        isLoading={postsLoading}
+        isFetchingNextPage={isFetchingNextPage}
+        hasNextPage={hasNextPage}
+        fetchNextPage={fetchNextPage}
+        refetch={refetchPosts}
+        emptyMessage={`${profile.name} hasn't shared any posts yet.`}
+        showAuthor={false}
+        ListHeaderComponent={ProfileHeader}
+      />
+    </View>
   );
 }

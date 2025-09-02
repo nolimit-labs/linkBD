@@ -1,4 +1,4 @@
-import { Heart, MessageCircle, Share, MoreVertical, Check } from 'lucide-react'
+import { Heart, MessageCircle, Share, MoreVertical, Check, Building2, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -49,10 +49,14 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
             params={{ id: author?.id || post.userId || '' }}
             className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
           >
-            <Avatar className="h-12 w-12">
+            <Avatar className="h-12 w-12 rounded-lg">
               <AvatarImage src={author?.image || ''} />
-              <AvatarFallback>
-                {author?.name?.charAt(0) || '?'}
+              <AvatarFallback className="text-3xl rounded-lg object-cover">
+                {author?.type === 'organization' ? (
+                  <Building2 className="h-full w-full p-3" />
+                ) : (
+                  <User className="h-full w-full p-3" />
+                )}
               </AvatarFallback>
             </Avatar>
 
@@ -63,13 +67,13 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                   {author?.name || 'Unknown User'}
                 </h4>
                 {author?.isOfficial && (
-                  <Badge variant="default" className="text-sm">
+                  <Badge variant="default" className="text-xs">
                     Official
                   </Badge>
                 )}
                 {(author?.subscriptionPlan === 'pro' || 
                   author?.subscriptionPlan === 'pro_complementary') && (
-                  <Badge variant="default" className="text-sm bg-secondary text-secondary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg">
+                  <Badge variant="default" className="text-10 bg-secondary text-secondary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg">
                     Premium
                   </Badge>
                 )}

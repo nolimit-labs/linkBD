@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Image, TouchableOpacity } from 'react-native';
 import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
+import { BadgeText } from '~/components/ui/badge';
 import { useRouter } from 'expo-router';
 
 // Post type definition based on the API response
@@ -25,9 +26,10 @@ type Post = {
 
 interface PostCardProps {
   post: Post;
+  showAuthor?: boolean;
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, showAuthor = true }: PostCardProps) {
   const router = useRouter();
 
   // Navigate to user profile when author is tapped
@@ -50,43 +52,50 @@ export function PostCard({ post }: PostCardProps) {
 
   return (
     <Card className="mb-4 p-4 bg-card">
-      {/* Author info - Clickable */}
-      <TouchableOpacity onPress={handleAuthorPress}>
-        <View className="flex-row items-center mb-3">
-          {post.author.image ? (
-            <Image
-              source={{ uri: post.author.image }}
-              className="w-10 h-10 rounded-full mr-3"
-            />
-          ) : (
-            <View className="w-10 h-10 rounded-full bg-muted mr-3 items-center justify-center">
-              <Text className="text-lg font-semibold">
-                {post.author.name?.charAt(0) || '?'}
-              </Text>
-            </View>
-          )}
-          <View className="flex-1">
-            <View className="flex-row items-center">
-              <Text className="font-semibold text-foreground">{post.author.name}</Text>
-              {post.author.isOfficial && (
-                <View className="ml-1 bg-primary px-2 py-0.5 rounded-md">
-                  <Text className="text-primary-foreground text-xs font-medium">
-                    Official
-                  </Text>
-                </View>
-              )}
-            </View>
-            <View className="flex-row items-center">
-              <Text className="text-xs text-muted-foreground">
-                {post.author.type === 'organization' ? '🏢 Organization' : 'User'}
-              </Text>
-              <Text className="text-xs text-muted-foreground ml-2">
-                • {formatDate(post.updatedAt)}
-              </Text>
+      {/* Author info - Clickable (only show if showAuthor is true) */}
+      {showAuthor && (
+        <TouchableOpacity onPress={handleAuthorPress}>
+          <View className="flex-row items-center mb-3">
+            {post.author.image ? (
+              <Image
+                source={{ uri: post.author.image }}
+                className="w-10 h-10 rounded-full mr-3"
+              />
+            ) : (
+              <View className="w-10 h-10 rounded-full bg-muted mr-3 items-center justify-center">
+                <Text className="text-lg font-semibold">
+                  {post.author.name?.charAt(0) || '?'}
+                </Text>
+              </View>
+            )}
+            <View className="flex-1">
+              <View className="flex-row items-center gap-2">
+                <Text className="font-semibold text-foreground">{post.author.name}</Text>
+                {post.author.isOfficial && (
+                  <BadgeText variant="default">
+                    ✓ Official
+                  </BadgeText>
+                )}
+              </View>
+              <View className="flex-row items-center">
+                <Text className="text-xs text-muted-foreground">
+                  {post.author.type === 'organization' ? '🏢 Organization' : 'User'}
+                </Text>
+                <Text className="text-xs text-muted-foreground ml-2">
+                  • {formatDate(post.updatedAt)}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      )}
+      
+      {/* Show timestamp when author is hidden */}
+      {!showAuthor && (
+        <Text className="text-xs text-muted-foreground mb-2">
+          {formatDate(post.updatedAt)}
+        </Text>
+      )}
 
       {/* Post content */}
       <Text className="mb-3 text-foreground">{post.content}</Text>

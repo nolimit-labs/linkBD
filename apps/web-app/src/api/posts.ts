@@ -6,7 +6,7 @@ import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
 // Infinite scroll version of posts feed
-export const useInfinitePostsFeed = (limit = 10) => {
+export const useGetPostsFeed = (limit = 10) => {
   return useInfiniteQuery({
     queryKey: ['posts', 'feed', 'infinite', limit],
     queryFn: async ({ pageParam }) => {
@@ -14,7 +14,7 @@ export const useInfinitePostsFeed = (limit = 10) => {
         query: {
           cursor: pageParam,
           limit: limit.toString(),
-          sortBy: 'popular', // Used in order by clause, popular posts first
+          sortBy: 'newest', // Used in order by clause, popular posts first
         },
       });
       
@@ -33,12 +33,20 @@ export const useInfinitePostsFeed = (limit = 10) => {
 };
 
 // Get posts for specific author (user or organization)
-export const useGetPostsByAuthor = (authorId: string) => {
-  return useQuery({
+
+
+// Infinite scroll version of posts by author
+export const useGetPostsByAuthor = (authorId: string, limit = 20) => {
+  return useInfiniteQuery({
     queryKey: queryKeys.posts.byAuthor(authorId),
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       const response = await rpcClient.api.posts.$get({
-        query: { authorId },
+        query: {
+          authorId,
+          cursor: pageParam,
+          limit: limit.toString(),
+          sortBy: 'newest', // Default to newest posts first
+        },
       });
       
       if (!response.ok) {
@@ -47,7 +55,12 @@ export const useGetPostsByAuthor = (authorId: string) => {
       
       return response.json();
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination.hasMore ? lastPage.pagination.nextCursor : undefined;
+    },
     enabled: !!authorId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
 
@@ -67,6 +80,22 @@ export const usePost = (postId: string) => {
       return response.json();
     },
     enabled: !!postId,
+  });
+};
+
+// Get current post limits and usage
+export const usePostLimits = () => {
+  return useQuery({
+    queryKey: queryKeys.posts.limits(),
+    queryFn: async () => {
+      const response = await rpcClient.api.posts.limits.$get();
+      if (!response.ok) {
+        throw new Error('Failed to fetch post limits');
+      }
+      return response.json();
+    },
+    refetchInterval: 60000, // Refetch every minute to update counts
+    staleTime: 30000, // Consider data stale after 30 seconds
   });
 };
 

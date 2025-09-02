@@ -2,20 +2,22 @@ import { createMiddleware } from 'hono/factory'
 import { auth } from '../auth'
 import { db } from '../db'
 import { posts } from '../db/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, gte, lt } from 'drizzle-orm'
 import { count } from 'drizzle-orm'
+import { getPlanLimits } from '../db/admin/plans/data'
+import { Session } from '../auth'
 
 // Type for context variables set by subscription middleware
 export type SubscriptionVariables = {
   subscription: any
-  postCount: number
-  postLimit: number
+  dailyPostCount: number
+  dailyPostLimit: number
 }
 
 // Middleware to check subscription limits before creating any new resources
 export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
   try {
-    const { activeOrganizationId, userId } = c.get('session')
+    const { session: { activeOrganizationId, userId } } = c.get('session') as Session
 
     // Determine which subscription to check (organization or personal)
     const referenceId = activeOrganizationId || userId
@@ -31,41 +33,53 @@ export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
       (sub: any) => sub.status === 'active' || sub.status === 'trialing'
     )
 
-    // Get post limit from active subscription or default to free plan
-    const postLimit = activeSubscription?.limits?.posts || 5 // Default to free plan limit
+    // Get plan limits using helper function
     const currentPlan = activeSubscription?.plan || 'free'
+    const planLimits = getPlanLimits(currentPlan)
+    const dailyPostLimit = planLimits?.postsPerDay || 1
 
-    // Get current post count based on context
-    const postCountResult = activeOrganizationId
+    // Get today's post count (UTC timezone)
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+
+    const todaysPostCount = activeOrganizationId
       ? await db
         .select({ count: count() })
         .from(posts)
-        .where(eq(posts.organizationId, activeOrganizationId))
+        .where(and(
+          eq(posts.organizationId, activeOrganizationId),
+          gte(posts.createdAt, today),
+          lt(posts.createdAt, tomorrow)
+        ))
       : await db
         .select({ count: count() })
         .from(posts)
         .where(and(
           eq(posts.userId, userId),
-          isNull(posts.organizationId)
+          isNull(posts.organizationId),
+          gte(posts.createdAt, today),
+          lt(posts.createdAt, tomorrow)
         ))
 
-    const currentPostCount = postCountResult[0]?.count || 0
+    const currentDailyCount = todaysPostCount[0]?.count || 0
 
-    // Check if user has reached their post limit
-    if (currentPostCount >= postLimit) {
+    // Check if user has reached their daily post limit
+    if (currentDailyCount >= dailyPostLimit) {
       return c.json({
         error: 'Post limit reached',
-        message: `You have reached your limit of ${postLimit} posts on the ${currentPlan} plan. Please upgrade to create more posts.`,
-        currentCount: currentPostCount,
-        limit: postLimit,
+        message: `You have reached your daily limit of ${dailyPostLimit} posts on the ${currentPlan} plan. Try again tomorrow.`,
+        currentCount: currentDailyCount,
+        dailyLimit: dailyPostLimit,
         plan: currentPlan
       }, 403)
     }
 
     // Add subscription info to context for potential use in handlers
     c.set('subscription', activeSubscription)
-    c.set('postCount', currentPostCount)
-    c.set('postLimit', postLimit)
+    c.set('dailyPostCount', currentDailyCount)
+    c.set('dailyPostLimit', dailyPostLimit)
 
     await next()
   } catch (error) {
@@ -77,7 +91,7 @@ export const subscriptionLimitMiddleware = createMiddleware(async (c, next) => {
 // Middleware to get subscription info without blocking (for informational purposes)
 export const subscriptionInfoMiddleware = createMiddleware(async (c, next) => {
   try {
-    const { activeOrganizationId, userId } = c.get('session')
+    const { session: { activeOrganizationId, userId } } = c.get('session') as Session
 
     // Determine which subscription to check (organization or personal)
     const referenceId = activeOrganizationId || userId
@@ -93,29 +107,42 @@ export const subscriptionInfoMiddleware = createMiddleware(async (c, next) => {
       (sub: any) => sub.status === 'active' || sub.status === 'trialing'
     )
 
-    // Get post limit from active subscription or default to free plan
-    const postLimit = activeSubscription?.limits?.posts || 5 // Default to free plan limit
+    // Get plan limits using helper function
+    const currentPlan = activeSubscription?.plan || 'free'
+    const planLimits = getPlanLimits(currentPlan)
+    const dailyPostLimit = planLimits?.postsPerDay || 1
 
-    // Get current post count based on context
-    const postCountResult = activeOrganizationId
+    // Get today's post count (UTC timezone)
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+    const tomorrow = new Date(today)
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1)
+
+    const todaysPostCount = activeOrganizationId
       ? await db
         .select({ count: count() })
         .from(posts)
-        .where(eq(posts.organizationId, activeOrganizationId))
+        .where(and(
+          eq(posts.organizationId, activeOrganizationId),
+          gte(posts.createdAt, today),
+          lt(posts.createdAt, tomorrow)
+        ))
       : await db
         .select({ count: count() })
         .from(posts)
         .where(and(
           eq(posts.userId, userId),
-          isNull(posts.organizationId)
+          isNull(posts.organizationId),
+          gte(posts.createdAt, today),
+          lt(posts.createdAt, tomorrow)
         ))
 
-    const currentPostCount = postCountResult[0]?.count || 0
+    const currentDailyCount = todaysPostCount[0]?.count || 0
 
     // Add subscription info to context
     c.set('subscription', activeSubscription)
-    c.set('postCount', currentPostCount)
-    c.set('postLimit', postLimit)
+    c.set('dailyPostCount', currentDailyCount)
+    c.set('dailyPostLimit', dailyPostLimit)
 
     await next()
   } catch (error) {

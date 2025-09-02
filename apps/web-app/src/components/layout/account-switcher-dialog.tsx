@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { CreateOrganizationDialog } from "@/components/organization/create-organization-dialog"
+import { CreateBusainessAccountDialog } from "@/components/businesses/create-business-account-dialog"
 import { cn } from "@/lib/utils"
 
 interface AccountSwitcherProps {
@@ -120,7 +120,7 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
           <Separator className="my-3" />
           
           {/* Create Organization Button */}
-          <CreateOrganizationDialog
+          <CreateBusainessAccountDialog
             trigger={
               <Button
                 variant="outline"

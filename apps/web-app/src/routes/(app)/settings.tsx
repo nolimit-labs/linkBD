@@ -5,6 +5,7 @@ import { AccountSettings } from '@/components/settings/personal-account-settings
 import { SystemSettings } from '@/components/settings/system-settings'
 import { DeveloperSettings } from '@/components/settings/developer-settings'
 import { BusinessAccountSettings } from '@/components/settings/business-account-settings'
+import { BillingSettings } from '@/components/settings/billing-settings'
 import { useState } from 'react'
 import { useActiveOrganization } from '@/lib/auth-client'
 import { env } from '@/lib/env'
@@ -22,6 +23,10 @@ const tabHeaders = {
     title: "Organization Settings",
     description: "Manage your organization's settings and members"
   },
+  billing: {
+    title: "Billing",
+    description: "Manage your subscription and billing details"
+  },
   system: {
     title: "System Settings",
     description: "Configure your settings related to the application"
@@ -32,7 +37,7 @@ const tabHeaders = {
   }
 }
 
-type TabType = 'account' | 'organization' | 'system' | 'developer'
+type TabType = 'account' | 'organization' | 'billing' | 'system' | 'developer'
 
 function SettingsPage() {
   const { data: activeOrg } = useActiveOrganization()
@@ -55,6 +60,7 @@ function SettingsPage() {
               {activeOrg && (
                 <TabsTrigger value="organization" className="flex-1">Business Account</TabsTrigger>
               )}
+              <TabsTrigger value="billing" className="flex-1">Billing</TabsTrigger>
               <TabsTrigger value="system" className="flex-1">System</TabsTrigger>
               {isDevelopment && (
                 <TabsTrigger value="developer" className="flex-1">Developer</TabsTrigger>
@@ -68,6 +74,9 @@ function SettingsPage() {
                 <BusinessAccountSettings />
               </TabsContent>
             )}
+            <TabsContent value="billing">
+              <BillingSettings />
+            </TabsContent>
             <TabsContent value="system">
               <SystemSettings />
             </TabsContent>

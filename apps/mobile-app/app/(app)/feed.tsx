@@ -3,7 +3,7 @@ import { View, KeyboardAvoidingView, Platform, FlatList, ActivityIndicator, Refr
 import { useRouter } from 'expo-router';
 import { Text } from '~/components/ui/text';
 import { useSession } from '~/api/auth';
-import { useInfinitePostsFeed } from '~/api/posts';
+import { useGetPostsFeed } from '~/api/posts';
 import { PostCard } from '~/components/posts/post-card';
 
 export default function TodosScreen() {
@@ -20,21 +20,19 @@ export default function TodosScreen() {
     isLoading,
     refetch,
     isRefetching,
-  } = useInfinitePostsFeed(10);
+  } = useGetPostsFeed(10);
 
-  // Flatten all pages of posts into a single array
-  const posts = data?.pages.flatMap(page => page.posts) || [];
-
-
-  if (isPending || (!session && isPending)) {
-    return (
-      <View className="flex-1 items-center justify-center gap-2">
-        <Text className="text-muted-foreground">Checking session…</Text>
-      </View>
+  // Flatten all pages of posts into a single array and deduplicate
+  const posts = React.useMemo(() => {
+    const allPosts = data?.pages.flatMap(page => page.posts) || [];
+    // Deduplicate posts by ID to prevent React key warnings
+    const uniquePosts = Array.from(
+      new Map(allPosts.map(post => [post.id, post])).values()
     );
-  }
+    return uniquePosts;
+  }, [data]);
 
-  if (!session) return null;
+
 
   // Render individual post item using PostCard component
   const renderPost = ({ item }: { item: any }) => <PostCard post={item} />;

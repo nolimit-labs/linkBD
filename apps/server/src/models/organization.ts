@@ -165,6 +165,27 @@ export async function getUserRoleInOrganization(userId: string, organizationId: 
   return members[0]?.role || null;
 }
 
+// Get organization owner (user with 'owner' role)
+export async function getOrgOwner(organizationId: string) {
+  const owners = await db
+    .select({
+      userId: member.userId,
+      userName: user.name,
+      userEmail: user.email,
+    })
+    .from(member)
+    .leftJoin(user, eq(member.userId, user.id))
+    .where(
+      and(
+        eq(member.organizationId, organizationId),
+        eq(member.role, 'owner')
+      )
+    )
+    .limit(1);
+
+  return owners[0] || null;
+}
+
 
 // Get organization by slug
 export async function getOrgBySlug(slug: string) {
@@ -273,6 +294,8 @@ export async function updateOrg(
     description?: string | null;
     metadata?: string | null;
     stripeCustomerId?: string | null;
+    isFeatured?: boolean;
+    featuredAt?: Date | null;
   }
 ) {
   const updatedOrganizations = await db
@@ -282,6 +305,28 @@ export async function updateOrg(
     .returning();
 
   return updatedOrganizations[0] || null;
+}
+
+// Get featured organizations with server-side limit enforcement
+export async function getFeaturedOrganizations(limit = 6) {
+  const maxLimit = Math.min(limit, 12); // Server-side limit enforcement
+  
+  return await db
+    .select({
+      id: organization.id,
+      name: organization.name,
+      slug: organization.slug,
+      imageKey: organization.imageKey,
+      description: organization.description,
+      createdAt: organization.createdAt,
+      isFeatured: organization.isFeatured,
+      featuredAt: organization.featuredAt,
+      isOfficial: organization.isOfficial,
+    })
+    .from(organization)
+    .where(eq(organization.isFeatured, true))
+    .orderBy(desc(organization.featuredAt))
+    .limit(maxLimit);
 }
 
 // Delete organization

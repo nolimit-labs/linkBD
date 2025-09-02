@@ -21,8 +21,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown, Building2 } from "lucide-react";
-import { useGetAllOrganizationsAsAdmin } from "@/api/organization";
+import { useGetAllOrganizationsAsAdmin, useUpdateOrganizationFeaturedStatus } from "@/api/organization";
 import { Link } from "@tanstack/react-router";
+import { Switch } from "@/components/ui/switch";
 
 export function OrganizationsTableView() {
   // Component State
@@ -30,8 +31,9 @@ export function OrganizationsTableView() {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  // Data Fetching
+  // Data Fetching & Mutations
   const { data, isLoading } = useGetAllOrganizationsAsAdmin();
+  const updateFeaturedStatus = useUpdateOrganizationFeaturedStatus();
   
   const list = data?.organizations ?? [];
   type Organization = (typeof list)[number];
@@ -102,7 +104,28 @@ export function OrganizationsTableView() {
         return <div className="text-sm text-muted-foreground">{date.toLocaleDateString()}</div>;
       },
     },
-  ], []);
+    {
+      id: "featured",
+      header: "Featured",
+      cell: ({ row }) => {
+        const org = row.original;
+        return (
+          <Switch
+            checked={org.isFeatured || false}
+            onCheckedChange={(checked) => 
+              updateFeaturedStatus.mutate({
+                organizationId: org.id,
+                isFeatured: checked,
+              })
+            }
+            disabled={updateFeaturedStatus.isPending}
+          />
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+  ], [updateFeaturedStatus]);
 
   const table = useReactTable<Organization>({
     data: list,

@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { rpcClient } from './rpc-client';
 
 // Get profile by ID (can be user or organization)
@@ -24,15 +24,20 @@ export const useGetProfile = (profileId: string | undefined) => {
   });
 };
 
-// Get posts for specific author (user or organization)
-export const useGetPostsByAuthor = (authorId: string | undefined) => {
-  return useQuery({
-    queryKey: ['posts', 'author', authorId],
-    queryFn: async () => {
-      if (!authorId) return [];
+// Infinite scroll version of posts by author
+export const useGetPostsByAuthor = (authorId: string | undefined, limit = 20) => {
+  return useInfiniteQuery({
+    queryKey: ['posts', 'author', authorId, 'infinite'],
+    queryFn: async ({ pageParam }) => {
+      if (!authorId) return { posts: [], pagination: { hasMore: false } };
       
       const response = await rpcClient.api.posts.$get({
-        query: { authorId },
+        query: {
+          authorId,
+          cursor: pageParam,
+          limit: limit.toString(),
+          sortBy: 'newest',
+        },
       });
       
       if (!response.ok) {
@@ -41,6 +46,13 @@ export const useGetPostsByAuthor = (authorId: string | undefined) => {
       
       return response.json();
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      return lastPage.pagination?.hasMore && 'nextCursor' in lastPage.pagination 
+        ? lastPage.pagination.nextCursor 
+        : undefined;
+    },
     enabled: !!authorId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
