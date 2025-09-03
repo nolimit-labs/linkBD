@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@better-auth/expo':
-        specifier: ^1.3.4
-        version: 1.3.6(better-auth@1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17))
+        specifier: ^1.3.7
+        version: 1.3.7(better-auth@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17))
       '@better-auth/stripe':
-        specifier: ^1.3.4
-        version: 1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
+        specifier: ^1.3.7
+        version: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
       better-auth:
-        specifier: ^1.3.4
-        version: 1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
+        specifier: ^1.3.7
+        version: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
     devDependencies:
       prettier:
         specifier: ^3.6.2
@@ -1290,16 +1290,16 @@ packages:
     resolution: {integrity: sha512-ruv7Ae4J5dUYULmeXw1gmb7rYRz57OWCPM57pHojnLq/3Z1CK2lNSLTCVjxVk1F/TZHwOZZrOWi0ur95BbLxNQ==}
     engines: {node: '>=6.9.0'}
 
-  '@better-auth/expo@1.3.6':
-    resolution: {integrity: sha512-11fM/r2wcrJRcRWx2FARUdjVRgy+Yj/yvkI8MuJ7l0vt1lzUBoGMnpRPIDU42Xou9fMOzUzp0MGkfjFzY6NsqA==}
+  '@better-auth/expo@1.3.7':
+    resolution: {integrity: sha512-S3EYFFzhxe7yZ8Cb6E44lpWXMY0oJ/RppYZ7GXvGdg8etgz5PwZPjIt8v4cf3Xa9wM4XGx5vluf2ZC2713uYAQ==}
     peerDependencies:
-      better-auth: 1.3.6
+      better-auth: 1.3.7
 
   '@better-auth/stripe@1.3.4':
     resolution: {integrity: sha512-sFHEOvLDwKe0ZYxqNTlfoshekiXkomnAcOEH7ARq0r7XImpPjpUR+GHc9+0CGTXTCn3LYljmBt0paTX1rhRNjw==}
 
-  '@better-auth/stripe@1.3.6':
-    resolution: {integrity: sha512-f4tsO5DLEOS1FhzpEE5QxtYjgxaAluy9ut9QsBp5uXx3dh38iFUOfrUuJTwxo2EdoqsEiRyIcFxH9ikMuzPrpQ==}
+  '@better-auth/stripe@1.3.7':
+    resolution: {integrity: sha512-hmcWJu9RB1IOf+Mb8izQyLOAkRFKes8O0j/VoIFwLR0l2zWTknXKzkLUjadFPeKXHtV3i2n2++prjuVev6F6zw==}
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
 
@@ -3823,8 +3823,8 @@ packages:
       react-dom:
         optional: true
 
-  better-auth@1.3.6:
-    resolution: {integrity: sha512-zjwbz9GpgGt3LuvJ8ZXfQeowSRpzdGojVvkhxvXjhCLwGOaOrZmFiNdEVyIKWTraN4oBtgNimcxUIQTGs6OKYg==}
+  better-auth@1.3.7:
+    resolution: {integrity: sha512-/1fEyx2SGgJQM5ujozDCh9eJksnVkNU/J7Fk/tG5Y390l8nKbrPvqiFlCjlMM+scR+UABJbQzA6An7HT50LHyQ==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
@@ -8673,10 +8673,10 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@better-auth/expo@1.3.6(better-auth@1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17))':
+  '@better-auth/expo@1.3.7(better-auth@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17))':
     dependencies:
       '@better-fetch/fetch': 1.1.18
-      better-auth: 1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
+      better-auth: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
       better-call: 1.0.13
       zod: 4.0.17
 
@@ -8688,9 +8688,9 @@ snapshots:
       - react
       - react-dom
 
-  '@better-auth/stripe@1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)':
+  '@better-auth/stripe@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)':
     dependencies:
-      better-auth: 1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
+      better-auth: 1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17)
       zod: 4.0.17
     transitivePeerDependencies:
       - react
@@ -12336,7 +12336,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  better-auth@1.3.6(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17):
+  better-auth@1.3.7(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(zod@4.0.17):
     dependencies:
       '@better-auth/utils': 0.2.6
       '@better-fetch/fetch': 1.1.18

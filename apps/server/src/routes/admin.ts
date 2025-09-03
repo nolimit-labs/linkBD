@@ -136,6 +136,35 @@ const adminRoutes = new Hono<{ Variables: AuthVariables }>()
     }
   })
 
+  // Delete user and all associated data (admin only)
+  .delete('/users/:userId', adminMiddleware, async (c) => {
+    try {
+      const userId = c.req.param('userId');
+      
+      // Delete the user and all their data
+      const result = await adminModel.deleteUserCompletely(userId);
+      
+      return c.json({
+        success: true,
+        message: `User deleted successfully along with ${result.deletedOrganizations} owned organizations`,
+        deletedUser: {
+          id: result.deletedUser.id,
+          email: result.deletedUser.email,
+          name: result.deletedUser.name,
+        },
+        deletedOrganizations: result.deletedOrganizations,
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      
+      if (error instanceof Error && error.message === 'User not found') {
+        return c.json({ error: 'User not found' }, 404);
+      }
+      
+      return c.json({ error: 'Failed to delete user' }, 500);
+    }
+  })
+
     // Update user subscription (admin only)
     .patch('/users/:userId/subscription', adminMiddleware, zValidator('json', updateSubscriptionSchema), async (c) => {
       try {

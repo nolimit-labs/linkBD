@@ -78,5 +78,25 @@ export function useUpdateUser() {
   });
 }
 
+// Delete user completely (admin only)
+export function useDeleteUser() {
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const response = await rpcClient.api.admin.users[':userId'].$delete({
+        param: {
+          userId,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Failed to delete user');
+      }
+      
+      return await response.json();
+    },
+  });
+}
+
 // Get user profile by ID (admin access)
 

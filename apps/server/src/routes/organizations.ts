@@ -113,7 +113,7 @@ const organizationsRoutes = new Hono<{ Variables: AuthVariables }>()
     // TODO: Add admin role check when admin roles are implemented
     
     try {
-      const updatedOrg = await adminModel.updateOrganizationFeaturedStatus(
+      const updatedOrg = await adminModel.updateOrgFeaturedStatus(
         organizationId, 
         isFeatured
       );

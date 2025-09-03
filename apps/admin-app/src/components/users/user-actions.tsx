@@ -17,6 +17,8 @@ import { admin } from "@/lib/auth-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { UpdateUserDialog } from "./update-user-dialog";
+import { DeleteUserDialog } from "./delete-user-dialog";
+import { useDeleteUser } from "@/api/user";
 
 interface UserActionsProps {
   user: {
@@ -31,7 +33,9 @@ interface UserActionsProps {
 export function UserActions({ user }: UserActionsProps) {
   const queryClient = useQueryClient();
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const deleteUser = useDeleteUser();
 
   const handleBanUser = async () => {
     if (!confirm(`Are you sure you want to ban ${user.email}?`)) {
@@ -112,6 +116,7 @@ export function UserActions({ user }: UserActionsProps) {
     }
   };
 
+
   return (
     <>
       <DropdownMenu>
@@ -119,7 +124,7 @@ export function UserActions({ user }: UserActionsProps) {
           <Button
             variant="ghost"
             className="h-8 w-8 p-0"
-            disabled={isLoading}
+            disabled={isLoading || deleteUser.isPending}
           >
             <span className="sr-only">Open menu</span>
             <MoreHorizontal className="h-4 w-4" />
@@ -163,11 +168,12 @@ export function UserActions({ user }: UserActionsProps) {
           )}
 
           <DropdownMenuItem 
+            onClick={() => setIsDeleteDialogOpen(true)}
             className="cursor-pointer text-destructive focus:text-destructive"
-            disabled
+            disabled={deleteUser.isPending}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            Delete User (Disabled)
+            Delete User
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -180,6 +186,13 @@ export function UserActions({ user }: UserActionsProps) {
           onOpenChange={setIsUpdateDialogOpen}
         />
       )}
+
+      {/* Delete User Dialog */}
+      <DeleteUserDialog 
+        user={user}
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      />
     </>
   );
 }

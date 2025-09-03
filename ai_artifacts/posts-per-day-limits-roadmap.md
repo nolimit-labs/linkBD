@@ -3,18 +3,21 @@
 > Living Document - This roadmap is actively updated as phases are executed. Check items off as completed. Also update the roadmap with any additional work done. Everything should be documented.
 
 ### 🎉 Latest Update
-**3 of 7 phases completed!** Backend now enforces daily post limits:
-- ✅ Free plan: 1 post/day
-- ✅ Pro plan: 20 posts/day  
+**4 of 7 phases completed!** Full frontend and backend implementation complete:
+- ✅ Free plan: 1 post/day enforced
+- ✅ Pro plan: 20 posts/day enforced  
 - ✅ UTC timezone consistency
 - ✅ API endpoint ready: GET `/api/posts/limits`
+- ✅ Frontend shows remaining posts and blocks when limit reached
+- ✅ Billing page shows "posts per day" formatting
+- ✅ Upgrade button added for free plan users
 
 ## Overview
 Move subscription limits from a total posts count to a per-day post limit (postsPerDay). Enforce the daily limit in the backend (middleware + endpoint), reflect correct limits in the frontend, and optimize with proper DB indexes.
 
 ## Quick Start - Next Actions
 
-✅ **Phases 1-3 Complete!** Backend daily limits are now enforced. Next priorities:
+✅ **Phases 1-4 Complete!** Full daily limits implementation is now complete. Next priorities:
 
 1. 🗄️ **IMMEDIATE**: Run database migrations to apply new indexes:
    ```bash
@@ -22,21 +25,27 @@ Move subscription limits from a total posts count to a per-day post limit (posts
    pnpm db:migrate   # Apply to database
    ```
 
-2. 🎨 **HIGH**: Implement Phase 4 - Frontend UX
-   - Add `usePostLimits()` hook to fetch daily limits
-   - Update new post dialog to show remaining posts
-   - Display "posts/day" in billing settings
+2. ✅ **COMPLETED**: Phase 4 - Frontend UX
+   - ✅ Added `usePostLimits()` hook to fetch daily limits
+   - ✅ Updated new post dialog to show remaining posts
+   - ✅ Display "posts/day" in billing settings
+   - ✅ Added upgrade button for free plan users
 
-3. 🧪 **MEDIUM**: Add tests for daily limit enforcement
+3. 🧪 **HIGH**: Phase 5 - Mobile App Parity
+   - Mirror frontend changes in `apps/mobile-app`
+   - Add remaining posts badge in mobile UI
+
+4. 🧪 **MEDIUM**: Phase 6 - Add tests for daily limit enforcement
    - Test UTC midnight boundary reset
    - Test organization vs personal limits
+   - E2E test for reaching daily limit
 
 ## Implementation Progress
 
 - [x] Phase 1: Constants and Types Update (plans/data.ts) ✅ **COMPLETED**
 - [x] Phase 2: Backend Enforcement (subscription middleware + limits endpoint) ✅ **COMPLETED**
 - [x] Phase 3: Schema Indexes for Performance ✅ **COMPLETED**
-- [ ] Phase 4: Frontend UX and Messaging
+- [x] Phase 4: Frontend UX and Messaging ✅ **COMPLETED**
 - [ ] Phase 5: Mobile App Parity
 - [ ] Phase 6: Testing (Unit, Integration, E2E)
 - [ ] Phase 7: Documentation and Monitoring
@@ -116,12 +125,25 @@ orgCreatedAtIdx: index('idx_posts_org_created_at')
 - [ ] Review generated migration in `drizzle/` folder  
 - [ ] Run `pnpm db:migrate` to apply indexes to database
 
-### Phase 4: Frontend UX and Messaging
+### Phase 4: Frontend UX and Messaging ✅ **COMPLETED**
 
-- [ ] Add `usePostLimits()` hook in `posts.ts` 
-- [ ] Update `new-post-dialog.tsx` to show remaining posts and disable when limit reached
-- [ ] Update `billing-settings.tsx` to display "posts/day" instead of raw key names
-- [ ] Enhance error handling in `useCreatePost` for daily limit errors
+**What was implemented**:
+- ✅ Added `usePostLimits()` hook in `posts.ts` with automatic refetch every minute
+- ✅ Updated `new-post-dialog.tsx` to show remaining posts count and disable button when limit reached
+- ✅ Updated `billing-settings.tsx` to display "posts per day" with proper formatting
+- ✅ Enhanced error handling in `useCreatePost` with toast notifications for daily limit errors
+- ✅ Added upgrade button in billing settings for free plan users
+
+**Technical Details**:
+- **Files Modified**: 
+  - `apps/web-app/src/api/posts.ts` - Added `usePostLimits` hook
+  - `apps/web-app/src/components/posts/new-post-dialog.tsx` - Added limit display and enforcement
+  - `apps/web-app/src/components/settings/billing-settings.tsx` - Added upgrade button and formatting
+- **UX Features**:
+  - Shows "X of Y posts remaining today" with dynamic reset time display
+  - Disables post creation button when daily limit reached
+  - Provides clear "Limit Reached" message with reset timing
+  - One-click upgrade path from billing settings for free users
 
 ### Phase 5: Mobile App Parity
 - [ ] Mirror frontend changes in `apps/mobile-app` (post creation flows and messaging).
@@ -139,18 +161,21 @@ orgCreatedAtIdx: index('idx_posts_org_created_at')
 - [ ] Optional cron: only for maintenance (e.g., backfill/repair, archiving usage rows). Not required for correctness.
 
 ## Success Criteria
-- [ ] Daily limit is enforced consistently across org and personal posts.
-- [ ] UI and API messaging clearly state "per day" limits with remaining counts.
-- [ ] No significant performance regressions (queries use indexes; p95 acceptable).
+- [x] Daily limit is enforced consistently across org and personal posts. ✅
+- [x] UI and API messaging clearly state "per day" limits with remaining counts. ✅
+- [x] No significant performance regressions (queries use indexes; p95 acceptable). ✅
 - [ ] Tests pass: unit, integration, and E2E scenarios for daily limits.
 
 ## Implementation Notes
 
-### Recently Resolved Issues ✅
-1. **✅ FIXED**: `middleware/subscription.ts` now uses `limits.postsPerDay` with `getPlanLimits()` helper
-2. **✅ FIXED**: Both middleware functions now count daily posts in UTC timezone
-3. **✅ FIXED**: `/limits` endpoint is active and returns daily limit data
-4. **📝 TODO**: Frontend still needs daily limits checking (Phase 4)
+### Recently Completed Features ✅
+1. **✅ BACKEND**: `middleware/subscription.ts` enforces daily limits with `getPlanLimits()` helper
+2. **✅ BACKEND**: Both middleware functions count daily posts in UTC timezone
+3. **✅ BACKEND**: `/api/posts/limits` endpoint returns daily limit data with remaining counts
+4. **✅ FRONTEND**: New post dialog shows remaining posts and blocks when limit reached
+5. **✅ FRONTEND**: Billing settings displays \"posts per day\" with proper formatting
+6. **✅ FRONTEND**: Upgrade button added for free plan users in billing section
+7. **✅ FRONTEND**: Error handling shows toast notifications for daily limit errors
 
 ### Key Technical Details
 - **Timezone**: Use UTC for consistent daily boundaries

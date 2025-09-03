@@ -37,6 +37,7 @@ export const env = {
   isDevelopment: import.meta.env.DEV,
   isStaging: import.meta.env.VITE_NODE_ENV === 'staging',
   isProduction: import.meta.env.VITE_NODE_ENV === 'production',
+  proPlanPrice: import.meta.env.VITE_PRO_PLAN_PRICE || '9',
 };
 
 /**

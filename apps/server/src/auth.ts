@@ -96,8 +96,13 @@ export const auth = betterAuth({
             subscription: {
                 enabled: true,
                 plans: activePlans,
-                requireEmailVerification: true,
+                requireEmailVerification: isProduction,
+                onSubscriptionCancel: async ({ event, subscription, stripeSubscription, cancellationDetails }) => {
+                    // Called when a subscription is canceled
+                    await assignDefaultSubscriptionForUser(subscription.referenceId);
+                },
             },
+            
         }),
     ],
     logger: {

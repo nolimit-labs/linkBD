@@ -1,5 +1,5 @@
 import { db } from '../db';
-import { migrationRuns,  user as users, organization as organizations, storage } from '../db/schema';
+import { migrationRuns,  user as users, organization, storage, member } from '../db/schema';
 import { eq, and, isNull, isNotNull, desc, sql } from 'drizzle-orm';
 import { readdir } from 'fs/promises';
 import { join } from 'path';
@@ -14,6 +14,59 @@ import { generateDownloadURL } from '../lib/storage';
 // ================================
 // User Management Functions
 // ================================
+
+// Delete a user and all their associated data
+export async function deleteUserCompletely(userId: string) {
+  return await db.transaction(async (tx) => {
+    // 1. First check if the user exists
+    const [userToDelete] = await tx
+      .select()
+      .from(users)
+      .where(eq(users.id, userId));
+    
+    if (!userToDelete) {
+      throw new Error('User not found');
+    }
+
+    // 2. Get all organizations owned by this user (where they are the only admin)
+    const ownedOrgs = await tx
+      .select({
+        orgId: organization.id,
+      })
+      .from(organization)
+      .innerJoin(member, eq(organization.id, member.organizationId))
+      .where(and(
+        eq(member.userId, userId),
+        eq(member.role, 'owner')
+      ));
+
+    // 3. Delete organizations where the user is the owner
+    // This will cascade delete:
+    // - All members of those organizations
+    // - All posts by those organizations
+    // - All invitations for those organizations
+    // - All sessions with activeOrganizationId
+    for (const org of ownedOrgs) {
+      await tx.delete(organization).where(eq(organization.id, org.orgId));
+    }
+
+    // 4. Delete the user - this will cascade delete:
+    // - All sessions for this user
+    // - All accounts (auth providers) for this user
+    // - All posts by this user
+    // - All likes by this user
+    // - All storage files uploaded by this user
+    // - All memberships in other organizations
+    // - All invitations sent by this user
+    await tx.delete(users).where(eq(users.id, userId));
+
+    return {
+      success: true,
+      deletedUser: userToDelete,
+      deletedOrganizations: ownedOrgs.length,
+    };
+  });
+}
 
 // Get user profile for admin with all related data
 export async function getUserProfileForAdmin(userId: string) {
@@ -87,7 +140,7 @@ export async function getOrgProfileForAdmin(organizationId: string) {
 }
 
 // Update organization featured status (admin only)
-export async function updateOrganizationFeaturedStatus(
+export async function updateOrgFeaturedStatus(
   organizationId: string, 
   isFeatured: boolean
 ) {
@@ -369,9 +422,9 @@ export async function findOrphanedFiles() {
   
   // 3. Files referenced directly in organization logos (logo field contains file key)
   const referencedInOrgs = await db
-    .select({ fileKey: organizations.logo })
-    .from(organizations)
-    .where(isNotNull(organizations.logo));
+    .select({ fileKey: organization.logo })
+    .from(organization)
+    .where(isNotNull(organization.logo));
   
   // Combine all referenced file keys
   const allReferencedKeys = new Set<string>();
