@@ -43,14 +43,24 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
 
   return (
     <>
-      <Popover>
-        <PopoverTrigger asChild>
-          <div
-            className={cn(
-              "flex items-center gap-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 hover:border-primary border-2 border-transparent transition-all duration-300 ease-in-out cursor-pointer group",
-              className
-            )}
-          >
+      <div className="relative rounded-lg group">
+        {/* Current Account Header - positioned to stick out from border */}
+        <div className="absolute -top-3 left-3 z-10 bg-sidebar-background">
+          <span className="bg-sidebar px-2 text-sm font-medium text-primary transition-colors">
+            Current Account
+          </span>
+        </div>
+        
+        {/* Border wrapper */}
+        <div className="border-2 border-primary/70 hover:border-primary rounded-lg p-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <div
+                className={cn(
+                  "flex items-center gap-3 p-3 rounded-md bg-muted/30 hover:bg-muted/50 transition-all duration-300 ease-in-out cursor-pointer",
+                  className
+                )}
+              >
             {/* Organization/User Avatar */}
             <Avatar className="w-12 h-12 rounded-md">
               <AvatarImage 
@@ -140,7 +150,9 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
             </Button>
           </div>
         </PopoverContent>
-      </Popover>
+          </Popover>
+        </div>
+      </div>
 
       {/* Organization Switcher Dialog */}
       {showOrgSwitcher && (

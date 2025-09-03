@@ -8,6 +8,8 @@ import { Calendar, Building, User, Edit3, Save, X, Upload } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { OfficialBadge } from './badge-official'
 import { ProBadge } from './badge-pro'
+import { FollowButton } from '@/components/follows/follow-button'
+import { FollowStats } from '@/components/follows/follow-stats'
 import { useState, useRef } from 'react'
 import { useSession } from '@/lib/auth-client'
 import { useActiveOrganization } from '@/lib/auth-client'
@@ -205,6 +207,28 @@ export function ProfileCard({ profile }: ProfileCardProps) {
               ) : (
                 <p className="text-sm text-muted-foreground break-words">{profile.description}</p>
               )}
+            </div>
+          )}
+
+          {/* Follow Stats */}
+          <div className="space-y-3">
+            <FollowStats
+              userId={isOrganization ? undefined : profile.id}
+              organizationId={isOrganization ? profile.id : undefined}
+              clickable={true}
+            />
+          </div>
+
+          {/* Follow Button */}
+          {!canEdit && (
+            <div className="pt-2">
+              <FollowButton
+                targetId={profile.id}
+                targetType={isOrganization ? 'organization' : 'user'}
+                variant="default"
+                size="default"
+                className="w-full"
+              />
             </div>
           )}
 

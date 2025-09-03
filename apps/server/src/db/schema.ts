@@ -213,6 +213,32 @@ export const likes = pgTable('likes', {
   userIdIdx: index('idx_likes_user_id').on(table.userId),
 }));
 
+// -------------------- Followers System Tables ------------------------------
+
+// Followers table - tracks who follows who (users and organizations)
+export const followers = pgTable('followers', {
+  id: text('id').primaryKey(),
+  followerId: text('follower_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  followingId: text('following_id') // User being followed
+    .references(() => user.id, { onDelete: 'cascade' }),
+  followingOrgId: text('following_org_id') // Organization being followed
+    .references(() => organization.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at')
+    .defaultNow()
+    .notNull(),
+}, (table) => ({
+  // Unique constraint to prevent duplicate follows
+  uniqueUserFollow: index('idx_unique_user_follow').on(table.followerId, table.followingId),
+  uniqueOrgFollow: index('idx_unique_org_follow').on(table.followerId, table.followingOrgId),
+  // Performance indexes
+  followerIdx: index('idx_followers_follower').on(table.followerId),
+  followingIdx: index('idx_followers_following').on(table.followingId),
+  followingOrgIdx: index('idx_followers_following_org').on(table.followingOrgId),
+  createdAtIdx: index('idx_followers_created_at').on(table.createdAt.desc()),
+}));
+
 export const storage = pgTable('storage', {
   id: text('id').primaryKey(),
   fileKey: text('file_key').notNull().unique(),
@@ -244,6 +270,12 @@ export const migrationRuns = pgTable('migration_runs', {
 });
 
 // =====================================================================
+// Followers System Schema Tables  
+// =====================================================================
+
+
+
+// =====================================================================
 // TypeScript type exports
 // =====================================================================
 
@@ -268,3 +300,15 @@ export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type Like = typeof likes.$inferSelect;
 export type NewLike = typeof likes.$inferInsert;
+
+// Followers system types
+export type Follower = typeof followers.$inferSelect;
+export type NewFollower = typeof followers.$inferInsert;
+
+// Storage types
+export type Storage = typeof storage.$inferSelect;
+export type NewStorage = typeof storage.$inferInsert;
+
+// Migration types
+export type MigrationRun = typeof migrationRuns.$inferSelect;
+export type NewMigrationRun = typeof migrationRuns.$inferInsert;

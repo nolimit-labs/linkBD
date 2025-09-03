@@ -19,6 +19,9 @@ import { Route as appImagesRouteImport } from './routes/(app)/images'
 import { Route as appFeedRouteImport } from './routes/(app)/feed'
 import { Route as appBusinessesRouteImport } from './routes/(app)/businesses'
 import { Route as appProfileIdRouteImport } from './routes/(app)/profile/$id'
+import { Route as appProfileIdFollowingRouteImport } from './routes/(app)/profile/$id.following'
+import { Route as appProfileIdFollowersRouteImport } from './routes/(app)/profile/$id.followers'
+import { Route as appOrganizationsIdFollowingRouteImport } from './routes/(app)/organizations/$id.following'
 
 const appRouteRoute = appRouteRouteImport.update({
   id: '/(app)',
@@ -69,6 +72,22 @@ const appProfileIdRoute = appProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appProfileIdFollowingRoute = appProfileIdFollowingRouteImport.update({
+  id: '/following',
+  path: '/following',
+  getParentRoute: () => appProfileIdRoute,
+} as any)
+const appProfileIdFollowersRoute = appProfileIdFollowersRouteImport.update({
+  id: '/followers',
+  path: '/followers',
+  getParentRoute: () => appProfileIdRoute,
+} as any)
+const appOrganizationsIdFollowingRoute =
+  appOrganizationsIdFollowingRouteImport.update({
+    id: '/organizations/$id/following',
+    path: '/organizations/$id/following',
+    getParentRoute: () => appRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof appRouteRouteWithChildren
@@ -79,7 +98,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
-  '/profile/$id': typeof appProfileIdRoute
+  '/profile/$id': typeof appProfileIdRouteWithChildren
+  '/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
+  '/profile/$id/followers': typeof appProfileIdFollowersRoute
+  '/profile/$id/following': typeof appProfileIdFollowingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof appRouteRouteWithChildren
@@ -90,7 +112,10 @@ export interface FileRoutesByTo {
   '/settings': typeof appSettingsRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
-  '/profile/$id': typeof appProfileIdRoute
+  '/profile/$id': typeof appProfileIdRouteWithChildren
+  '/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
+  '/profile/$id/followers': typeof appProfileIdFollowersRoute
+  '/profile/$id/following': typeof appProfileIdFollowingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,7 +128,10 @@ export interface FileRoutesById {
   '/(app)/settings': typeof appSettingsRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/(auth)/sign-up': typeof authSignUpRoute
-  '/(app)/profile/$id': typeof appProfileIdRoute
+  '/(app)/profile/$id': typeof appProfileIdRouteWithChildren
+  '/(app)/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
+  '/(app)/profile/$id/followers': typeof appProfileIdFollowersRoute
+  '/(app)/profile/$id/following': typeof appProfileIdFollowingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,6 +145,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/profile/$id'
+    | '/organizations/$id/following'
+    | '/profile/$id/followers'
+    | '/profile/$id/following'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,6 +159,9 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/profile/$id'
+    | '/organizations/$id/following'
+    | '/profile/$id/followers'
+    | '/profile/$id/following'
   id:
     | '__root__'
     | '/'
@@ -140,6 +174,9 @@ export interface FileRouteTypes {
     | '/(auth)/sign-in'
     | '/(auth)/sign-up'
     | '/(app)/profile/$id'
+    | '/(app)/organizations/$id/following'
+    | '/(app)/profile/$id/followers'
+    | '/(app)/profile/$id/following'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,8 +258,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appProfileIdRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/profile/$id/following': {
+      id: '/(app)/profile/$id/following'
+      path: '/following'
+      fullPath: '/profile/$id/following'
+      preLoaderRoute: typeof appProfileIdFollowingRouteImport
+      parentRoute: typeof appProfileIdRoute
+    }
+    '/(app)/profile/$id/followers': {
+      id: '/(app)/profile/$id/followers'
+      path: '/followers'
+      fullPath: '/profile/$id/followers'
+      preLoaderRoute: typeof appProfileIdFollowersRouteImport
+      parentRoute: typeof appProfileIdRoute
+    }
+    '/(app)/organizations/$id/following': {
+      id: '/(app)/organizations/$id/following'
+      path: '/organizations/$id/following'
+      fullPath: '/organizations/$id/following'
+      preLoaderRoute: typeof appOrganizationsIdFollowingRouteImport
+      parentRoute: typeof appRouteRoute
+    }
   }
 }
+
+interface appProfileIdRouteChildren {
+  appProfileIdFollowersRoute: typeof appProfileIdFollowersRoute
+  appProfileIdFollowingRoute: typeof appProfileIdFollowingRoute
+}
+
+const appProfileIdRouteChildren: appProfileIdRouteChildren = {
+  appProfileIdFollowersRoute: appProfileIdFollowersRoute,
+  appProfileIdFollowingRoute: appProfileIdFollowingRoute,
+}
+
+const appProfileIdRouteWithChildren = appProfileIdRoute._addFileChildren(
+  appProfileIdRouteChildren,
+)
 
 interface appRouteRouteChildren {
   appBusinessesRoute: typeof appBusinessesRoute
@@ -230,7 +302,8 @@ interface appRouteRouteChildren {
   appImagesRoute: typeof appImagesRoute
   appSearchRoute: typeof appSearchRoute
   appSettingsRoute: typeof appSettingsRoute
-  appProfileIdRoute: typeof appProfileIdRoute
+  appProfileIdRoute: typeof appProfileIdRouteWithChildren
+  appOrganizationsIdFollowingRoute: typeof appOrganizationsIdFollowingRoute
 }
 
 const appRouteRouteChildren: appRouteRouteChildren = {
@@ -239,7 +312,8 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appImagesRoute: appImagesRoute,
   appSearchRoute: appSearchRoute,
   appSettingsRoute: appSettingsRoute,
-  appProfileIdRoute: appProfileIdRoute,
+  appProfileIdRoute: appProfileIdRouteWithChildren,
+  appOrganizationsIdFollowingRoute: appOrganizationsIdFollowingRoute,
 }
 
 const appRouteRouteWithChildren = appRouteRoute._addFileChildren(

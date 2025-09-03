@@ -10,6 +10,7 @@ import searchRoutes from './routes/search'
 import { prettyJSON } from 'hono/pretty-json'
 import { secureHeaders } from 'hono/secure-headers'
 import organizationsRoutes from './routes/organizations'
+import followersRoutes from './routes/followers'
 import dotenv from 'dotenv'
 import { rateLimiter } from 'hono-rate-limiter'
 import { createHash } from 'crypto'
@@ -98,6 +99,7 @@ const routes = app
   .route('/api/storage', storageRoutes)
   .route('/api/search', searchRoutes)
   .route('/api/organizations', organizationsRoutes)
+  .route('/api/followers', followersRoutes)
   .route('/api/admin', adminRoutes)
 
 // Export AppType for RPC client usage in client 

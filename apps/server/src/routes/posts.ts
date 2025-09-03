@@ -22,6 +22,7 @@ const paginationSchema = z.object({
   limit: z.string().optional().transform(val => val ? parseInt(val) : 20),
   direction: z.enum(['after', 'before']).optional().default('after'),
   sortBy: z.enum(['newest', 'oldest', 'popular']).optional().default('newest'),
+  filter: z.enum(['all', 'following']).optional().default('all'),
 });
 
 const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
@@ -30,18 +31,25 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
   // Queries
   // ===============================
 
-  // Get feed (public posts for discovery) with pagination
+  // Get feed (public posts for discovery or following feed) with pagination
   .get('/feed', authMiddleware, zValidator('query', paginationSchema), async (c) => {
     const { user } = c.get('session');
-    const { cursor, limit, direction, sortBy } = c.req.valid('query');
+    const { cursor, limit, direction, sortBy, filter } = c.req.valid('query');
 
-    // Get paginated public feed
-    const result = await postModel.getPublicPostsPaginated({
-      cursor,
-      limit,
-      direction,
-      sortBy
-    });
+    // Get appropriate feed based on filter
+    const result = filter === 'following' 
+      ? await postModel.getFollowingPostsPaginated(user.id, {
+          cursor,
+          limit,
+          direction,
+          sortBy
+        })
+      : await postModel.getPublicPostsPaginated({
+          cursor,
+          limit,
+          direction,
+          sortBy
+        });
 
     // Map download URLs for posts that have images, check likes, and add subscription data
     const postsWithDetails = await Promise.all(

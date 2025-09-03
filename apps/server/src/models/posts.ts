@@ -1,6 +1,6 @@
 import { db } from '../db';
-import { posts, likes, user, organization } from '../db/schema';
-import { eq, and, desc, isNull, sql, lt, gt, count, asc } from 'drizzle-orm';
+import { posts, likes, user, organization, followers } from '../db/schema';
+import { eq, and, desc, sql, lt, gt, asc, or, inArray, isNull, count } from 'drizzle-orm';
 
 
 // ===============================
@@ -84,6 +84,145 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
     .leftJoin(user, eq(posts.userId, user.id))
     .leftJoin(organization, eq(posts.organizationId, organization.id))
     .where(and(...whereConditions))
+    .orderBy(...orderByClause)
+    .limit(limit + 1);
+  
+  const hasMore = results.length > limit;
+  const posts_data = results.slice(0, limit);
+  
+  // Generate next cursor from last post
+  const nextCursor = posts_data.length > 0 ? 
+    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
+
+  return {
+    posts: posts_data,
+    pagination: {
+      hasMore,
+      nextCursor,
+      limit,
+      count: posts_data.length
+    }
+  };
+}
+
+// Get posts from followed users and organizations
+export async function getFollowingPostsPaginated(currentUserId: string, options: PaginationOptions = {}) {
+  const { 
+    limit = 20, 
+    cursor, 
+    direction = 'after',
+    sortBy = 'newest'
+  } = options;
+
+  // First get all users and organizations this user follows
+  const following = await db
+    .select({
+      followingUserId: followers.followingId,
+      followingOrgId: followers.followingOrgId,
+    })
+    .from(followers)
+    .where(eq(followers.followerId, currentUserId));
+
+  // Extract user and org IDs
+  const followingUserIds = following
+    .filter(f => f.followingUserId)
+    .map(f => f.followingUserId!);
+  
+  const followingOrgIds = following
+    .filter(f => f.followingOrgId)
+    .map(f => f.followingOrgId!);
+
+  // If not following anyone, return empty
+  if (followingUserIds.length === 0 && followingOrgIds.length === 0) {
+    return {
+      posts: [],
+      pagination: {
+        hasMore: false,
+        nextCursor: null,
+        limit,
+        count: 0
+      }
+    };
+  }
+
+  // Build where conditions for posts from followed users/orgs
+  let whereConditions = [];
+  
+  // Include posts from followed users
+  if (followingUserIds.length > 0) {
+    whereConditions.push(inArray(posts.userId, followingUserIds));
+  }
+  
+  // Include posts from followed organizations
+  if (followingOrgIds.length > 0) {
+    whereConditions.push(inArray(posts.organizationId, followingOrgIds));
+  }
+
+  // Combine with OR - posts from either followed users or organizations
+  let baseConditions = whereConditions.length > 0 ? or(...whereConditions) : undefined;
+  
+  // Add visibility check - only public posts
+  let finalConditions = baseConditions ? 
+    [baseConditions, eq(posts.visibility, 'public')] : 
+    [eq(posts.visibility, 'public')];
+  
+  // Add cursor-based filtering
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (direction === 'after') {
+      finalConditions.push(lt(posts.createdAt, cursorDate));
+    } else {
+      finalConditions.push(gt(posts.createdAt, cursorDate));
+    }
+  }
+
+  // Build sorting
+  let orderByClause;
+  switch (sortBy) {
+    case 'newest':
+      orderByClause = [desc(posts.createdAt)];
+      break;
+    case 'oldest':
+      orderByClause = [asc(posts.createdAt)];
+      break;
+    case 'popular':
+      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
+      break;
+    default:
+      orderByClause = [desc(posts.createdAt)];
+  }
+
+  // Fetch posts with author information
+  const results = await db
+    .select({
+      // Post fields
+      id: posts.id,
+      userId: posts.userId,
+      organizationId: posts.organizationId,
+      content: posts.content,
+      imageKey: posts.imageKey,
+      likesCount: posts.likesCount,
+      visibility: posts.visibility,
+      createdBy: posts.createdBy,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+      
+      // Author fields - organization when userId is null, user when organizationId is null
+      author: {
+        id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
+        name: sql<string>`COALESCE(${organization.name}, ${user.name})`.as('author_name'),
+        image: sql<string | null>`COALESCE(${organization.imageKey}, ${user.image})`.as('author_image'),
+        type: sql<'user' | 'organization'>`CASE 
+          WHEN ${posts.userId} IS NULL THEN 'organization'
+          ELSE 'user'
+        END`.as('author_type'),
+        isOfficial: sql<boolean>`COALESCE(${organization.isOfficial}, ${user.isOfficial}, false)`.as('author_is_official')
+      }
+    })
+    .from(posts)
+    .leftJoin(user, eq(posts.userId, user.id))
+    .leftJoin(organization, eq(posts.organizationId, organization.id))
+    .where(and(...finalConditions))
     .orderBy(...orderByClause)
     .limit(limit + 1);
   

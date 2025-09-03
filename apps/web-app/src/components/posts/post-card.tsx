@@ -80,26 +80,26 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
 
           { /* Edit and Delete if Owner */ }
           {isOwner && (onEdit || onDelete) && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-background/70 text-xl" side="bottom">
-                {onEdit && (
-                  <DropdownMenuItem onClick={onEdit}>
-                    Edit
-                  </DropdownMenuItem>
-                )}
-                {onDelete && (
-                  <DropdownMenuItem onClick={onDelete} className="text-lg text-destructive">
-                    Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="bg-background/70 text-xl" side="bottom">
+                  {onEdit && (
+                    <DropdownMenuItem onClick={onEdit}>
+                      Edit
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <DropdownMenuItem onClick={onDelete} className="text-lg text-destructive">
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
         </div>
       </CardHeader>
 
@@ -149,7 +149,7 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
             </Button>
 
             <span className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+              {/* {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })} */}
             </span>
           </div>
         </div>

@@ -45,6 +45,6 @@ organization.create() // Create new org
 ```
 
 ## Important Notes
-1. When adding Better Auth plugins, manually add required tables/fields to `schema.ts`. The `auth-schema.ts` file is whats created by better auth but jsut used as a reference to knwo which tables and fields are created by better auth. The `schema.ts` is the source of truth for the database schema.
+1. When adding Better Auth plugins, manually add required tables/fields to `schema.ts`. The `auth-schema.ts` file is whats created by better auth but just used as a reference to know which tables and fields are created by better auth. The `schema.ts` is the source of truth for the database schema.
 2. On the client side, the organizations are referred to ass business accounts. Even though the hooks are called organizations, the ui references business accounts, since this is easier to understand for the user.
 3. Organization and Stripe plugins extend auth functionality but remain within the auth domain

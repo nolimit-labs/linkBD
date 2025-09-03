@@ -9,16 +9,17 @@ import { useActiveOrganization } from '@/lib/auth-client';
 // Queries
 // ================================
 
-// Infinite scroll version of posts feed
-export const useGetPostsFeed = (limit = 10) => {
+// Infinite scroll version of posts feed with filter support
+export const useGetPostsFeed = (limit = 10, filter: 'all' | 'following' = 'all') => {
   return useInfiniteQuery({
-    queryKey: ['posts', 'feed', 'infinite', limit],
+    queryKey: ['posts', 'feed', 'infinite', limit, filter],
     queryFn: async ({ pageParam }) => {
       const response = await rpcClient.api.posts.feed.$get({
         query: {
           cursor: pageParam,
           limit: limit.toString(),
           sortBy: 'newest', // Used in order by clause, popular posts first
+          filter,
         },
       });
       
