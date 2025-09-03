@@ -98,7 +98,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <CurrentAccountBox />
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-muted-foreground px-2">
+            Current Account
+          </p>
+          <CurrentAccountBox />
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

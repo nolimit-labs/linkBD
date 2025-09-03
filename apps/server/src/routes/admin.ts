@@ -251,6 +251,7 @@ const adminRoutes = new Hono<{ Variables: AuthVariables }>()
             logo: org.logo,
             logoUrl,
             memberCount: org.memberCount || 0,
+            isFeatured: org.isFeatured || false,
             createdAt: org.createdAt,
           };
         })

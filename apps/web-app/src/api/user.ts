@@ -44,7 +44,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userData: { name?: string; image?: string | null }) => {
+    mutationFn: async (userData: { name?: string; image?: string | null; description?: string }) => {
       const response = await rpcClient.api.user.profile.$put({
         json: userData
       });

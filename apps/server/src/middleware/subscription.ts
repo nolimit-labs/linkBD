@@ -93,8 +93,8 @@ export const subscriptionInfoMiddleware = createMiddleware(async (c, next) => {
   try {
     const { session: { activeOrganizationId, userId } } = c.get('session') as Session
 
-    // Determine which subscription to check (organization or personal)
-    const referenceId = activeOrganizationId || userId
+    // reference id is always the user id for now
+    const referenceId = userId
 
     // Get subscription using Better Auth API
     const subscriptions = await auth.api.listActiveSubscriptions({

@@ -1,8 +1,9 @@
 import { Building2 } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Link } from '@tanstack/react-router'
+import { OfficialBadge } from '@/components/profile/badge-official'
+import { ProBadge } from '@/components/profile/badge-pro'
 
 type FeaturedBusinessCardProps = {
   business: {
@@ -37,14 +38,10 @@ export function FeaturedBusinessCard({ business }: FeaturedBusinessCardProps) {
                   {business.name}
                 </h3>
                 {business.isOfficial && (
-                  <Badge variant="default" className="text-sm">
-                    Official
-                  </Badge>
+                  <OfficialBadge className="text-sm" />
                 )}
                 {(business.subscriptionPlan === 'pro' || business.subscriptionPlan === 'pro_complementary') && (
-                  <Badge variant="secondary" className="text-sm bg-secondary text-secondary-foreground">
-                    Premium
-                  </Badge>
+                  <ProBadge className="text-sm" />
                 )}
               </div>
               {business.description && (

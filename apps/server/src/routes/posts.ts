@@ -26,6 +26,10 @@ const paginationSchema = z.object({
 
 const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
 
+  // ===============================
+  // Queries
+  // ===============================
+
   // Get feed (public posts for discovery) with pagination
   .get('/feed', authMiddleware, zValidator('query', paginationSchema), async (c) => {
     const { user } = c.get('session');
@@ -42,15 +46,28 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     // Map download URLs for posts that have images, check likes, and add subscription data
     const postsWithDetails = await Promise.all(
       result.posts.map(async (post) => {
-        // Get subscription data for the author
-        const authorSubscription = await subscriptionModel.getUserActiveSubscription(post.author.id);
-        
+        let subscriptionPlan = 'free';
+
+        // Get subscription data based on author type
+        if (post.author.type === 'user') {
+          // For user posts, get the user's subscription directly
+          const authorSubscription = await subscriptionModel.getUserActiveSubscription(post.author.id);
+          subscriptionPlan = authorSubscription?.plan || 'free';
+        } else if (post.author.type === 'organization') {
+          // For organization posts, get the owner's subscription
+          const orgOwner = await orgModel.getOrgOwner(post.author.id);
+          if (orgOwner) {
+            const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
+            subscriptionPlan = ownerSubscription?.plan || 'free';
+          }
+        }
+
         return {
           ...post,
           author: {
             ...post.author,
             image: await generateDownloadURL(post.author.image),
-            subscriptionPlan: authorSubscription?.plan || 'free'
+            subscriptionPlan
           },
           imageUrl: await generateDownloadURL(post.imageKey),
           hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
@@ -85,7 +102,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
         direction,
         sortBy
       });
-      
+
       const authorSubscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
       author = {
         id: userInfo.id,
@@ -107,15 +124,22 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
           direction,
           sortBy
         });
-        
-        const orgSubscription = await subscriptionModel.getUserActiveSubscription(orgInfo.id);
+
+        // Get the organization owner's subscription
+        let subscriptionPlan = 'free';
+        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
+        if (orgOwner) {
+          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
+          subscriptionPlan = ownerSubscription?.plan || 'free';
+        }
+
         author = {
           id: orgInfo.id,
           name: orgInfo.name,
           image: await generateDownloadURL(orgInfo.imageKey),
           type: 'organization' as const,
           isOfficial: orgInfo.isOfficial || false,
-          subscriptionPlan: orgSubscription?.plan || 'free'
+          subscriptionPlan
         };
       } else {
         // Author not found
@@ -139,51 +163,30 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     });
   })
 
-    // Get subscription limits info
-    .get('/limits', authMiddleware, subscriptionInfoMiddleware, async (c) => {
-      const dailyPostCount = c.get('dailyPostCount');
-      const dailyPostLimit = c.get('dailyPostLimit');
-      const subscription = c.get('subscription');
-      
-      // Calculate hours until midnight UTC reset
-      const now = new Date();
-      const tomorrow = new Date();
-      tomorrow.setUTCHours(24, 0, 0, 0); // Next midnight UTC
-      const hoursUntilReset = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60));
-  
-      return c.json({
-        todaysCount: dailyPostCount,
-        dailyLimit: dailyPostLimit,
-        plan: subscription?.plan || 'free',
-        remainingToday: dailyPostLimit - dailyPostCount,
-        hasReachedDailyLimit: dailyPostCount >= dailyPostLimit,
-        hoursUntilReset,
-        resetTimeUTC: tomorrow.toISOString()
-      });
-    })
+  // Get subscription limits info
+  .get('/limits', authMiddleware, subscriptionInfoMiddleware, async (c) => {
+    const dailyPostCount = c.get('dailyPostCount');
+    const dailyPostLimit = c.get('dailyPostLimit');
+    const subscription = c.get('subscription');
 
-  // Create a new post (with subscription limit check)
-  .post('/', authMiddleware, subscriptionLimitMiddleware, zValidator('json', postSchema), async (c) => {
-    const { session, user } = c.get('session');
-    const body = await c.req.json();
+    // Calculate hours until midnight UTC reset
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setUTCHours(24, 0, 0, 0); // Next midnight UTC
+    const hoursUntilReset = Math.ceil((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60));
 
-    let createdPost = session.activeOrganizationId ? await postModel.createOrgPost({
-      organizationId: session.activeOrganizationId!,
-      createdBy: user.id,
-      content: body.content,
-      imageKey: body.imageKey,
-      visibility: body.visibility,
-    }) : await postModel.createUserPost({
-      userId: user.id,
-      content: body.content,
-      imageKey: body.imageKey,
-      visibility: body.visibility,
+    return c.json({
+      todaysCount: dailyPostCount,
+      dailyLimit: dailyPostLimit,
+      plan: subscription?.plan || 'free',
+      remainingToday: dailyPostLimit - dailyPostCount,
+      hasReachedDailyLimit: dailyPostCount >= dailyPostLimit,
+      hoursUntilReset,
+      resetTimeUTC: tomorrow.toISOString()
     });
-    
-
-
-    return c.json(createdPost, 201);
   })
+
+
 
   // Get a specific post by ID
   .get('/:id', authMiddleware, async (c) => {
@@ -204,6 +207,34 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     };
 
     return c.json(postWithDetails);
+  })
+
+
+  // ===============================
+  // Mutations
+  // ===============================
+
+  // Create a new post (with subscription limit check)
+  .post('/', authMiddleware, subscriptionLimitMiddleware, zValidator('json', postSchema), async (c) => {
+    const { session, user } = c.get('session');
+    const body = await c.req.json();
+
+    let createdPost = session.activeOrganizationId ? await postModel.createOrgPost({
+      organizationId: session.activeOrganizationId!,
+      createdBy: user.id,
+      content: body.content,
+      imageKey: body.imageKey,
+      visibility: body.visibility,
+    }) : await postModel.createUserPost({
+      userId: user.id,
+      content: body.content,
+      imageKey: body.imageKey,
+      visibility: body.visibility,
+    });
+
+
+
+    return c.json(createdPost, 201);
   })
 
   // Update a post

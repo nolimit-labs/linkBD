@@ -26,6 +26,7 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
           id: userInfo.id,
           name: userInfo.name,
           image: imageUrl,
+          description: userInfo.description || null,
           type: 'user' as const,
           isOfficial: userInfo.isOfficial || false,
           subscriptionPlan: subscription?.plan || 'free',
@@ -40,8 +41,13 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
         // Generate logo URL if organization has a logo or imageKey
         const imageUrl = await generateDownloadURL(orgInfo.imageKey || orgInfo.logo);
         
-        // Get subscription data
-        const subscription = await subscriptionModel.getUserActiveSubscription(orgInfo.id);
+        // Get the organization owner's subscription
+        let subscriptionPlan = 'free';
+        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
+        if (orgOwner) {
+          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
+          subscriptionPlan = ownerSubscription?.plan || 'free';
+        }
         
         return c.json({
           id: orgInfo.id,
@@ -50,7 +56,7 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
           description: orgInfo.description || null,
           type: 'organization' as const,
           isOfficial: orgInfo.isOfficial || false,
-          subscriptionPlan: subscription?.plan || 'free',
+          subscriptionPlan,
           createdAt: orgInfo.createdAt
         });
       }

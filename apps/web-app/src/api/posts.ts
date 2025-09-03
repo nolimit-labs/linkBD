@@ -5,6 +5,10 @@ import { toast } from 'sonner';
 import { useUploadFile } from './storage';
 import { useActiveOrganization } from '@/lib/auth-client';
 
+// ================================
+// Queries
+// ================================
+
 // Infinite scroll version of posts feed
 export const useGetPostsFeed = (limit = 10) => {
   return useInfiniteQuery({
@@ -99,6 +103,10 @@ export const usePostLimits = () => {
   });
 };
 
+// ================================
+// Mutations
+// ================================
+
 // Create a post with optional image upload
 export const useCreatePost = () => {
   const uploadFile = useUploadFile();
@@ -149,6 +157,7 @@ export const useCreatePost = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts.all(organizationId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.feed.public() });
       queryClient.invalidateQueries({ queryKey: ['posts', 'feed', 'infinite'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts.limits() });
       toast.success('Post created successfully');
     },
     onError: (error) => {
@@ -156,46 +165,6 @@ export const useCreatePost = () => {
     },
   });
 };
-
-
-
-
-// // Update a todo
-// export const useUpdateTodo = () => {
-//   const queryClient = useQueryClient();
-  
-//   return useMutation({
-//     mutationFn: async ({ 
-//       todoId, 
-//       updateData 
-//     }: { 
-//       todoId: string; 
-//       updateData: {
-//         title: string;
-//         description: string;
-//       };
-//     }) => {
-//       const response = await rpcClient.api.todos[':id'].$put({
-//         param: { id: todoId },
-//         json: updateData,
-//       });
-      
-//       if (!response.ok) {
-//         const error = await response.json();  
-//         throw new Error((error as any).error || 'Failed to update todo');
-//       }
-      
-//       return response.json();
-//     },
-//     onSuccess: (updatedTodo) => {
-//       // Update the single todo query
-//       queryClient.setQueryData(queryKeys.todos.single(updatedTodo.id), updatedTodo);
-      
-//       // Invalidate list queries
-//       queryClient.invalidateQueries({ queryKey: queryKeys.todos.all() });
-//     },
-//   });
-// };
 
 // Toggle post like
 export const useTogglePostLike = () => {
@@ -258,45 +227,6 @@ export const useDeletePost = () => {
 };
 
 
-// // Update todo image
-// export const useUpdateTodoImage = () => {
-//   const queryClient = useQueryClient();
-//   const uploadFile = useUploadFile();
-  
-//   return useMutation({
-//     mutationFn: async ({ 
-//       todoId, 
-//       imageFile 
-//     }: { 
-//       todoId: string; 
-//       imageFile: File 
-//     }) => {
-//       // Step 1: Upload the new image
-//       const uploadResult = await uploadFile.mutateAsync(imageFile);
-      
-//       // Step 2: Update todo with new image key
-//       const response = await rpcClient.api.todos[':id'].image.$patch({
-//         param: { id: todoId },
-//         json: { imageKey: uploadResult.fileKey },
-//       });
-      
-//       if (!response.ok) {
-//         const error = await response.json();
-//         throw new Error((error as any).error || 'Failed to update todo image');
-//       }
-      
-//       return response.json();
-//     },
-//     onSuccess: (updatedTodo) => {
-//       queryClient.setQueryData(queryKeys.todos.single(updatedTodo.id), updatedTodo);
-//       queryClient.invalidateQueries({ queryKey: queryKeys.todos.all() });
-//       toast.success('Image updated successfully');
-//     },
-//     onError: (error) => {
-//       toast.error(error.message);
-//     },
-//   });
-// };
 
 // Remove post image
 export const useRemovePostImage = () => {

@@ -41,6 +41,7 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
   .put('/profile', authMiddleware, zValidator('json', z.object({
     name: z.string().min(1).max(100).optional(),
     image: z.string().nullable().optional(), // File key from storage or null to remove
+    description: z.string().max(500).optional(), // User bio/about section
   })), async (c) => {
     const { user } = c.get('session');
     if (!user) {

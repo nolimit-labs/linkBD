@@ -65,7 +65,7 @@ function BusinessesPage() {
       <div className="px-6">
         {/* No Results State */}
         {searchQuery && !isLoading && businesses.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12"> 
             <p className="text-muted-foreground">
               No businesses found for "{searchQuery}"
             </p>

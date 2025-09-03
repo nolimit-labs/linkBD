@@ -97,8 +97,8 @@ export const auth = betterAuth({
                 enabled: true,
                 plans: activePlans,
                 requireEmailVerification: isProduction,
-                onSubscriptionCancel: async ({ event, subscription, stripeSubscription, cancellationDetails }) => {
-                    // Called when a subscription is canceled
+                onSubscriptionCancel: async ({ event, subscription }) => {
+                    // Called when a subscription is canceled since better auth just changes status to canceled but doesn't delete the subscription we need to reassign the default free subscription
                     await assignDefaultSubscriptionForUser(subscription.referenceId);
                 },
             },

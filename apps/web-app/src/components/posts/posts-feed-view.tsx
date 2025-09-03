@@ -17,7 +17,7 @@ export function PostsFeedView() {
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage 
-  } = useGetPostsFeed(4)
+  } = useGetPostsFeed(12)
   
   console.log('data', data)
   // Flatten all pages into a single posts array

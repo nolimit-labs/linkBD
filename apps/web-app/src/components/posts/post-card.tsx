@@ -2,7 +2,6 @@ import { Heart, MessageCircle, Share, MoreVertical, Check, Building2, User } fro
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import { useTogglePostLike } from '@/api'
 import { cn } from '@/lib/utils'
@@ -15,6 +14,8 @@ import {
 import { useSession } from '@/lib/auth-client'
 import { rpcClient } from '@/api'
 import { Link } from '@tanstack/react-router'
+import { OfficialBadge } from '@/components/profile/badge-official'
+import { ProBadge } from '@/components/profile/badge-pro'
 
 type Post = Awaited<
   ReturnType<
@@ -67,15 +68,11 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
                   {author?.name || 'Unknown User'}
                 </h4>
                 {author?.isOfficial && (
-                  <Badge variant="default" className="text-xs">
-                    Official
-                  </Badge>
+                  <OfficialBadge className="text-xs" />
                 )}
                 {(author?.subscriptionPlan === 'pro' || 
                   author?.subscriptionPlan === 'pro_complementary') && (
-                  <Badge variant="default" className="text-10 bg-secondary text-secondary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg">
-                    Premium
-                  </Badge>
+                  <ProBadge className="text-10 text-secondary-foreground flex items-center gap-1 px-2 py-0.5 rounded-lg" />
                 )}
               </div>
             </div>

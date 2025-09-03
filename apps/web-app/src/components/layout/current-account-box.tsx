@@ -1,7 +1,9 @@
 import { User, Building, ChevronsUpDown, UserCircle } from "lucide-react"
 import { useCurrentUser } from "@/api/user"
+import { useGetProfile } from "@/api/profile"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization } from "@/lib/auth-client"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Popover,
   PopoverContent,
@@ -23,6 +25,21 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
   const [showOrgSwitcher, setShowOrgSwitcher] = useState(false)
   const { data: user } = useCurrentUser()
   const { data: activeOrg } = useActiveOrganization()
+  
+  // Get profile data for current account (user or active org)
+  const currentAccountId = activeOrg?.id || user?.id
+  const { data: profileData } = useGetProfile(currentAccountId)
+  
+  // Determine current account info
+  const isOrganization = !!activeOrg
+  const currentAccount = {
+    id: currentAccountId,
+    name: activeOrg ? activeOrg.name : user?.name || 'Personal Account',
+    image: profileData?.image,
+    description: profileData?.description,
+    type: isOrganization ? 'Business Account' : 'Personal Account'
+  }
+
 
   return (
     <>
@@ -35,21 +52,27 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
             )}
           >
             {/* Organization/User Avatar */}
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-              {activeOrg ? (
-                <Building className="w-5 h-5 text-primary" />
-              ) : (
-                <User className="w-5 h-5 text-primary" />
-              )}
-            </div>
+            <Avatar className="w-12 h-12 rounded-md">
+              <AvatarImage 
+                src={currentAccount.image || undefined} 
+                className="rounded-md object-cover" 
+              />
+              <AvatarFallback className="rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                {isOrganization ? (
+                  <Building className="w-5 h-5 text-primary" />
+                ) : (
+                  <User className="w-5 h-5 text-primary" />
+                )}
+              </AvatarFallback>
+            </Avatar>
 
             {/* Account Info */}
             <div className="flex-1 min-w-0">
               <p className="text-lg font-medium text-foreground truncate">
-                {activeOrg ? activeOrg.name : user?.name || 'Personal Account'}
+                {currentAccount.name}
               </p>
               <p className="text-sm text-primary truncate">
-                {activeOrg ? 'Business Account' : 'Personal Account'}
+                {currentAccount.type}
               </p>
             </div>
           </div>
@@ -58,12 +81,12 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
           {/* Account Info Header */}
           <div className="px-2 py-1.5">
             <p className="text-sm font-medium">
-              {activeOrg ? activeOrg.name : user?.name || 'Personal Account'}
+              {currentAccount.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              {activeOrg ? 'Business Account' : user?.email}
+              {isOrganization ? 'Business Account' : user?.email}
             </p>
-            {activeOrg && (
+            {isOrganization && (
               <p className="text-xs text-primary mt-1">
                 Managed by {user?.name}
               </p>

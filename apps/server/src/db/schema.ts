@@ -36,6 +36,7 @@ export const user = pgTable("user", {
     banExpires: timestamp("ban_expires"), // From Better-Auth Plugin: Admin
   stripeCustomerId: text("stripe_customer_id"), // From Better-Auth Plugin: Stripe
   isOfficial: boolean("is_official").$defaultFn(() => false), // Custom field for Official linkBD team member badge
+  description: text("description"), // Custom field for user bio/about section
 });
 
 export const session = pgTable("session", {

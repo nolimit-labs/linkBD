@@ -27,7 +27,8 @@ export async function getAllOrgsPaginated(paginationOptions: {
           slug: organization.slug,
           logo: organization.logo,
           createdAt: organization.createdAt,
-          memberCount: count(member.userId),
+          memberCount: count(member.userId),  
+          isFeatured: organization.isFeatured,
       })
       .from(organization)
       .leftJoin(member, eq(organization.id, member.organizationId))

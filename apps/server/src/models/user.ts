@@ -180,7 +180,7 @@ export async function getUserMembershipsByUserId(userId: string) {
 // Write Functions
 // ================================
 
-export async function updateUser(userId: string, data: { name?: string; image?: string | null }) {
+export async function updateUser(userId: string, data: { name?: string; image?: string | null; description?: string }) {
   const updatedUsers = await db
     .update(user)
     .set({ 
