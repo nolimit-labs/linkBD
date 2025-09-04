@@ -218,9 +218,10 @@ export const likes = pgTable('likes', {
 // Followers table - tracks who follows who (users and organizations)
 export const followers = pgTable('followers', {
   id: text('id').primaryKey(),
-  followerId: text('follower_id')
-    .notNull()
+  followerUserId: text('follower_user_id') // User who is following
     .references(() => user.id, { onDelete: 'cascade' }),
+  followerOrgId: text('follower_org_id') // Organization who is following
+    .references(() => organization.id, { onDelete: 'cascade' }),
   followingId: text('following_id') // User being followed
     .references(() => user.id, { onDelete: 'cascade' }),
   followingOrgId: text('following_org_id') // Organization being followed
@@ -229,11 +230,14 @@ export const followers = pgTable('followers', {
     .defaultNow()
     .notNull(),
 }, (table) => ({
-  // Unique constraint to prevent duplicate follows
-  uniqueUserFollow: index('idx_unique_user_follow').on(table.followerId, table.followingId),
-  uniqueOrgFollow: index('idx_unique_org_follow').on(table.followerId, table.followingOrgId),
+  // Unique constraints to prevent duplicate follows
+  uniqueUserUserFollow: index('idx_unique_user_user_follow').on(table.followerUserId, table.followingId),
+  uniqueUserOrgFollow: index('idx_unique_user_org_follow').on(table.followerUserId, table.followingOrgId),
+  uniqueOrgUserFollow: index('idx_unique_org_user_follow').on(table.followerOrgId, table.followingId),
+  uniqueOrgOrgFollow: index('idx_unique_org_org_follow').on(table.followerOrgId, table.followingOrgId),
   // Performance indexes
-  followerIdx: index('idx_followers_follower').on(table.followerId),
+  followerUserIdx: index('idx_followers_follower_user').on(table.followerUserId),
+  followerOrgIdx: index('idx_followers_follower_org').on(table.followerOrgId),
   followingIdx: index('idx_followers_following').on(table.followingId),
   followingOrgIdx: index('idx_followers_following_org').on(table.followingOrgId),
   createdAtIdx: index('idx_followers_created_at').on(table.createdAt.desc()),

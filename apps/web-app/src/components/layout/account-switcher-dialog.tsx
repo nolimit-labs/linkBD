@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { CreateBusainessAccountDialog } from "@/components/businesses/create-business-account-dialog"
 import { cn } from "@/lib/utils"
+import { useQueryClient } from "@tanstack/react-query"
 
 interface AccountSwitcherProps {
   open: boolean
@@ -21,14 +22,18 @@ interface AccountSwitcherProps {
 export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
   const { data: activeOrg } = useActiveOrganization()
   const { data: organizations, isPending } = useListOrganizations()
+  const queryClient = useQueryClient()
 
   const handleSetActiveOrganization = async (orgId?: string) => {
     try {
       if (orgId) {
         await organization.setActive({ organizationId: orgId })
+        queryClient.invalidateQueries()
+
       } else {
         // Switch to personal account
         await organization.setActive({ organizationId: null })
+        queryClient.invalidateQueries()
       }
       onOpenChange(false)
     } catch (error) {

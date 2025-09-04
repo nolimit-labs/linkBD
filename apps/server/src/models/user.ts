@@ -6,7 +6,6 @@ import { eq, ilike, or, sql, desc, inArray, count, gt, and } from 'drizzle-orm';
 // Read Functions
 // ================================
 
-
 // Get all users with cursor-based pagination
 export async function getAllUsersPaginated(options: {
   limit?: number;

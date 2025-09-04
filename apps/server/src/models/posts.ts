@@ -4,7 +4,7 @@ import { eq, and, desc, sql, lt, gt, asc, or, inArray, isNull, count } from 'dri
 
 
 // ===============================
-// Queries
+// Read Functions
 // ===============================
 
 // Enhanced pagination options for posts
@@ -121,7 +121,7 @@ export async function getFollowingPostsPaginated(currentUserId: string, options:
       followingOrgId: followers.followingOrgId,
     })
     .from(followers)
-    .where(eq(followers.followerId, currentUserId));
+    .where(eq(followers.followerUserId, currentUserId));
 
   // Extract user and org IDs
   const followingUserIds = following
@@ -414,7 +414,7 @@ export async function getPostById(postId: string, userId: string, organizationId
 }
 
 // ===============================
-// Mutations
+// Write Functions
 // ===============================
 
 export async function createUserPost(data: {

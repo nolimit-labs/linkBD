@@ -171,7 +171,7 @@ export function ProfileCard({ profile }: ProfileCardProps) {
                   <h1 className="text-2xl font-bold">{profile.name}</h1>
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-balg text-muted-foreground">
-                      {isOrganization ? 'Business Account' : 'Personal Account'}
+                      {isOrganization ? 'Business' : 'User'}
                     </span>
                     {profile.isOfficial && (
                       <OfficialBadge className="text-xs" />

@@ -3,24 +3,9 @@ import { storage } from '../db/schema';
 import { eq, and, isNull, desc } from 'drizzle-orm';
 
 // =====================================================================
-// Storage Model
+// Read Functions
 // =====================================================================
 
-// Create a new file record in the database
-export async function createFileRecord(data: {
-  fileKey: string;
-  userId: string;
-  organizationId?: string | null;
-  filename: string;
-  mimeType: string;
-  size: number;
-}) {
-  const [record] = await db.insert(storage).values({
-    id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
-    ...data,
-  }).returning();
-  return record;
-}
 
 // Get personal files for a user (where organizationId is null)
 export async function getUserFiles(userId: string) {
@@ -59,6 +44,28 @@ export async function getFileByFileKey(fileKey: string, userId: string, organiza
 
   return null; // No access
 }
+
+
+// ================================
+// Write Functions
+// ================================
+
+// Create a new file record in the database
+export async function createFileRecord(data: {
+  fileKey: string;
+  userId: string;
+  organizationId?: string | null;
+  filename: string;
+  mimeType: string;
+  size: number;
+}) {
+  const [record] = await db.insert(storage).values({
+    id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
+    ...data,
+  }).returning();
+  return record;
+}
+
 
 // Delete a file record from the database
 export async function deleteFileRecord(fileKey: string) {
