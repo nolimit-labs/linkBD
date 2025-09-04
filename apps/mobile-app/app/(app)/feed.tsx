@@ -5,6 +5,7 @@ import { Text } from '~/components/ui/text';
 import { useSession } from '~/api/auth';
 import { useGetPostsFeed } from '~/api/posts';
 import { PostCard } from '~/components/posts/post-card';
+import { CreatePostButton } from '~/components/posts/create-post-modal';
 
 export default function TodosScreen() {
   // Authentication & session
@@ -83,6 +84,9 @@ export default function TodosScreen() {
             ) : null
           }
         />
+        
+        {/* Floating Create Post Button */}
+        <CreatePostButton />
       </View>
     </KeyboardAvoidingView>
   );

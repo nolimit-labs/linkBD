@@ -4,7 +4,7 @@ import { useRouter, Redirect } from 'expo-router';
 import { authClient } from '~/lib/auth-client';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '~/lib/use-theme-colors';
 import { Logo } from '~/components/logo';
 import { GoogleIcon } from '~/lib/icons';
@@ -85,12 +85,12 @@ export default function SignInScreen() {
   }
 
   return (
-    <LinearGradient
-      colors={gradientColors as [ColorValue, ColorValue, ...ColorValue[]]}
-      style={{ flex: 1 }}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-    >
+    // <LinearGradient
+    //   colors={gradientColors as [ColorValue, ColorValue, ...ColorValue[]]}
+    //   style={{ flex: 1 }}
+    //   start={{ x: 0, y: 0 }}
+    //   end={{ x: 1, y: 1 }}
+    // >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View className="flex-1 justify-center px-6 py-8">
           {/* Logo with enhanced styling */}
@@ -186,6 +186,6 @@ export default function SignInScreen() {
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    // </LinearGradient>
   );
 }

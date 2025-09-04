@@ -76,7 +76,7 @@ export default function ProfileIndexScreen() {
   // Profile header component
   const ProfileHeader = () => (
     <>
-      <Card className="mx-4 mt-4 p-6 bg-card">
+      <Card className="p-6 bg-card">
         <View className="items-center">
           {profileData.image ? (
             <Image source={{ uri: profileData.image }} className="w-24 h-24 rounded-full mb-4" />

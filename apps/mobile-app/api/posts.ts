@@ -10,7 +10,7 @@ export const useGetPostsFeed = (limit = 10) => {
         query: {
           cursor: pageParam,
           limit: limit.toString(),
-          sortBy: 'popular',
+          sortBy: 'newest',
         },
       });
       

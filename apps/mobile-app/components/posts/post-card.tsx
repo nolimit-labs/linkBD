@@ -4,6 +4,8 @@ import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
 import { BadgeText } from '~/components/ui/badge';
 import { useRouter } from 'expo-router';
+import { Heart, MessageCircle, Share } from 'lucide-react-native';
+import { useTogglePostLike } from '~/api/posts';
 
 // Post type definition based on the API response
 type Post = {
@@ -13,6 +15,7 @@ type Post = {
     name: string;
     type: "user" | "organization";
     isOfficial?: boolean;
+    subscriptionPlan?: string;
   };
   imageUrl: string | null;
   hasLiked: boolean;
@@ -31,10 +34,16 @@ interface PostCardProps {
 
 export function PostCard({ post, showAuthor = true }: PostCardProps) {
   const router = useRouter();
+  const toggleLike = useTogglePostLike();
 
   // Navigate to user profile when author is tapped
   const handleAuthorPress = () => {
-    router.push(`/profile/${post.author.id}`);
+    router.push(`/profile/${post.author.id}` as const);
+  };
+
+  // Handle like toggle
+  const handleLikeToggle = () => {
+    toggleLike.mutate(post.id);
   };
 
   // Format date to relative time
@@ -59,10 +68,10 @@ export function PostCard({ post, showAuthor = true }: PostCardProps) {
             {post.author.image ? (
               <Image
                 source={{ uri: post.author.image }}
-                className="w-10 h-10 rounded-full mr-3"
+                className="w-10 h-10 rounded-lg mr-3"
               />
             ) : (
-              <View className="w-10 h-10 rounded-full bg-muted mr-3 items-center justify-center">
+              <View className="w-10 h-10 rounded-lg bg-muted mr-3 items-center justify-center">
                 <Text className="text-lg font-semibold">
                   {post.author.name?.charAt(0) || '?'}
                 </Text>
@@ -73,13 +82,18 @@ export function PostCard({ post, showAuthor = true }: PostCardProps) {
                 <Text className="font-semibold text-foreground">{post.author.name}</Text>
                 {post.author.isOfficial && (
                   <BadgeText variant="default">
-                    ✓ Official
+                    Official
+                  </BadgeText>
+                )}
+                {(post.author.subscriptionPlan === 'pro' || post.author.subscriptionPlan === 'pro_complementary') && (
+                  <BadgeText variant="secondary">
+                    Pro
                   </BadgeText>
                 )}
               </View>
               <View className="flex-row items-center">
                 <Text className="text-xs text-muted-foreground">
-                  {post.author.type === 'organization' ? '🏢 Organization' : 'User'}
+                  {post.author.type === 'organization' ? 'Organization' : 'User'}
                 </Text>
                 <Text className="text-xs text-muted-foreground ml-2">
                   • {formatDate(post.updatedAt)}
@@ -111,16 +125,27 @@ export function PostCard({ post, showAuthor = true }: PostCardProps) {
 
       {/* Post stats */}
       <View className="flex-row items-center justify-between pt-3 border-t border-border">
-        <TouchableOpacity className="flex-row items-center">
-          <Text className="text-sm text-muted-foreground">
-            {post.hasLiked ? '❤️ Liked' : '🤍 Like'}
+        <TouchableOpacity 
+          className="flex-row items-center gap-1" 
+          onPress={handleLikeToggle}
+          disabled={toggleLike.isPending}
+        >
+          <Heart 
+            size={16}
+            color={post.hasLiked ? "#ef4444" : "#6b7280"}
+            fill={post.hasLiked ? "#ef4444" : "transparent"}
+          />
+          <Text className={`text-sm ${post.hasLiked ? 'text-red-500' : 'text-muted-foreground'}`}>
+            {post.hasLiked ? 'Liked' : 'Like'}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-row items-center">
-          <Text className="text-sm text-muted-foreground">💬 Comment</Text>
+        <TouchableOpacity className="flex-row items-center gap-1">
+          <MessageCircle size={16} color="#6b7280" />
+          <Text className="text-sm text-muted-foreground">Comment</Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-row items-center">
-          <Text className="text-sm text-muted-foreground">📤 Share</Text>
+        <TouchableOpacity className="flex-row items-center gap-1">
+          <Share size={16} color="#6b7280" />
+          <Text className="text-sm text-muted-foreground">Share</Text>
         </TouchableOpacity>
       </View>
     </Card>

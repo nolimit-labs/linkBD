@@ -111,10 +111,18 @@ export default function AppLayout() {
         />
         {/* Hidden dynamic profile route */}
         <Drawer.Screen
-          name="profile/[userId]"
+          name="profile/[id]"
           options={{
             drawerItemStyle: { display: 'none' },
-            title: 'User Profile',
+            title: 'Profile',
+            headerLeft: ({ tintColor }) => (
+              <Pressable
+                onPress={() => router.back()}
+                className="ml-4 p-2"
+              >
+                <MaterialIcons name="arrow-back" size={24} color={tintColor} />
+              </Pressable>
+            ),
           }}
         />
       </Drawer>

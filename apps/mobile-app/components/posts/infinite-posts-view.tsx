@@ -110,7 +110,7 @@ export function InfinitePostsView({
     }
 
     return (
-      <Card className="mx-4 mt-4 p-6 bg-card">
+      <Card className="mt-4 p-6 bg-card">
         <Text className="text-center text-muted-foreground">{emptyMessage}</Text>
       </Card>
     );
@@ -132,7 +132,7 @@ export function InfinitePostsView({
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-      contentContainerStyle={{ flexGrow: 1 }}
+      contentContainerStyle={{ flexGrow: 1, padding: 16 }}
       showsVerticalScrollIndicator={false}
     />
   );
