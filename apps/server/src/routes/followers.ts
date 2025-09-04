@@ -45,16 +45,12 @@ const followersRoute = new Hono<{ Variables: AuthVariables }>()
       return c.json({ error: 'Missing targetId parameter' }, 400);
     }
     
-    
     // Determine follower context from session
     const followerType = session.activeOrganizationId ? 'organization' : 'user';
     const followerId = session.activeOrganizationId ?? session.userId;
-
-    console.log('This is the targetId', followerId, followerType, targetId);
     
     try {
       const isFollowing = await followersModel.isFollowing(followerId, followerType, targetId);
-      console.log('This is the isFollowing', isFollowing);
       return c.json({ isFollowing }, 200);
     } catch (error: any) {
       return c.json({ error: error.message }, 400);
