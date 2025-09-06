@@ -138,9 +138,16 @@ export function PostCard({ post, onEdit, onDelete }: PostCardProps) {
               <span className="text-xs">{post.likesCount}</span>
             </Button>
 
-            <Button variant="ghost" size="sm" className="flex items-center space-x-1">
-              <MessageCircle className="h-4 w-4" />
-              <span className="text-xs">Comment</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center space-x-1"
+              asChild
+            >
+              <Link to="/posts/$id" params={{ id: post.id }}>
+                <MessageCircle className="h-4 w-4" />
+                <span className="text-xs">Comment</span>
+              </Link>
             </Button>
 
             <Button variant="ghost" size="sm" className="flex items-center space-x-1">

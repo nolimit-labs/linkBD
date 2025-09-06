@@ -7,8 +7,8 @@ import { toast } from 'sonner';
 // ================================
 
 export const followersQueryKeys = {
-  followStatus: (targetType: 'user' | 'organization', targetId: string) => 
-    ['follow-status', targetType, targetId] as const,
+  followStatus: (targetId: string) => 
+    ['follow-status', targetId] as const,
   followers: (targetId: string) => 
     ['followers', targetId] as const,
   following: (followerId: string) => 
@@ -22,9 +22,9 @@ export const followersQueryKeys = {
 // ================================
 
 // Check if following a target (unified)
-export const useFollowStatus = (targetType: 'user' | 'organization', targetId: string) => {
+export const useFollowStatus = (targetId: string) => {
   return useQuery({
-    queryKey: followersQueryKeys.followStatus(targetType, targetId),
+    queryKey: followersQueryKeys.followStatus(targetId),
     queryFn: async () => {
       const response = await rpcClient.api.followers.status[':id'].$get({
         param: { id: targetId }
@@ -33,7 +33,7 @@ export const useFollowStatus = (targetType: 'user' | 'organization', targetId: s
       if (!response.ok) return { isFollowing: false };
       return response.json();
     },
-    enabled: !!targetId,
+    enabled: true,
   });
 };
 
@@ -125,10 +125,10 @@ export const useFollow = () => {
       
       return response.json();
     },
-    onSuccess: (_, { targetId, targetType, action }) => {
+    onSuccess: (_, { targetId, action }) => {
       // Invalidate related queries
       queryClient.invalidateQueries({ 
-        queryKey: followersQueryKeys.followStatus(targetType, targetId) 
+        queryKey: followersQueryKeys.followStatus(targetId) 
       });
       queryClient.invalidateQueries({ 
         queryKey: followersQueryKeys.counts(targetId) 
@@ -142,8 +142,7 @@ export const useFollow = () => {
       });
       
       const actionText = action === 'follow' ? 'Following' : 'Unfollowed';
-      const entityText = targetType === 'user' ? 'user' : 'organization';
-      toast.success(`${actionText} ${entityText}`);
+      toast.success(`${actionText}`);
     },
     onError: (error) => {
       toast.error(error.message);

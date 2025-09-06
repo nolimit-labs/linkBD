@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Building2, User, Search, Users } from 'lucide-react';
 import { useState } from 'react';
-import { FollowButton } from '@/components/follows/follow-button';
+import { FollowButton } from '@/components/profile/follow-button';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSession } from '@/lib/auth-client';

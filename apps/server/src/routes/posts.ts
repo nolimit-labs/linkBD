@@ -7,6 +7,7 @@ import * as postModel from '../models/posts';
 import * as userModel from '../models/user';
 import * as orgModel from '../models/organization';
 import * as subscriptionModel from '../models/subscriptions';
+import * as commentModel from '../models/comments';
 import { generateDownloadURL } from '../lib/storage';
 // import { Session } from 'better-auth';
 
@@ -16,6 +17,14 @@ const postSchema = z.object({
   visibility: z.enum(['public', 'organization', 'private']).optional(),
 });
 
+const createCommentSchema = z.object({
+  content: z.string().min(1).max(5000),
+  parentId: z.string().optional(),
+});
+
+const updateCommentSchema = z.object({
+  content: z.string().min(1).max(5000),
+});
 
 const paginationSchema = z.object({
   cursor: z.string().optional(),
@@ -23,6 +32,11 @@ const paginationSchema = z.object({
   direction: z.enum(['after', 'before']).optional().default('after'),
   sortBy: z.enum(['newest', 'oldest', 'popular']).optional().default('newest'),
   filter: z.enum(['all', 'following']).optional().default('all'),
+});
+
+const commentPaginationSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.string().optional().transform(val => val ? parseInt(val) : 20),
 });
 
 const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }>()
@@ -115,7 +129,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       author = {
         id: userInfo.id,
         name: userInfo.name,
-        image: await generateDownloadURL(userInfo.image),
+        image: userInfo.imageUrl,
         type: 'user' as const,
         isOfficial: userInfo.isOfficial || false,
         subscriptionPlan: authorSubscription?.plan || 'free'
@@ -144,7 +158,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
         author = {
           id: orgInfo.id,
           name: orgInfo.name,
-          image: await generateDownloadURL(orgInfo.imageKey),
+          image: orgInfo.imageUrl,
           type: 'organization' as const,
           isOfficial: orgInfo.isOfficial || false,
           subscriptionPlan
@@ -207,9 +221,52 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       return c.json({ error: 'Post not found' }, 404);
     }
 
-    // Add download URL and like status
+    // Get author information
+    let author;
+    let subscriptionPlan = 'free';
+    
+    if (post.userId) {
+      // It's a user post
+      const userInfo = await userModel.getUserById(post.userId);
+      if (userInfo) {
+        const authorSubscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
+        subscriptionPlan = authorSubscription?.plan || 'free';
+        
+        author = {
+          id: userInfo.id,
+          name: userInfo.name,
+          image: userInfo.imageUrl,
+          type: 'user' as const,
+          isOfficial: userInfo.isOfficial || false,
+          subscriptionPlan
+        };
+      }
+    } else if (post.organizationId) {
+      // It's an organization post
+      const orgInfo = await orgModel.getOrgById(post.organizationId);
+      if (orgInfo) {
+        // Get the organization owner's subscription
+        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
+        if (orgOwner) {
+          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
+          subscriptionPlan = ownerSubscription?.plan || 'free';
+        }
+        
+        author = {
+          id: orgInfo.id,
+          name: orgInfo.name,
+          image: orgInfo.imageUrl,
+          type: 'organization' as const,
+          isOfficial: orgInfo.isOfficial || false,
+          subscriptionPlan
+        };
+      }
+    }
+
+    // Add download URL, like status, and author info
     const postWithDetails = {
       ...post,
+      author,
       imageUrl: await generateDownloadURL(post.imageKey),
       hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
     };
@@ -327,6 +384,198 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     return c.json(updated);
   })
 
+  // ===============================
+  // Comments endpoints
+  // ===============================
 
+  // Get comments for a post with pagination
+  .get('/:id/comments', authMiddleware, zValidator('query', commentPaginationSchema), async (c) => {
+    const postId = c.req.param('id');
+    const { cursor, limit } = c.req.valid('query');
+    const { user } = c.get('session');
+
+    // Verify post exists (this also checks visibility permissions)
+    const post = await postModel.getPostById(postId, user.id);
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+
+    const result = await commentModel.getPostComments(postId, limit, cursor);
+    return c.json(result);
+  })
+
+  // Create a new comment on a post
+  .post('/:id/comments', authMiddleware, zValidator('json', createCommentSchema), async (c) => {
+    const postId = c.req.param('id');
+    const { content, parentId } = c.req.valid('json');
+    const { session, user } = c.get('session');
+
+    // Verify post exists
+    const post = await postModel.getPostById(postId, user.id);
+    if (!post) {
+      return c.json({ error: 'Post not found' }, 404);
+    }
+
+    // Verify parent comment exists if parentId is provided
+    if (parentId) {
+      const parentComment = await commentModel.getCommentById(parentId);
+      if (!parentComment) {
+        return c.json({ error: 'Parent comment not found' }, 404);
+      }
+      // Ensure parent comment belongs to the same post
+      if (parentComment.postId !== postId) {
+        return c.json({ error: 'Parent comment does not belong to this post' }, 400);
+      }
+    }
+
+    // Determine author type and ID
+    let authorId: string;
+    let authorType: 'user' | 'organization';
+
+    if (session.activeOrganizationId) {
+      // Posting as organization
+      authorId = session.activeOrganizationId;
+      authorType = 'organization';
+    } else {
+      // Posting as user
+      authorId = user.id;
+      authorType = 'user';
+    }
+
+    const comment = await commentModel.createComment(
+      postId,
+      content,
+      authorId,
+      authorType,
+      parentId
+    );
+
+    // Get author info for response
+    const commentWithAuthor = await commentModel.getCommentById(comment.id);
+    
+    return c.json(commentWithAuthor, 201);
+  })
+
+  // Get replies for a comment with pagination
+  .get('/:postId/comments/:commentId/replies', authMiddleware, zValidator('query', commentPaginationSchema), async (c) => {
+    const postId = c.req.param('postId');
+    const commentId = c.req.param('commentId');
+    const { cursor, limit } = c.req.valid('query');
+
+    // Verify comment exists and belongs to the post
+    const comment = await commentModel.getCommentById(commentId);
+    if (!comment) {
+      return c.json({ error: 'Comment not found' }, 404);
+    }
+    if (comment.postId !== postId) {
+      return c.json({ error: 'Comment does not belong to this post' }, 400);
+    }
+
+    const result = await commentModel.getCommentReplies(commentId, limit, cursor);
+    return c.json(result);
+  })
+
+  // Update a comment
+  .put('/:postId/comments/:commentId', authMiddleware, zValidator('json', updateCommentSchema), async (c) => {
+    const postId = c.req.param('postId');
+    const commentId = c.req.param('commentId');
+    const { content } = c.req.valid('json');
+    const { session, user } = c.get('session');
+
+    // Verify comment exists and belongs to the post
+    const existingComment = await commentModel.getCommentById(commentId);
+    if (!existingComment) {
+      return c.json({ error: 'Comment not found' }, 404);
+    }
+    if (existingComment.postId !== postId) {
+      return c.json({ error: 'Comment does not belong to this post' }, 400);
+    }
+
+    // Determine author type and ID
+    let authorId: string;
+    let authorType: 'user' | 'organization';
+
+    if (session.activeOrganizationId) {
+      // Updating as organization
+      authorId = session.activeOrganizationId;
+      authorType = 'organization';
+    } else {
+      // Updating as user
+      authorId = user.id;
+      authorType = 'user';
+    }
+
+    try {
+      const updatedComment = await commentModel.updateComment(
+        commentId,
+        content,
+        authorId,
+        authorType
+      );
+
+      if (!updatedComment) {
+        return c.json({ error: 'Comment not found' }, 404);
+      }
+
+      // Get author info for response
+      const commentWithAuthor = await commentModel.getCommentById(updatedComment.id);
+      
+      return c.json(commentWithAuthor);
+    } catch (error: any) {
+      if (error.message === 'Unauthorized to edit this comment') {
+        return c.json({ error: 'Unauthorized to edit this comment' }, 403);
+      }
+      throw error;
+    }
+  })
+
+  // Delete a comment
+  .delete('/:postId/comments/:commentId', authMiddleware, async (c) => {
+    const postId = c.req.param('postId');
+    const commentId = c.req.param('commentId');
+    const { session, user } = c.get('session');
+
+    // Verify comment exists and belongs to the post
+    const existingComment = await commentModel.getCommentById(commentId);
+    if (!existingComment) {
+      return c.json({ error: 'Comment not found' }, 404);
+    }
+    if (existingComment.postId !== postId) {
+      return c.json({ error: 'Comment does not belong to this post' }, 400);
+    }
+
+    // Determine author type and ID
+    let authorId: string;
+    let authorType: 'user' | 'organization';
+
+    if (session.activeOrganizationId) {
+      // Deleting as organization
+      authorId = session.activeOrganizationId;
+      authorType = 'organization';
+    } else {
+      // Deleting as user
+      authorId = user.id;
+      authorType = 'user';
+    }
+
+    try {
+      const deleted = await commentModel.deleteComment(
+        commentId,
+        authorId,
+        authorType
+      );
+
+      if (!deleted) {
+        return c.json({ error: 'Comment not found' }, 404);
+      }
+
+      return c.json({ success: true });
+    } catch (error: any) {
+      if (error.message === 'Unauthorized to delete this comment') {
+        return c.json({ error: 'Unauthorized to delete this comment' }, 403);
+      }
+      throw error;
+    }
+  })
 
 export default postsRoute;

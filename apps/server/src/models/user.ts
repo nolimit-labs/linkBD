@@ -1,5 +1,6 @@
 import { db } from '../db/index.js';
-import { user, posts, member, organization, subscription } from '../db/schema.js';
+import { generateDownloadURL } from '../lib/storage.js';
+import { user as userTable, posts, member, organization, subscription } from '../db/schema.js';
 import { eq, ilike, or, sql, desc, inArray, count, gt, and } from 'drizzle-orm';
 
 // ================================
@@ -11,26 +12,26 @@ export async function getAllUsersPaginated(options: {
   limit?: number;
   cursor?: string; // User ID to start after
 } = {}) {
-  const { 
-    limit = 20, 
+  const {
+    limit = 20,
     cursor
   } = options;
 
   // Build the where clause for cursor pagination
-  const whereClause = cursor 
-    ? gt(user.createdAt, 
-        db.select({ createdAt: user.createdAt })
-          .from(user)
-          .where(eq(user.id, cursor))
-      )
+  const whereClause = cursor
+    ? gt(userTable.createdAt,
+      db.select({ createdAt: userTable.createdAt })
+        .from(userTable)
+        .where(eq(userTable.id, cursor))
+    )
     : undefined;
 
   // Get users with cursor pagination
   const users = await db
     .select()
-    .from(user)
+    .from(userTable)
     .where(whereClause)
-    .orderBy(desc(user.createdAt))
+    .orderBy(desc(userTable.createdAt))
     .limit(limit + 1); // Fetch one extra to determine if there's a next page
 
   // Check if there's a next page
@@ -40,7 +41,7 @@ export async function getAllUsersPaginated(options: {
   // Get total count
   const [{ totalCount }] = await db
     .select({ totalCount: count() })
-    .from(user);
+    .from(userTable);
 
   return {
     users: usersToReturn,
@@ -52,14 +53,30 @@ export async function getAllUsersPaginated(options: {
   };
 }
 
+// Get user and generate image URL
 export async function getUserById(userId: string) {
   const users = await db
     .select()
-    .from(user)
-    .where(eq(user.id, userId))
+    .from(userTable)
+    .where(eq(userTable.id, userId))
     .limit(1);
 
-  return users[0] || null;
+  const base = users[0] || null;
+  if (!base) return null;
+
+  // Backward compatible: return original fields plus imageUrl
+  if (base.image) {
+    const imageUrl = await generateDownloadURL(base.image);
+    return {
+      ...base,
+      imageUrl,
+    }
+  } else {
+    return {
+      ...base,
+      imageUrl: null,
+    }
+  }
 }
 
 
@@ -74,7 +91,7 @@ export async function getUserProfile(userId: string) {
     })
     .from(posts)
     .where(eq(posts.userId, userId));
-  
+
   return {
     ...userInfo,
     postCount: postCount[0]?.count || 0,
@@ -84,17 +101,17 @@ export async function getUserProfile(userId: string) {
 // Search users by name only
 export async function searchUsers(query: string, limit = 20, offset = 0) {
   const searchPattern = `%${query}%`;
-  
+
   return await db
     .select({
-      id: user.id,
-      name: user.name,
-      image: user.image,
-      createdAt: user.createdAt,
+      id: userTable.id,
+      name: userTable.name,
+      image: userTable.image,
+      createdAt: userTable.createdAt,
     })
-    .from(user)
-    .where(ilike(user.name, searchPattern))
-    .orderBy(user.name)
+    .from(userTable)
+    .where(ilike(userTable.name, searchPattern))
+    .orderBy(userTable.name)
     .limit(limit)
     .offset(offset);
 }
@@ -102,7 +119,7 @@ export async function searchUsers(query: string, limit = 20, offset = 0) {
 // Get user's subscription information
 export async function getUserSubscriptions(userIds: string[]) {
   if (userIds.length === 0) return [];
-  
+
   const subscriptions = await db
     .select({
       referenceId: subscription.referenceId,
@@ -114,7 +131,7 @@ export async function getUserSubscriptions(userIds: string[]) {
     })
     .from(subscription)
     .where(inArray(subscription.referenceId, userIds));
-  
+
   return subscriptions;
 }
 
@@ -145,7 +162,7 @@ export async function getUserActiveSubscription(userId: string) {
 // Get user's organization memberships
 export async function getUserMemberships(userIds: string[]) {
   if (userIds.length === 0) return [];
-  
+
   const memberships = await db
     .select({
       userId: member.userId,
@@ -156,7 +173,7 @@ export async function getUserMemberships(userIds: string[]) {
     .from(member)
     .leftJoin(organization, eq(member.organizationId, organization.id))
     .where(inArray(member.userId, userIds));
-  
+
   return memberships;
 }
 
@@ -171,7 +188,7 @@ export async function getUserMembershipsByUserId(userId: string) {
     .from(member)
     .leftJoin(organization, eq(member.organizationId, organization.id))
     .where(eq(member.userId, userId));
-  
+
   return memberships;
 }
 
@@ -181,12 +198,12 @@ export async function getUserMembershipsByUserId(userId: string) {
 
 export async function updateUser(userId: string, data: { name?: string; image?: string | null; description?: string }) {
   const updatedUsers = await db
-    .update(user)
-    .set({ 
+    .update(userTable)
+    .set({
       ...data,
       updatedAt: new Date()
     })
-    .where(eq(user.id, userId))
+    .where(eq(userTable.id, userId))
     .returning();
 
   return updatedUsers[0] || null;

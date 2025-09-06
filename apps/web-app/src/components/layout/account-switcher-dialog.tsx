@@ -28,13 +28,12 @@ export function AccountSwitcher({ open, onOpenChange }: AccountSwitcherProps) {
     try {
       if (orgId) {
         await organization.setActive({ organizationId: orgId })
-        queryClient.invalidateQueries()
 
       } else {
         // Switch to personal account
         await organization.setActive({ organizationId: null })
-        queryClient.invalidateQueries()
       }
+      queryClient.invalidateQueries()
       onOpenChange(false)
     } catch (error) {
       console.error('Failed to switch organization:', error)

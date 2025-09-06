@@ -9,6 +9,7 @@ import {
   numeric,
   index
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 // =====================================================================
 // Auth schema from better-auth
@@ -213,7 +214,34 @@ export const likes = pgTable('likes', {
   userIdIdx: index('idx_likes_user_id').on(table.userId),
 }));
 
-// -------------------- Followers System Tables ------------------------------
+// Comments table - social post comments with polymorphic author support
+export const comments = pgTable('comments', {
+  id: text('id').primaryKey(),
+  postId: text('post_id')
+    .notNull()
+    .references(() => posts.id, { onDelete: 'cascade' }),
+  parentId: text('parent_id')
+    .references((): AnyPgColumn => comments.id, { onDelete: 'cascade' }), // For nested replies
+  userId: text('user_id')
+    .references(() => user.id, { onDelete: 'set null' }), 
+  organizationId: text('organization_id')
+    .references(() => organization.id, { onDelete: 'set null' }),
+  content: text('content').notNull(),
+  isEdited: boolean('is_edited').notNull().default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Performance indexes
+  postIdIdx: index('idx_comments_post_id').on(table.postId),
+  parentIdIdx: index('idx_comments_parent_id').on(table.parentId),
+  userIdIdx: index('idx_comments_user_id').on(table.userId),
+  orgIdIdx: index('idx_comments_org_id').on(table.organizationId),
+  // Pagination indexes
+  postCreatedAtIdx: index('idx_comments_post_created_at')
+    .on(table.postId, table.createdAt.desc()),
+  parentCreatedAtIdx: index('idx_comments_parent_created_at')
+    .on(table.parentId, table.createdAt.desc()),
+}));
 
 // Followers table - tracks who follows who (users and organizations)
 export const followers = pgTable('followers', {
@@ -274,12 +302,6 @@ export const migrationRuns = pgTable('migration_runs', {
 });
 
 // =====================================================================
-// Followers System Schema Tables  
-// =====================================================================
-
-
-
-// =====================================================================
 // TypeScript type exports
 // =====================================================================
 
@@ -304,6 +326,10 @@ export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type Like = typeof likes.$inferSelect;
 export type NewLike = typeof likes.$inferInsert;
+
+// Comments types
+export type Comment = typeof comments.$inferSelect;
+export type NewComment = typeof comments.$inferInsert;
 
 // Followers system types
 export type Follower = typeof followers.$inferSelect;

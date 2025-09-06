@@ -39,7 +39,7 @@ export function FollowButton({
   }
 
   // Query follow status using the API hook
-  const { data: followStatus } = useFollowStatus(targetType, targetId);
+  const { data: followStatus } = useFollowStatus(targetId);
 
   // Follow/unfollow mutation
   const followMutation = useFollow();

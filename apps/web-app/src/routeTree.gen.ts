@@ -19,6 +19,7 @@ import { Route as appImagesRouteImport } from './routes/(app)/images'
 import { Route as appFeedRouteImport } from './routes/(app)/feed'
 import { Route as appBusinessesRouteImport } from './routes/(app)/businesses'
 import { Route as appProfileIdRouteImport } from './routes/(app)/profile/$id'
+import { Route as appPostsIdRouteImport } from './routes/(app)/posts/$id'
 import { Route as appOrganizationsIdFollowingRouteImport } from './routes/(app)/organizations/$id.following'
 
 const appRouteRoute = appRouteRouteImport.update({
@@ -70,6 +71,11 @@ const appProfileIdRoute = appProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => appRouteRoute,
 } as any)
+const appPostsIdRoute = appPostsIdRouteImport.update({
+  id: '/posts/$id',
+  path: '/posts/$id',
+  getParentRoute: () => appRouteRoute,
+} as any)
 const appOrganizationsIdFollowingRoute =
   appOrganizationsIdFollowingRouteImport.update({
     id: '/organizations/$id/following',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof appSettingsRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
+  '/posts/$id': typeof appPostsIdRoute
   '/profile/$id': typeof appProfileIdRoute
   '/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
 }
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/settings': typeof appSettingsRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
+  '/posts/$id': typeof appPostsIdRoute
   '/profile/$id': typeof appProfileIdRoute
   '/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
 }
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/(app)/settings': typeof appSettingsRoute
   '/(auth)/sign-in': typeof authSignInRoute
   '/(auth)/sign-up': typeof authSignUpRoute
+  '/(app)/posts/$id': typeof appPostsIdRoute
   '/(app)/profile/$id': typeof appProfileIdRoute
   '/(app)/organizations/$id/following': typeof appOrganizationsIdFollowingRoute
 }
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/posts/$id'
     | '/profile/$id'
     | '/organizations/$id/following'
   fileRoutesByTo: FileRoutesByTo
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sign-in'
     | '/sign-up'
+    | '/posts/$id'
     | '/profile/$id'
     | '/organizations/$id/following'
   id:
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/(app)/settings'
     | '/(auth)/sign-in'
     | '/(auth)/sign-up'
+    | '/(app)/posts/$id'
     | '/(app)/profile/$id'
     | '/(app)/organizations/$id/following'
   fileRoutesById: FileRoutesById
@@ -234,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appProfileIdRouteImport
       parentRoute: typeof appRouteRoute
     }
+    '/(app)/posts/$id': {
+      id: '/(app)/posts/$id'
+      path: '/posts/$id'
+      fullPath: '/posts/$id'
+      preLoaderRoute: typeof appPostsIdRouteImport
+      parentRoute: typeof appRouteRoute
+    }
     '/(app)/organizations/$id/following': {
       id: '/(app)/organizations/$id/following'
       path: '/organizations/$id/following'
@@ -250,6 +269,7 @@ interface appRouteRouteChildren {
   appImagesRoute: typeof appImagesRoute
   appSearchRoute: typeof appSearchRoute
   appSettingsRoute: typeof appSettingsRoute
+  appPostsIdRoute: typeof appPostsIdRoute
   appProfileIdRoute: typeof appProfileIdRoute
   appOrganizationsIdFollowingRoute: typeof appOrganizationsIdFollowingRoute
 }
@@ -260,6 +280,7 @@ const appRouteRouteChildren: appRouteRouteChildren = {
   appImagesRoute: appImagesRoute,
   appSearchRoute: appSearchRoute,
   appSettingsRoute: appSettingsRoute,
+  appPostsIdRoute: appPostsIdRoute,
   appProfileIdRoute: appProfileIdRoute,
   appOrganizationsIdFollowingRoute: appOrganizationsIdFollowingRoute,
 }

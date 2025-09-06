@@ -2,7 +2,7 @@ import { User, Building, ChevronsUpDown, UserCircle } from "lucide-react"
 import { useCurrentUser } from "@/api/user"
 import { useGetProfile } from "@/api/profile"
 import { cn } from "@/lib/utils"
-import { useActiveOrganization } from "@/lib/auth-client"
+import { useActiveOrganization, useSession } from "@/lib/auth-client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   Popover,
@@ -23,18 +23,17 @@ interface CurrentAccountBoxProps {
 
 export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
   const [showOrgSwitcher, setShowOrgSwitcher] = useState(false)
-  const { data: user } = useCurrentUser()
-  const { data: activeOrg } = useActiveOrganization()
+  const { data: session } = useSession()
   
   // Get profile data for current account (user or active org)
-  const currentAccountId = activeOrg?.id || user?.id
+  const currentAccountId = session?.session?.activeOrganizationId || session?.session?.userId
   const { data: profileData } = useGetProfile(currentAccountId)
   
   // Determine current account info
-  const isOrganization = !!activeOrg
+  const isOrganization = !!session?.session?.activeOrganizationId
   const currentAccount = {
     id: currentAccountId,
-    name: activeOrg ? activeOrg.name : user?.name || 'Personal Account',
+    name: isOrganization ? profileData?.name : profileData?.name || 'Personal Account',
     image: profileData?.image,
     description: profileData?.description,
     type: isOrganization ? 'Business Account' : 'Personal Account'
@@ -94,11 +93,11 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
               {currentAccount.name}
             </p>
             <p className="text-xs text-muted-foreground">
-              {isOrganization ? 'Business Account' : user?.email}
+              {isOrganization ? 'Business Account' : 'Personal Account'}
             </p>
             {isOrganization && (
               <p className="text-xs text-primary mt-1">
-                Managed by {user?.name}
+                Managed by {profileData?.name}
               </p>
             )}
           </div>
@@ -108,8 +107,8 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
           {/* Menu Items */}
           <div className="space-y-1">
             {/* View My Profile */}
-            {user?.id && (
-              <Link to="/profile/$id" params={{ id: user.id }}>
+            {currentAccount?.id && (
+              <Link to="/profile/$id" params={{ id: currentAccount?.id || '' }}>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -122,21 +121,21 @@ export function CurrentAccountBox({ className }: CurrentAccountBoxProps) {
             )}
 
             {/* View Organization Profile */}
-            {activeOrg && (
-              <Link to="/profile/$id" params={{ id: activeOrg.id }}>
+            {isOrganization && (
+              <Link to="/profile/$id" params={{ id: currentAccount?.id || '' }}>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start"
                 >
                   <Building className="mr-2 h-4 w-4" />
-                  View {activeOrg.name} Profile
+                  View {currentAccount?.name} Profile
                 </Button>
               </Link>
             )}
 
             {/* Separator if we have profile links */}
-            {(user?.id || activeOrg) && <Separator className="my-2" />}
+            {(currentAccount?.id || isOrganization) && <Separator className="my-2" />}
 
             {/* Switch Account */}
             <Button

@@ -81,7 +81,7 @@ export async function searchOrganizations(query: string, limit = 20, offset = 0)
 
 
 
-// Get organization by ID
+// Get organization and generate image URL
 export async function getOrgById(orgId: string) {
   const organizations = await db
     .select()
@@ -89,7 +89,23 @@ export async function getOrgById(orgId: string) {
     .where(eq(organization.id, orgId))
     .limit(1);
 
-  return organizations[0] || null;
+  const base = organizations[0] || null;
+  if (!base) return null;
+
+  // Backward compatible: return original fields plus imageUrl
+  const imageSource = base.imageKey || null;
+  if (imageSource) {
+    const imageUrl = await generateDownloadURL(imageSource);
+    return {
+    ...base,
+      imageUrl,
+    } 
+  } else {
+    return {
+      ...base,
+      imageUrl: null,
+    }
+  }
 }
 
 // Get organization profile with member count

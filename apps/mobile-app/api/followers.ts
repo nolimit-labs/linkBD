@@ -4,10 +4,9 @@ import { rpcClient } from './rpc-client';
 // Query Keys
 const queryKeys = {
   followers: {
-    status: (targetType: 'user' | 'organization', targetId: string) => [
+    status: (targetId: string) => [
       'followers',
       'status',
-      targetType,
       targetId,
     ] as const,
     counts: (id: string) => [
@@ -29,9 +28,9 @@ const queryKeys = {
 } as const;
 
 // Hook to check if currently following a user or organization (unified)
-export const useFollowStatus = (targetType: 'user' | 'organization', targetId: string) => {
+export const useFollowStatus = (targetId: string) => {
   return useQuery({
-    queryKey: queryKeys.followers.status(targetType, targetId),
+    queryKey: queryKeys.followers.status(targetId),
     queryFn: async () => {
       const res = await rpcClient.api.followers.status[':id'].$get({
         param: { id: targetId }
@@ -134,10 +133,10 @@ export const useFollow = () => {
       }
       return res.json();
     },
-    onSuccess: (data, { targetId, targetType }) => {
+    onSuccess: (_, { targetId }) => {
       // Invalidate follow status queries
       queryClient.invalidateQueries({
-        queryKey: queryKeys.followers.status(targetType, targetId),
+        queryKey: queryKeys.followers.status(targetId),
       });
       
       // Invalidate follower counts for the target

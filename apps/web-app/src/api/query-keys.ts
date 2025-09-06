@@ -7,10 +7,10 @@ export const queryKeys = {
   },
   posts: {
     all: (organizationId?: string, userId?: string) => {
-      const key = ['posts'];
+      const key: (string | undefined)[] = ['posts'];
       if (organizationId) key.push('org', organizationId);
       if (userId) key.push('user', userId);
-      return key as const;
+      return key;
     },
     byAuthor: (authorId: string) => ['posts', 'author', authorId] as const,
     single: (id: string) => ['posts', id] as const,
@@ -42,5 +42,11 @@ export const queryKeys = {
   },
   profile: {
     detail: (id: string) => ['profile', id] as const,
+  },
+  comments: {
+    all: ['comments'] as const,
+    byPost: (postId: string) => ['comments', 'post', postId] as const,
+    replies: (commentId: string) => ['comments', 'replies', commentId] as const,
+    single: (commentId: string) => ['comments', commentId] as const,
   },
 } as const
