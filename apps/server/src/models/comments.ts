@@ -160,9 +160,7 @@ async function getCommentAuthor(comment: Comment) {
     const userInfo = await userModel.getUserById(comment.userId);
     if (userInfo) {
       return {
-        id: userInfo.id,
-        name: userInfo.name,
-        imageUrl: userInfo.imageUrl,
+        ...userInfo,
         type: 'user' as const,
         isOfficial: userInfo.isOfficial || false,
       };
@@ -171,9 +169,7 @@ async function getCommentAuthor(comment: Comment) {
     const orgInfo = await orgModel.getOrgById(comment.organizationId);
     if (orgInfo) {
       return {
-        id: orgInfo.id,
-        name: orgInfo.name,
-        imageUrl: orgInfo.imageUrl,
+        ...orgInfo,
         type: 'organization' as const,
         isOfficial: orgInfo.isOfficial || false,
       };

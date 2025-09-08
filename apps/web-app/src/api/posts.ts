@@ -37,10 +37,7 @@ export const useGetPostsFeed = (limit = 10, filter: 'all' | 'following' = 'all')
   });
 };
 
-// Get posts for specific author (user or organization)
-
-
-// Infinite scroll version of posts by author
+// Infinite scroll version of posts by author (user or organization)
 export const useGetPostsByAuthor = (authorId: string, limit = 20) => {
   return useInfiniteQuery({
     queryKey: queryKeys.posts.byAuthor(authorId),
@@ -70,7 +67,7 @@ export const useGetPostsByAuthor = (authorId: string, limit = 20) => {
 };
 
 // Get single post by ID
-export const usePost = (postId: string) => {
+export const useGetPostById = (postId: string) => {
   return useQuery({
     queryKey: queryKeys.posts.single(postId),
     queryFn: async () => {

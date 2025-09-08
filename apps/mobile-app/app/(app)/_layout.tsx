@@ -115,17 +115,38 @@ export default function AppLayout() {
           options={{
             drawerItemStyle: { display: 'none' },
             title: 'Profile',
+            drawerLabel: 'Profile',
             headerLeft: ({ tintColor }) => (
               <Pressable
                 onPress={() => router.back()}
                 className="ml-4 p-2"
               >
+                {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
+                <MaterialIcons name="arrow-back" size={24} color={tintColor} />
+              </Pressable>
+            ),
+          }}
+        />
+
+      <Drawer.Screen
+          name="posts/[id]"
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'Post',
+            drawerLabel: 'Post',
+            headerLeft: ({ tintColor }) => (
+              <Pressable
+                onPress={() => router.back()}
+                className="ml-4 p-2"
+              >
+                {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
                 <MaterialIcons name="arrow-back" size={24} color={tintColor} />
               </Pressable>
             ),
           }}
         />
       </Drawer>
+
 
     </GestureHandlerRootView>
 

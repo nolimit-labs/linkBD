@@ -1,5 +1,9 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { rpcClient } from './rpc-client';
+
+// ================================
+// Queries
+// ================================
 
 // Infinite scroll version of posts feed
 export const useGetPostsFeed = (limit = 10) => {
@@ -27,6 +31,25 @@ export const useGetPostsFeed = (limit = 10) => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
+
+// Get single post by ID
+export const useGetPostById = (postId: string) => {
+  return useQuery({
+    queryKey: ['posts', 'single', postId],
+    queryFn: async () => {
+      const response = await rpcClient.api.posts[':id'].$get({
+        param: { id: postId },
+      });
+      if (!response.ok) throw new Error('Failed to fetch post');
+      return response.json();
+    },
+    enabled: !!postId,
+  });
+};
+
+// ================================
+// Mutations
+// ================================
 
 // Toggle post like
 export const useTogglePostLike = () => {

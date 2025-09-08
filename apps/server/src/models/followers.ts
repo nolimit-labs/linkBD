@@ -2,37 +2,7 @@ import { db } from '../db';
 import { followers, user, organization } from '../db/schema';
 import { and, eq, sql, desc, isNotNull } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-
-// ===============================
-// Helper Functions
-// ===============================
-
-// Auto-detect if an ID belongs to a user or organization
-async function detectEntityType(id: string): Promise<'user' | 'organization' | null> {
-  // Check if it's a user
-  const userResult = await db
-    .select({ id: user.id })
-    .from(user)
-    .where(eq(user.id, id))
-    .limit(1);
-  
-  if (userResult.length > 0) {
-    return 'user';
-  }
-  
-  // Check if it's an organization
-  const orgResult = await db
-    .select({ id: organization.id })
-    .from(organization)
-    .where(eq(organization.id, id))
-    .limit(1);
-  
-  if (orgResult.length > 0) {
-    return 'organization';
-  }
-  
-  return null;
-}
+import { detectEntityType } from './helper';
 
 // ===============================
 // Read Functions
@@ -107,7 +77,7 @@ export async function getUserFollowing(userId: string, limit = 20, offset = 0) {
 }
 
 // Get organizations a user is following
-export async function getUserFollowingOrgs(userId: string, limit = 20, offset = 0) {
+export async function getOrgFollowing(userId: string, limit = 20, offset = 0) {
   const result = await db
     .select({
       following: followers,
@@ -200,7 +170,7 @@ export async function getFollowingList(followerId: string, limit = 20, offset = 
 
   if (followerType === 'user') {
     const following = await getUserFollowing(followerId, limit, offset);
-    const organizations = await getUserFollowingOrgs(followerId, limit, offset);
+    const organizations = await getOrgFollowing(followerId, limit, offset);
     return { following, organizations };
   } else {
     // For organizations, we need to implement this in a future phase

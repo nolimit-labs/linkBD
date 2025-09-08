@@ -4,7 +4,9 @@ import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
 import { BadgeText } from '~/components/ui/badge';
 import { useRouter } from 'expo-router';
-import { Heart, MessageCircle, Share } from 'lucide-react-native';
+import { Heart } from '~/lib/icons/Heart'
+import { MessageCircle } from '~/lib/icons/MessageCircle'
+import { Share } from '~/lib/icons/Share'
 import { useTogglePostLike } from '~/api/posts';
 
 // Post type definition based on the API response
@@ -30,15 +32,25 @@ type Post = {
 interface PostCardProps {
   post: Post;
   showAuthor?: boolean;
+  onPostPress?: () => void;
 }
 
-export function PostCard({ post, showAuthor = true }: PostCardProps) {
+export function PostCard({ post, showAuthor = true, onPostPress }: PostCardProps) {
   const router = useRouter();
   const toggleLike = useTogglePostLike();
 
   // Navigate to user profile when author is tapped
   const handleAuthorPress = () => {
     router.push(`/profile/${post.author.id}` as const);
+  };
+
+  // Navigate to post detail when post is tapped
+  const handlePostPress = () => {
+    if (onPostPress) {
+      onPostPress();
+    } else {
+      router.push({ pathname: '/posts/[id]', params: { id: post.id } });
+    }
   };
 
   // Handle like toggle
@@ -60,91 +72,93 @@ export function PostCard({ post, showAuthor = true }: PostCardProps) {
   };
 
   return (
-    <Card className="mb-4 p-4 bg-card">
-      {/* Author info - Clickable (only show if showAuthor is true) */}
-      {showAuthor && (
-        <TouchableOpacity onPress={handleAuthorPress}>
-          <View className="flex-row items-center mb-3">
-            {post.author.image ? (
-              <Image
-                source={{ uri: post.author.image }}
-                className="w-10 h-10 rounded-lg mr-3"
-              />
-            ) : (
-              <View className="w-10 h-10 rounded-lg bg-muted mr-3 items-center justify-center">
-                <Text className="text-lg font-semibold">
-                  {post.author.name?.charAt(0) || '?'}
-                </Text>
-              </View>
-            )}
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2">
-                <Text className="font-semibold text-foreground">{post.author.name}</Text>
-                {post.author.isOfficial && (
-                  <BadgeText variant="default">
-                    Official
-                  </BadgeText>
-                )}
-                {(post.author.subscriptionPlan === 'pro' || post.author.subscriptionPlan === 'pro_complementary') && (
-                  <BadgeText variant="secondary">
-                    Pro
-                  </BadgeText>
-                )}
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-xs text-muted-foreground">
-                  {post.author.type === 'organization' ? 'Organization' : 'User'}
-                </Text>
-                <Text className="text-xs text-muted-foreground ml-2">
-                  • {formatDate(post.updatedAt)}
-                </Text>
-              </View>
+    <Card className="mb-4 bg-card">
+      <TouchableOpacity onPress={handlePostPress}>
+        <View className="p-4">
+          {/* Author info - Clickable (only show if showAuthor is true) */}
+          {showAuthor && (
+            <View className="flex-row items-center mb-3">
+              <TouchableOpacity onPress={handleAuthorPress}>
+                <View className="flex-row items-center">
+                  {post.author.image ? (
+                    <Image
+                      source={{ uri: post.author.image }}
+                      className="w-10 h-10 rounded-lg mr-3"
+                    />
+                  ) : (
+                    <View className="w-10 h-10 rounded-lg bg-muted mr-3 items-center justify-center">
+                      <Text className="text-lg font-semibold">
+                        {post.author.name?.charAt(0) || '?'}
+                      </Text>
+                    </View>
+                  )}
+                  <View>
+                    <View className="flex-row items-center gap-2">
+                      <Text className="font-semibold text-foreground">{post.author.name}</Text>
+                      {post.author.isOfficial && (
+                        <BadgeText variant="default">
+                          Official
+                        </BadgeText>
+                      )}
+                      {(post.author.subscriptionPlan === 'pro' || post.author.subscriptionPlan === 'pro_complementary') && (
+                        <BadgeText variant="secondary">
+                          Pro
+                        </BadgeText>
+                      )}
+                    </View>
+                    <View className="flex-row items-center">
+                      <Text className="text-xs text-muted-foreground">
+                        {post.author.type === 'organization' ? 'Organization' : 'User'}
+                      </Text>
+                      <Text className="text-xs text-muted-foreground ml-2">
+                        • {formatDate(post.updatedAt)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
             </View>
-          </View>
-        </TouchableOpacity>
-      )}
-      
-      {/* Show timestamp when author is hidden */}
-      {!showAuthor && (
-        <Text className="text-xs text-muted-foreground mb-2">
-          {formatDate(post.updatedAt)}
-        </Text>
-      )}
+          )}
+          
+          {/* Show timestamp when author is hidden */}
+          {!showAuthor && (
+            <Text className="text-xs text-muted-foreground mb-2">
+              {formatDate(post.updatedAt)}
+            </Text>
+          )}
 
-      {/* Post content */}
-      <Text className="mb-3 text-foreground">{post.content}</Text>
+          {/* Post content */}
+          <Text className="mb-3 text-foreground">{post.content}</Text>
 
-      {/* Post image if exists */}
-      {post.imageUrl && (
-        <Image
-          source={{ uri: post.imageUrl }}
-          className="w-full h-48 rounded-lg mb-3"
-          resizeMode="cover"
-        />
-      )}
+          {/* Post image if exists */}
+          {post.imageUrl && (
+            <Image
+              source={{ uri: post.imageUrl }}
+              className="w-full h-48 rounded-lg mb-3"
+              resizeMode="cover"
+            />
+          )}
+        </View>
+      </TouchableOpacity>
 
-      {/* Post stats */}
-      <View className="flex-row items-center justify-between pt-3 border-t border-border">
+      {/* Post stats - Outside of the main touchable area */}
+      <View className="flex-row items-center justify-between px-4 pb-4 pt-3 border-t border-border">
         <TouchableOpacity 
           className="flex-row items-center gap-1" 
           onPress={handleLikeToggle}
           disabled={toggleLike.isPending}
         >
-          <Heart 
-            size={16}
-            color={post.hasLiked ? "#ef4444" : "#6b7280"}
-            fill={post.hasLiked ? "#ef4444" : "transparent"}
-          />
+          <Heart className={post.hasLiked ? 'text-red-500' : 'text-muted-foreground'} size={16} />
           <Text className={`text-sm ${post.hasLiked ? 'text-red-500' : 'text-muted-foreground'}`}>
             {post.hasLiked ? 'Liked' : 'Like'}
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity className="flex-row items-center gap-1">
-          <MessageCircle size={16} color="#6b7280" />
+        <TouchableOpacity className="flex-row items-center gap-1" onPress={() => router.push({ pathname: '/posts/[id]', params: { id: post.id } })}>
+          <MessageCircle className="text-muted-foreground" size={16} />
           <Text className="text-sm text-muted-foreground">Comment</Text>
         </TouchableOpacity>
         <TouchableOpacity className="flex-row items-center gap-1">
-          <Share size={16} color="#6b7280" />
+          <Share className="text-muted-foreground" size={16} />
           <Text className="text-sm text-muted-foreground">Share</Text>
         </TouchableOpacity>
       </View>

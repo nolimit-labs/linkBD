@@ -1,5 +1,5 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { usePost } from '@/api'
+import { useGetPostById } from '@/api'
 import { PostDetailView } from '@/components/posts/post-detail-view'
 import { LoadingSpinner } from '@/components/layout/loading-spinner'
 
@@ -9,7 +9,7 @@ export const Route = createFileRoute('/(app)/posts/$id')({
 
 function PostDetailComponent() {
   const { id } = Route.useParams()
-  const { data: post, isLoading, error } = usePost(id)
+  const { data: post, isLoading, error } = useGetPostById(id)
 
   if (isLoading) {
     return (
