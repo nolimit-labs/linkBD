@@ -28,6 +28,7 @@ export function CommentsList({
   onReplyPress,
   emptyMessage = 'No comments yet',
 }: CommentsListProps) {
+  
   if (isLoading) {
     return (
       <View className="py-10 items-center">

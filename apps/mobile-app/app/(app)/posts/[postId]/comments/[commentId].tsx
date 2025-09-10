@@ -57,7 +57,7 @@ export default function CommentThreadScreen() {
   return (
     <View className="flex-1 bg-background">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
@@ -101,7 +101,7 @@ export default function CommentThreadScreen() {
                   repliesCount: reply.repliesCount ?? 0,
                 })
               );
-              router.navigate({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: reply.id, root: nextRoot } });
+              router.push({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: reply.id, root: nextRoot } });
             }}
             onReplyPress={(reply) => {
               const nextRoot = encodeURIComponent(
@@ -125,17 +125,15 @@ export default function CommentThreadScreen() {
                   repliesCount: reply.repliesCount ?? 0,
                 })
               );
-              router.navigate({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: reply.id, root: nextRoot } });
+              router.push({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: reply.id, root: nextRoot } });
             }}
           />
         </View>
 
-        {/* Sticky reply input with context */}
-        <View className="absolute bottom-2 left-0 right-0">
+        {/* Bottom input stays in flow so KeyboardAvoidingView can lift it */}
+        <View>
           <View className="px-4 mb-1">
-            <Text className="text-xs text-muted-foreground">
-              Replying to {root?.author?.name || 'this comment'}
-            </Text>
+            <Text className="text-xs text-muted-foreground">Replying to {root?.author?.name || 'this comment'}</Text>
           </View>
           <CommentInput
             postId={postId as string}

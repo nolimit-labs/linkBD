@@ -13,7 +13,6 @@ import type { ComponentProps } from 'react'
 export default function PostDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>()
   const postId = params.id as string
-  const { data: session } = useSession()
 
   const { data: post, isLoading: loadingPost } = useGetPostById(postId)
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = usePostComments(postId)
@@ -51,11 +50,12 @@ export default function PostDetailScreen() {
   return (
     <View className="flex-1 bg-background">
       <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <CommentsList
+        <View className="flex-1">
+          <CommentsList
           comments={comments}
           isLoading={isLoading}
           isFetchingNextPage={isFetchingNextPage}
@@ -130,18 +130,19 @@ export default function PostDetailScreen() {
               router.push({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: c.id, root } });
             });
           }}
-        />
+          />
+        </View>
+
+        {/* Bottom input stays in flow so KeyboardAvoidingView can lift it */}
         
-        {/* Sticky comment input at bottom */}
-        {session && (
-          <View className="absolute bottom-2 left-0 right-0">
+          <View className="border-t border-border bg-background">
             <CommentInput
               postId={postId}
               placeholder="Join the conversation..."
               onSuccess={handleCommentSuccess}
             />
           </View>
-        )}
+        
       </KeyboardAvoidingView>
     </View>
   )

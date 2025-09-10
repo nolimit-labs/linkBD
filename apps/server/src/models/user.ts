@@ -93,16 +93,12 @@ export async function getUserProfileById(userId: string) {
   const activeSubscription = await getUserActiveSubscription(userId);
   
   return {
-    id: userInfo.id,
-    name: userInfo.name,
-    email: userInfo.email,
-    emailVerified: userInfo.emailVerified,
+    ...userInfo,
     image: userInfo.imageUrl,
     description: userInfo.description || null,
     type: 'user' as const,
     isOfficial: userInfo.isOfficial || false,
     subscriptionPlan: activeSubscription?.plan || 'free',
-    createdAt: userInfo.createdAt
   };
 }
 

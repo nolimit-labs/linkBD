@@ -64,7 +64,7 @@ export default function UserProfileScreen() {
   // Profile header component for ListHeaderComponent
   const ProfileHeader = () => (
     <>
-      <Card className="p-6 bg-card">
+      <Card className="p-6 bg-card dark:border-background/0 rounded-sm">
         {/* Top Section - Avatar and Basic Info */}
         <View className="flex-row items-start gap-5 mb-5">
           {/* Avatar */}
