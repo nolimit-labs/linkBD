@@ -11,25 +11,16 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
   // Get current user profile
   .get('/profile', authMiddleware, async (c) => {
     const { user } = c.get('session');
-    if (!user) {
-      return c.json({ error: 'Not authenticated' }, 401);
-    }
 
     try {
-      const currentUser = await userModel.getUserProfile(user.id);
+      const currentUser = await userModel.getUserProfileById(user.id);
 
       if (!currentUser) {
         return c.json({ error: 'User not found' }, 404);
       }
 
-      // Generate avatar URL if user has an image
-      const avatarUrl = await generateDownloadURL(currentUser.image);
-
       return c.json({
-        user: {
-          ...currentUser,
-          avatarUrl
-        }
+       ...currentUser
       });
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -44,9 +35,6 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
     description: z.string().max(500).optional(), // User bio/about section
   })), async (c) => {
     const { user } = c.get('session');
-    if (!user) {
-      return c.json({ error: 'Not authenticated' }, 401);
-    }
     const validatedData = c.req.valid('json');
 
     try {
@@ -56,15 +44,8 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
         return c.json({ error: 'User not found' }, 404);
       }
 
-      // Generate avatar URL if user has an image
-      const avatarUrl = await generateDownloadURL(updatedUser.image);
-
       return c.json({
-        success: true,
-        user: {
-          ...updatedUser,
-          avatarUrl
-        }
+        ...updatedUser,
       });
     } catch (error) {
       console.error('Error updating user profile:', error);
@@ -72,30 +53,6 @@ const userRoutes = new Hono<{ Variables: AuthVariables }>()
     }
   })
   
-  // Get user profile by ID
-  .get('/:id', authMiddleware, async (c) => {
-    const targetUserId = c.req.param('id');
-    
-    try {
-      const userProfile = await userModel.getUserProfile(targetUserId);
-      
-      if (!userProfile) {
-        return c.json({ error: 'User not found' }, 404);
-      }
-      
-      // Generate avatar URL if user has an image
-      const avatarUrl = await generateDownloadURL(userProfile.image);
-      
-      return c.json({
-        user: {
-          ...userProfile,
-          avatarUrl
-        }
-      });
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return c.json({ error: 'Failed to fetch user profile' }, 500);
-    }
-  });
+
 
 export default userRoutes;

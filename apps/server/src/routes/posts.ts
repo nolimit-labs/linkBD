@@ -114,9 +114,9 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
     let author;
 
     // Handle authorId - determine if it's a user or organization
-    const userInfo = await userModel.getUserById(authorId);
+    const userProfile = await userModel.getUserProfileById(authorId);
 
-    if (userInfo) {
+    if (userProfile) {
       // It's a user ID
       result = await postModel.getUserPostsPaginated(authorId, {
         cursor,
@@ -125,20 +125,14 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
         sortBy
       });
 
-      const authorSubscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
       author = {
-        id: userInfo.id,
-        name: userInfo.name,
-        image: userInfo.imageUrl,
-        type: 'user' as const,
-        isOfficial: userInfo.isOfficial || false,
-        subscriptionPlan: authorSubscription?.plan || 'free'
+        ...userProfile,
       };
     } else {
       // Check if it's an organization ID
-      const orgInfo = await orgModel.getOrgById(authorId);
+      const orgProfile = await orgModel.getOrgProfileById(authorId);
 
-      if (orgInfo) {
+      if (orgProfile) {
         // It's an organization ID
         result = await postModel.getOrgPostsPaginated(authorId, {
           cursor,
@@ -147,21 +141,8 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
           sortBy
         });
 
-        // Get the organization owner's subscription
-        let subscriptionPlan = 'free';
-        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
-        if (orgOwner) {
-          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
-          subscriptionPlan = ownerSubscription?.plan || 'free';
-        }
-
         author = {
-          id: orgInfo.id,
-          name: orgInfo.name,
-          image: orgInfo.imageUrl,
-          type: 'organization' as const,
-          isOfficial: orgInfo.isOfficial || false,
-          subscriptionPlan
+          ...orgProfile,
         };
       } else {
         // Author not found
@@ -223,42 +204,31 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
     // Get author information
     let author;
-    let subscriptionPlan = 'free';
     
     if (post.userId) {
       // It's a user post
-      const userInfo = await userModel.getUserById(post.userId);
-      if (userInfo) {
-        const authorSubscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
-        subscriptionPlan = authorSubscription?.plan || 'free';
-        
+      const userProfile = await userModel.getUserProfileById(post.userId);
+      if (userProfile) {
         author = {
-          id: userInfo.id,
-          name: userInfo.name,
-          image: userInfo.imageUrl,
-          type: 'user' as const,
-          isOfficial: userInfo.isOfficial || false,
-          subscriptionPlan
+          id: userProfile.id,
+          name: userProfile.name,
+          image: userProfile.image,
+          type: userProfile.type,
+          isOfficial: userProfile.isOfficial,
+          subscriptionPlan: userProfile.subscriptionPlan
         };
       }
     } else if (post.organizationId) {
       // It's an organization post
-      const orgInfo = await orgModel.getOrgById(post.organizationId);
-      if (orgInfo) {
-        // Get the organization owner's subscription
-        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
-        if (orgOwner) {
-          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
-          subscriptionPlan = ownerSubscription?.plan || 'free';
-        }
-        
+      const orgProfile = await orgModel.getOrgProfileById(post.organizationId);
+      if (orgProfile) {
         author = {
-          id: orgInfo.id,
-          name: orgInfo.name,
-          image: orgInfo.imageUrl,
-          type: 'organization' as const,
-          isOfficial: orgInfo.isOfficial || false,
-          subscriptionPlan
+          id: orgProfile.id,
+          name: orgProfile.name,
+          image: orgProfile.image,
+          type: orgProfile.type,
+          isOfficial: orgProfile.isOfficial,
+          subscriptionPlan: orgProfile.subscriptionPlan
         };
       }
     }

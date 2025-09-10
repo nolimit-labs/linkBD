@@ -1,5 +1,5 @@
 import { User, Building, Settings, LogOut } from "lucide-react"
-import { useCurrentUser } from "@/api/user"
+import { useCurrentUserProfile } from "@/api/user"
 import { Link } from "@tanstack/react-router"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization, signOut } from "@/lib/auth-client"
@@ -16,7 +16,7 @@ interface UserAccountProps {
 }
 
 export function UserAccount({ className }: UserAccountProps) {
-  const { data: user } = useCurrentUser()
+  const { data: user } = useCurrentUserProfile()
   const { data: activeOrg } = useActiveOrganization()
 
   const handleSignOut = async () => {

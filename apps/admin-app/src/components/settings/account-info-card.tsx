@@ -117,8 +117,8 @@ export function AccountInfoCard() {
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <Avatar className="h-48 w-48">
-                  {user?.avatarUrl ? (
-                    <AvatarImage src={user.avatarUrl} alt={user.name || 'User avatar'} />
+                  {user?.image ? (
+                    <AvatarImage src={user.image} alt={user.name || 'User avatar'} />
                   ) : (
                     <AvatarFallback>
                       <User className="h-14 w-14 text-muted-foreground" />
@@ -134,7 +134,7 @@ export function AccountInfoCard() {
                 >
                   <Camera className="h-4 w-4" />
                 </Button>
-                {user?.avatarUrl && (
+                {user?.image && (
                   <Button
                     size="icon"
                     variant="secondary"

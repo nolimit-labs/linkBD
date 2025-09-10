@@ -157,21 +157,19 @@ async function checkCommentOwnership(
 // Helper: Get author information for a comment
 async function getCommentAuthor(comment: Comment) {
   if (comment.userId) {
-    const userInfo = await userModel.getUserById(comment.userId);
-    if (userInfo) {
+    const userProfile = await userModel.getUserProfileById(comment.userId);
+    if (userProfile) {
       return {
-        ...userInfo,
-        type: 'user' as const,
-        isOfficial: userInfo.isOfficial || false,
+        ...userProfile,
+        imageUrl: userProfile.image,
       };
     }
   } else if (comment.organizationId) {
-    const orgInfo = await orgModel.getOrgById(comment.organizationId);
-    if (orgInfo) {
+    const orgProfile = await orgModel.getOrgProfileById(comment.organizationId);
+    if (orgProfile) {
       return {
-        ...orgInfo,
-        type: 'organization' as const,
-        isOfficial: orgInfo.isOfficial || false,
+        ...orgProfile,
+        imageUrl: orgProfile.image,
       };
     }
   }

@@ -2,8 +2,6 @@ import { Hono } from 'hono';
 import { authMiddleware, type AuthVariables } from '../middleware/auth.js';
 import * as userModel from '../models/user.js';
 import * as orgModel from '../models/organization.js';
-import * as subscriptionModel from '../models/subscriptions.js';
-import { generateDownloadURL } from '../lib/storage';
 
 const profileRoutes = new Hono<{ Variables: AuthVariables }>()
 
@@ -12,47 +10,18 @@ const profileRoutes = new Hono<{ Variables: AuthVariables }>()
     const profileId = c.req.param('id');
     
     try {
-      // Try to fetch as user first
-      const userInfo = await userModel.getUserById(profileId);
+      // Try to fetch as user first with subscription data
+      const userProfile = await userModel.getUserProfileById(profileId);
       
-      if (userInfo) {
-        // Get subscription data
-        const subscription = await subscriptionModel.getUserActiveSubscription(userInfo.id);
-        
-        return c.json({
-          id: userInfo.id,
-          name: userInfo.name,
-          image: userInfo.imageUrl,
-          description: userInfo.description || null,
-          type: 'user' as const,
-          isOfficial: userInfo.isOfficial || false,
-          subscriptionPlan: subscription?.plan || 'free',
-          createdAt: userInfo.createdAt
-        });
+      if (userProfile) {
+        return c.json(userProfile);
       }
       
-      // If not a user, try to fetch as organization
-      const orgInfo = await orgModel.getOrgById(profileId);
+      // If not a user, try to fetch as organization with subscription data
+      const orgProfile = await orgModel.getOrgProfileById(profileId);
       
-      if (orgInfo) {
-        // Get the organization owner's subscription
-        let subscriptionPlan = 'free';
-        const orgOwner = await orgModel.getOrgOwner(orgInfo.id);
-        if (orgOwner) {
-          const ownerSubscription = await subscriptionModel.getUserActiveSubscription(orgOwner.userId);
-          subscriptionPlan = ownerSubscription?.plan || 'free';
-        }
-        
-        return c.json({
-          id: orgInfo.id,
-          name: orgInfo.name,
-          image: orgInfo.imageUrl,
-          description: orgInfo.description || null,
-          type: 'organization' as const,
-          isOfficial: orgInfo.isOfficial || false,
-          subscriptionPlan,
-          createdAt: orgInfo.createdAt
-        });
+      if (orgProfile) {
+        return c.json(orgProfile);
       }
       
       // Neither user nor organization found

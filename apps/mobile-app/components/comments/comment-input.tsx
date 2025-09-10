@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useSession } from '~/api/auth';
 import { useCreateComment } from '~/api/comments';
-import { Send } from '~/lib/icons';
+import { Text } from '~/components/ui/text';
 
 interface CommentInputProps {
   postId: string;
+  parentId?: string;
   placeholder?: string;
   onSuccess?: () => void;
 }
 
 export function CommentInput({ 
-  postId, 
+  postId,
+  parentId,
   placeholder = "Join the conversation...",
   onSuccess 
 }: CommentInputProps) {
@@ -27,6 +29,7 @@ export function CommentInput({
       {
         postId,
         content: content.trim(),
+        parentId,
       },
       {
         onSuccess: () => {
@@ -66,7 +69,7 @@ export function CommentInput({
               {createComment.isPending ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Send size={20} color="white" />
+                <Text className="text-primary-foreground font-semibold">Send</Text>
               )}
             </TouchableOpacity>
           )}

@@ -1,9 +1,9 @@
-import { useCurrentUser, useUserSubscriptions } from '@/api'
+import { useCurrentUserProfile, useUserSubscriptions } from '@/api'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useSession } from '@/lib/auth-client'
 
 export function DeveloperSettings() {
-  const { data: user } = useCurrentUser()
+  const { data: user } = useCurrentUserProfile()
   const { data: subscriptions } = useUserSubscriptions()
   const { data: session } = useSession()
 

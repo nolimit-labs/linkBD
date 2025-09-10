@@ -48,6 +48,7 @@ This section details the organization of the backend application.
     *   **Post Model (`posts.ts`)**: Social post CRUD operations and business logic
     *   **Job Model (`jobs.ts`)**: Job listing CRUD operations and business logic
     *   **Admin Model (`admin.ts`)**: Admin CRUD operations and business logic for the `/admin` routes
+    *   **Helper (`helper.ts`)**: Lightweight shared helpers for models (e.g., `detectEntityType`); keep concise and focused
 
 
 -   **Routes (`apps/server/src/routes/`)**: Thin HTTP handlers that call model functions:

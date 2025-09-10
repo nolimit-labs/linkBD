@@ -26,7 +26,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         <View className="flex-1 justify-center px-6 py-8">
           {/* Logo with title */}
           <View className="items-center mb-10">
-            <Logo className="items-center justify-center mb-6" textSize="text-6xl" />
+            <Logo className="items-center justify-center mb-6" />
             <Text className="text-3xl font-bold text-foreground">{title}</Text>
             <Text className="text-base text-muted-foreground mt-2">{subtitle}</Text>
           </View>

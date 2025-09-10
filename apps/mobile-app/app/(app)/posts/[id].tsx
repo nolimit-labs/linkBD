@@ -1,9 +1,9 @@
 import React from 'react'
-import { View, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { Text } from '~/components/ui/text'
 import { PostCard } from '~/components/posts/post-card'
-import { CommentCard } from '~/components/comments/comment-card'
+import { CommentsList } from '~/components/comments/comments-list'
 import { CommentInput } from '~/components/comments/comment-input'
 import { useGetPostById } from '~/api/posts'
 import { usePostComments } from '~/api/comments'
@@ -20,19 +20,19 @@ export default function PostDetailScreen() {
 
   const comments = data?.pages.flatMap((p) => p.comments) ?? []
   type PostCardPost = ComponentProps<typeof PostCard>['post']
-  const postWithAuthor: PostCardPost | null = post
-    ? ({
+  const postWithAuthor: PostCardPost  =
+    ({
         ...post,
         author:
-          post.author ?? {
-            id: post.userId || '',
+          post?.author ?? {
+            id: post?.userId || '',
             name: 'Unknown',
             image: null,
             type: 'user',
             isOfficial: false,
           },
       } as unknown as PostCardPost)
-    : null
+    
 
   if (loadingPost) {
     return (
@@ -55,55 +55,81 @@ export default function PostDetailScreen() {
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <FlatList
-          data={comments}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ 
-            padding: 16,
-            paddingBottom: session ? 80 : 16 // Extra padding when comment input is shown
+        <CommentsList
+          comments={comments}
+          isLoading={isLoading}
+          isFetchingNextPage={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage();
           }}
-          ListHeaderComponent={
+          header={
             <View className="mb-4">
               {postWithAuthor ? (
-                <PostCard 
-                  post={postWithAuthor} 
-                  showAuthor={true}
-                  onPostPress={() => {}} // Disable navigation since we're already on the detail page
-                />
+                <PostCard post={postWithAuthor} showAuthor={true} onPostPress={() => {}} />
               ) : null}
               {comments.length > 0 && (
-                <View className="mt-4 mb-2">
-                  <Text className="text-lg font-semibold text-foreground">
-                    Comments ({comments.length})
-                  </Text>
+                <View className="ml-4">
+                  <Text className="text-lg font-semibold text-foreground">Comments ({comments.length})</Text>
                 </View>
               )}
             </View>
           }
-          renderItem={({ item }) => <CommentCard comment={item} />}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+          onItemPress={(c) => {
+            const root = encodeURIComponent(
+              JSON.stringify({
+                id: c.id,
+                postId,
+                parentId: c.parentId ?? null,
+                content: c.content,
+                isEdited: c.isEdited ?? false,
+                createdAt: c.createdAt,
+                author: c.author
+                  ? {
+                      id: c.author.id,
+                      name: c.author.name,
+                      image: c.author.image ?? c.author.imageUrl ?? null,
+                      type: c.author.type,
+                      isOfficial: c.author.isOfficial ?? false,
+                      subscriptionPlan: c.author.subscriptionPlan,
+                    }
+                  : null,
+                repliesCount: c.repliesCount ?? 0,
+              })
+            );
+            // @ts-ignore router available via expo-router
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            import('expo-router').then(({ router }) => {
+              router.push({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: c.id, root } });
+            });
           }}
-          onEndReachedThreshold={0.5}
-          ListEmptyComponent={isLoading ? (
-            <View className="py-10 items-center">
-              <ActivityIndicator size="large" />
-              <Text className="text-muted-foreground mt-2">Loading comments...</Text>
-            </View>
-          ) : (
-            <View className="py-10 items-center">
-              <Text className="text-muted-foreground text-lg">No comments yet</Text>
-              <Text className="text-muted-foreground mt-1 text-center">Be the first to share your thoughts!</Text>
-            </View>
-          )}
-          ListFooterComponent={
-            isFetchingNextPage ? (
-              <View className="py-4 items-center">
-                <ActivityIndicator size="small" />
-                <Text className="text-muted-foreground mt-1">Loading more comments...</Text>
-              </View>
-            ) : null
-          }
+          onReplyPress={(c) => {
+            const root = encodeURIComponent(
+              JSON.stringify({
+                id: c.id,
+                postId,
+                parentId: c.parentId ?? null,
+                content: c.content,
+                isEdited: c.isEdited ?? false,
+                createdAt: c.createdAt,
+                author: c.author
+                  ? {
+                      id: c.author.id,
+                      name: c.author.name,
+                      image: c.author.image ?? c.author.imageUrl ?? null,
+                      type: c.author.type,
+                      isOfficial: c.author.isOfficial ?? false,
+                      subscriptionPlan: c.author.subscriptionPlan,
+                    }
+                  : null,
+                repliesCount: c.repliesCount ?? 0,
+              })
+            );
+            import('expo-router').then(({ router }) => {
+              router.push({ pathname: '/posts/[postId]/comments/[commentId]', params: { postId, commentId: c.id, root } });
+            });
+          }}
         />
         
         {/* Sticky comment input at bottom */}

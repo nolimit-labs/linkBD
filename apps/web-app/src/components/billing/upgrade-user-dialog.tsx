@@ -12,7 +12,7 @@ import { PricingTable } from './pricing-table'
 import { CreditCard } from 'lucide-react'
 import { subscription } from '@/lib/auth-client'
 import { env } from '@/lib/env'
-import { useCurrentUser } from '@/api/user'
+import { useCurrentUserProfile } from '@/api/user'
 
 interface UpgradeUserSubscriptionDialogProps {
   children?: React.ReactNode
@@ -32,7 +32,7 @@ export function UpgradeUserSubscriptionDialog({
   // Use controlled state if provided, otherwise use internal state
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = controlledOnOpenChange || setInternalOpen
-  const { data: user } = useCurrentUser()
+  const { data: user } = useCurrentUserProfile()
 
   const handleUpgrade = (planId: string) => {
     if (!user?.id) {

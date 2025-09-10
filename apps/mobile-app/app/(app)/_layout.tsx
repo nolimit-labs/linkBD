@@ -87,17 +87,7 @@ export default function AppLayout() {
             ),
           }}
         />
-        <Drawer.Screen
-          name="profile/index"
-          options={{
-            title: 'My Profile',
-            drawerLabel: 'My Profile',
-            drawerIcon: ({ color, size }) => (
-              // @ts-ignore React 19 JSX typing mismatch
-              <MaterialIcons name="person" size={size} color={color} />
-            ),
-          }}
-        />
+        
         <Drawer.Screen
           name="settings"
           options={{
@@ -109,7 +99,6 @@ export default function AppLayout() {
             ),
           }}
         />
-        {/* Hidden dynamic profile route */}
         <Drawer.Screen
           name="profile/[id]"
           options={{
@@ -145,6 +134,23 @@ export default function AppLayout() {
             ),
           }}
         />
+        <Drawer.Screen
+          name="posts/[postId]/comments/[commentId]"
+          options={{
+            drawerItemStyle: { display: 'none' },
+            title: 'Thread',
+            drawerLabel: 'Thread',
+            headerLeft: ({ tintColor }) => (
+              <Pressable
+                onPress={() => router.back()}
+                className="ml-4 p-2"
+              >
+                {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
+                <MaterialIcons name="arrow-back" size={24} color={tintColor} />
+              </Pressable>
+            ),
+          }}
+        />
       </Drawer>
 
 
@@ -157,9 +163,8 @@ export default function AppLayout() {
 }
 
 function AppDrawerContent(props: any) {
-  const query = useSession();
-  const userName = (query.data as any)?.user?.name ?? 'Current Account';
-  const userEmail = (query.data as any)?.user?.email ?? '';
+  const { data: session } = useSession();
+  const userName = (session?.data?.user?.name ?? 'Current Account');
 
   return (
     <View className="flex-1 bg-background">
@@ -172,19 +177,20 @@ function AppDrawerContent(props: any) {
 
       {/* Footer: current user */}
       <View className="px-4 pb-8 pt-4 border-t border-border">
-        <Link href="/profile" asChild>
+        <Link
+          href={
+            (session?.data?.user?.id
+              ? { pathname: '/profile/[id]', params: { id: (session?.data?.user?.id) } }
+              : '/'
+          )}
+          asChild
+        >
           <Pressable className="flex-row items-center gap-3">
             <Avatar alt={userName}>
               <AvatarFallback>
                 <UIText>{userName?.slice(0, 2).toUpperCase()}</UIText>
               </AvatarFallback>
-            </Avatar>
-            <View className="flex-1">
-              <UIText className="font-medium text-foreground">{userName}</UIText>
-              {!!userEmail && (
-                <UIText className="text-xs text-muted-foreground">{userEmail}</UIText>
-              )}
-            </View>
+            </Avatar> 
           </Pressable>
         </Link>
       </View>

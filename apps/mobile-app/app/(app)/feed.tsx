@@ -55,7 +55,7 @@ export default function TodosScreen() {
           data={posts}
           renderItem={renderPost}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 0 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}

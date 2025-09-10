@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { organization, member, posts, user } from '../db/schema.js';
+import { organization, member, posts, user, subscription } from '../db/schema.js';
 import { eq, ilike, or, sql, desc, and, gt, count } from 'drizzle-orm';
 import { generateDownloadURL } from '../lib/storage.js';
 
@@ -274,6 +274,49 @@ export async function isUserMemberOfOrganization(userId: string, organizationId:
     .limit(1);
 
   return members.length > 0;
+}
+
+/**
+ * Get organization profile by ID with subscription data
+ * @param orgId - The organization ID to fetch
+ * @returns Organization profile with owner's subscription plan or null if not found
+ */
+export async function getOrgProfileById(orgId: string) {
+  // Get organization data with image URL
+  const orgInfo = await getOrgById(orgId);
+  if (!orgInfo) return null;
+
+  // Get the organization owner's subscription
+  let subscriptionPlan = 'free';
+  const orgOwner = await getOrgOwner(orgInfo.id);
+  if (orgOwner) {
+    const ownerSubscription = await db
+      .select()
+      .from(subscription)
+      .where(
+        and(
+          eq(subscription.referenceId, orgOwner.userId),
+          or(
+            eq(subscription.status, 'active'),
+            eq(subscription.status, 'trialing')
+          )
+        )
+      )
+      .limit(1);
+    
+    subscriptionPlan = ownerSubscription[0]?.plan || 'free';
+  }
+  
+  return {
+    id: orgInfo.id,
+    name: orgInfo.name,
+    image: orgInfo.imageUrl,
+    description: orgInfo.description || null,
+    type: 'organization' as const,
+    isOfficial: orgInfo.isOfficial || false,
+    subscriptionPlan,
+    createdAt: orgInfo.createdAt
+  };
 }
 
 // ================================

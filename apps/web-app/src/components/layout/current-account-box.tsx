@@ -1,5 +1,4 @@
 import { User, Building, ChevronsUpDown, UserCircle } from "lucide-react"
-import { useCurrentUser } from "@/api/user"
 import { useGetProfile } from "@/api/profile"
 import { cn } from "@/lib/utils"
 import { useActiveOrganization, useSession } from "@/lib/auth-client"

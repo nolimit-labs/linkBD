@@ -64,7 +64,7 @@ export default function UserProfileScreen() {
   // Profile header component for ListHeaderComponent
   const ProfileHeader = () => (
     <>
-      <Card className="mt-4 p-6 bg-card">
+      <Card className="p-6 bg-card">
         {/* Top Section - Avatar and Basic Info */}
         <View className="flex-row items-start gap-5 mb-5">
           {/* Avatar */}
@@ -146,9 +146,9 @@ export default function UserProfileScreen() {
       </Card>
 
       {/* Posts Section Header */}
-      <View className="mt-6 mb-4">
+      <View className="mt-6 mb-4 ml-6">
         <Text className="text-lg font-semibold text-foreground">
-          {isOrganization ? 'Updates' : 'Posts'}
+          Posts
         </Text>
       </View>
     </>

@@ -72,7 +72,7 @@ export function PostCard({ post, showAuthor = true, onPostPress }: PostCardProps
   };
 
   return (
-    <Card className="mb-4 bg-card">
+    <Card className="mb-4 bg-card dark:border-background/0 rounded-sm">
       <TouchableOpacity onPress={handlePostPress}>
         <View className="p-4">
           {/* Author info - Clickable (only show if showAuthor is true) */}

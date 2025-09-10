@@ -4,7 +4,7 @@ import { queryKeys } from './query-keys';
 import { subscription } from '@/lib/auth-client';
 
 // Get current user profile
-export function useCurrentUser() {
+export function useCurrentUserProfile() {
   return useQuery({
     queryKey: queryKeys.user.profile,
     queryFn: async () => {
@@ -15,29 +15,10 @@ export function useCurrentUser() {
       }
 
       const data = await response.json();
-      return data.user;
+      return data;
     },
   });
 }
-
-// Get user profile by ID
-export const useUser = (userId: string) => {
-  return useQuery({
-    queryKey: queryKeys.users.single(userId),
-    queryFn: async () => {
-      const response = await rpcClient.api.user[':id'].$get({
-        param: { id: userId },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
-
-      return response.json();
-    },
-    enabled: !!userId,
-  });
-};
 
 // Update current user profile
 export function useUpdateUser() {
@@ -54,7 +35,7 @@ export function useUpdateUser() {
       }
 
       const data = await response.json();
-      return data.user;
+      return data;
     },
     onSuccess: (updatedUser) => {
       // Update the user query data

@@ -79,22 +79,30 @@ export async function getUserById(userId: string) {
   }
 }
 
-
-// Get user profile with post count
-export async function getUserProfile(userId: string) {
+/**
+ * Get user profile by ID with subscription data
+ * @param userId - The user ID to fetch
+ * @returns User profile with subscription plan or null if not found
+ */
+export async function getUserProfileById(userId: string) {
+  // Get user data with image URL
   const userInfo = await getUserById(userId);
   if (!userInfo) return null;
 
-  const postCount = await db
-    .select({
-      count: sql<number>`count(*)`.as('count'),
-    })
-    .from(posts)
-    .where(eq(posts.userId, userId));
-
+  // Get subscription data
+  const activeSubscription = await getUserActiveSubscription(userId);
+  
   return {
-    ...userInfo,
-    postCount: postCount[0]?.count || 0,
+    id: userInfo.id,
+    name: userInfo.name,
+    email: userInfo.email,
+    emailVerified: userInfo.emailVerified,
+    image: userInfo.imageUrl,
+    description: userInfo.description || null,
+    type: 'user' as const,
+    isOfficial: userInfo.isOfficial || false,
+    subscriptionPlan: activeSubscription?.plan || 'free',
+    createdAt: userInfo.createdAt
   };
 }
 
@@ -157,6 +165,7 @@ export async function getUserActiveSubscription(userId: string) {
 
   return subscriptions[0] || null;
 }
+
 
 
 // Get user's organization memberships

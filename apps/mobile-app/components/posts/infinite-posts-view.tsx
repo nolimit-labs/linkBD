@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { PostCard } from './post-card';
 import { Text } from '~/components/ui/text';
@@ -56,7 +56,7 @@ export function InfinitePostsView({
   ListHeaderComponent,
 }: InfinitePostsViewProps) {
   // Flatten all pages of posts into a single array and deduplicate
-  const posts = React.useMemo(() => {
+  const posts = useMemo(() => {
     const allPosts = data?.pages.flatMap((page) => page.posts || []) || [];
     // Filter out any null/undefined posts and deduplicate by ID
     const validPosts = allPosts.filter((post): post is Post => post != null && typeof post.id === 'string');
@@ -67,7 +67,7 @@ export function InfinitePostsView({
   }, [data]);
 
   // Handle pull to refresh
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     refetch();
@@ -132,7 +132,7 @@ export function InfinitePostsView({
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-      contentContainerStyle={{ flexGrow: 1, padding: 16 }}
+      contentContainerStyle={{ flexGrow: 1, padding: 0 }}
       showsVerticalScrollIndicator={false}
     />
   );
