@@ -3,6 +3,7 @@ import { View, Modal, Pressable, ScrollView, TouchableOpacity, Image } from 'rea
 import { Text } from '~/components/ui/text';
 import { useSession } from '~/api/auth';
 import { useListOrganizations, organization } from '~/lib/auth-client';
+import { authClient } from '~/lib/auth-client';
 import { useGetProfile } from '~/api/profile';
 import { useQueryClient } from '@tanstack/react-query';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -62,9 +63,18 @@ export function AccountSwitcher({ open, onOpenChange }: { open: boolean; onOpenC
             )}
           </ScrollView>
 
-          <View className="mt-3">
+          <View className="mt-3 gap-2">
             <Pressable className="w-full items-center py-2 rounded-md bg-muted" onPress={() => onOpenChange(false)}>
               <Text className="text-foreground">Cancel</Text>
+            </Pressable>
+            <Pressable
+              className="w-full items-center py-2 rounded-md border border-destructive"
+              onPress={() => {
+                authClient.signOut().catch(() => {});
+                onOpenChange(false);
+              }}
+            >
+              <Text className="text-destructive">Sign out</Text>
             </Pressable>
           </View>
         </View>

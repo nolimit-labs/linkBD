@@ -145,13 +145,7 @@ function AppDrawerContent(props: any) {
     <View className="flex-1 bg-background">
       {/* Drawer items */}
       {/* Account header at the top */}
-      <DrawerAccountHeader
-        // You can pass multi-account list here if available
-        accounts={[]}
-        onSwitchAccount={(id) => {
-          console.log('Switch account to', id);
-        }}
-      />
+      <DrawerAccountHeader />
 
       {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
       <DrawerContentScrollView

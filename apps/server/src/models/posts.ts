@@ -85,7 +85,7 @@ export async function getFollowingPostsQuery(
  * mode 'public' returns public posts.
  * mode 'following' returns public posts authored by followed users/organizations.
  */
-export async function getPostsPaginated(args: { where: any[]; orderBy: any[]; options?: PaginationOptions }) {
+async function executePostsPaginated(args: { where: any[]; orderBy: any[]; options?: PaginationOptions }) {
   const { where, orderBy, options } = args;
   const limit = options?.limit ?? 20;
 
@@ -138,27 +138,44 @@ export async function getPostsPaginated(args: { where: any[]; orderBy: any[]; op
   };
 }
 
-// Getting Public Posts for Feed using cursor based pagination
-export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
-  const { where, orderBy } = getPublicPostsQuery(options);
-  return getPostsPaginated({ where, orderBy, options });
-}
-
-// Get posts from followed users and organizations
-export async function getFollowingPostsPaginated(currentUserId: string, options: PaginationOptions = {}) {
-  const { where, orderBy, isEmpty } = await getFollowingPostsQuery(currentUserId, options);
-  if (isEmpty) {
-    return {
-      posts: [],
-      pagination: {
-        hasMore: false,
-        nextCursor: null,
-        limit: options.limit ?? 20,
-        count: 0
+export async function getPostsPaginated(
+  mode: FeedMode,
+  options: PaginationOptions & { currentAccountId: string } = { currentAccountId: '' }
+) {
+  switch (mode) {
+    case 'public': {
+      const { where, orderBy } = getPublicPostsQuery(options);
+      return executePostsPaginated({ where, orderBy, options });
+    }
+    case 'following': {
+      const { currentAccountId } = options;
+      const { where, orderBy, isEmpty } = await getFollowingPostsQuery(currentAccountId, options);
+      if (isEmpty) {
+        return {
+          posts: [],
+          pagination: {
+            hasMore: false,
+            nextCursor: null,
+            limit: options.limit ?? 20,
+            count: 0
+          }
+        };
       }
-    };
+      return executePostsPaginated({ where, orderBy, options });
+    }
+    default: {
+      const _exhaustive: never = mode;
+      return {
+        posts: [],
+        pagination: {
+          hasMore: false,
+          nextCursor: null,
+          limit: options.limit ?? 20,
+          count: 0
+        }
+      };
+    }
   }
-  return getPostsPaginated({ where, orderBy, options });
 }
 
 export async function getUserPostsPaginated(userId: string, options: PaginationOptions = {}) {

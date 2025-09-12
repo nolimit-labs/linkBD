@@ -4,7 +4,7 @@ import { Loader2 } from 'lucide-react'
 import { useSession } from '@/lib/auth-client'
 import { useEffect, useRef, useCallback } from 'react'
 
-export function PostsFeedView() {
+export function PostsFeedView({ filter = 'all' }: { filter?: 'all' | 'following' }) {
   const { data: session } = useSession()
   const deletePost = useDeletePost()
   const loadMoreRef = useRef<HTMLDivElement>(null)
@@ -17,7 +17,7 @@ export function PostsFeedView() {
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage 
-  } = useGetPostsFeed(12)
+  } = useGetPostsFeed(12, filter)
   
   console.log('data', data)
   // Flatten all pages into a single posts array

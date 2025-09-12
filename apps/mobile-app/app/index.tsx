@@ -7,7 +7,7 @@ import { Text } from '~/components/ui/text';
 // import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors } from '~/lib/use-theme-colors';
 import { Logo } from '~/components/logo';
-import { GoogleIcon } from '~/lib/icons';
+import { GoogleIcon } from '~/lib/icons/Google';
 import { useSession } from '~/api/auth';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -40,7 +40,7 @@ export default function SignInScreen() {
 
   // If a valid session exists, redirect to feed
   if (session?.data?.user?.id && !isPending) {
-    return <Redirect href="/(app)/feed" />;
+    return <Redirect href="/(app)/(drawer)/feed" />;
   }
 
   const handleLogin = async () => {

@@ -6,15 +6,16 @@ import { rpcClient } from './rpc-client';
 // ================================
 
 // Infinite scroll version of posts feed
-export const useGetPostsFeed = (limit = 10) => {
+export const useGetPostsFeed = (limit = 10, filter: 'all' | 'following' = 'all') => {
   return useInfiniteQuery({
-    queryKey: ['posts', 'feed', 'infinite', limit],
+    queryKey: ['posts', 'feed', 'infinite', limit, filter],
     queryFn: async ({ pageParam }) => {
       const response = await rpcClient.api.posts.feed.$get({
         query: {
           cursor: pageParam,
           limit: limit.toString(),
           sortBy: 'newest',
+          filter,
         },
       });
       

@@ -47,23 +47,22 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
 
   // Get feed (public posts for discovery or following feed) with pagination
   .get('/feed', authMiddleware, zValidator('query', paginationSchema), async (c) => {
-    const { user } = c.get('session');
+    const { session: { activeOrganizationId, userId} } = c.get('session');
     const { cursor, limit, direction, sortBy, filter } = c.req.valid('query');
 
+    const currentAccountId = activeOrganizationId ? activeOrganizationId : userId;
+
     // Get appropriate feed based on filter
-    const result = filter === 'following' 
-      ? await postModel.getFollowingPostsPaginated(user.id, {
-          cursor,
-          limit,
-          direction,
-          sortBy
-        })
-      : await postModel.getPublicPostsPaginated({
-          cursor,
-          limit,
-          direction,
-          sortBy
-        });
+    const result = await postModel.getPostsPaginated(
+      filter === 'following' ? 'following' : 'public',
+      {
+        cursor,
+        limit,
+        direction,
+        sortBy,
+        currentAccountId,
+      }
+    );
 
     // Map download URLs for posts that have images, check likes, and add subscription data
     const postsWithDetails = await Promise.all(
@@ -92,7 +91,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
             subscriptionPlan
           },
           imageUrl: await generateDownloadURL(post.imageKey),
-          hasLiked: await postModel.hasUserLikedPost(post.id, user.id)
+          hasLiked: await postModel.hasUserLikedPost(post.id, userId)
         };
       })
     );
