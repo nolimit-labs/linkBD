@@ -14,6 +14,7 @@ import { Text as UIText } from '~/components/ui/text';
 import { Link } from 'expo-router';
 import { Pressable } from 'react-native';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
+import { DrawerAccountHeader } from '~/components/layout/drawer-account-header';
 
 export default function AppLayout() {
   const { data: session, isPending, isFetching, status } = useSession();
@@ -143,31 +144,26 @@ function AppDrawerContent(props: any) {
   return (
     <View className="flex-1 bg-background">
       {/* Drawer items */}
+      {/* Account header at the top */}
+      <DrawerAccountHeader
+        // You can pass multi-account list here if available
+        accounts={[]}
+        onSwitchAccount={(id) => {
+          console.log('Switch account to', id);
+        }}
+      />
+
       {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
-      <DrawerContentScrollView {...props} className="flex-1">
+      <DrawerContentScrollView
+        {...props}
+        className="flex-1"
+        contentContainerStyle={{ paddingTop: 0, marginTop: 2 }}
+      >
         {/* @ts-ignore React 19 JSX typing mismatch with RN Navigation */}
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
 
-      {/* Footer: current user */}
-      <View className="px-4 pb-8 pt-4 border-t border-border">
-        <Link
-          href={
-            (session?.data?.user?.id
-              ? { pathname: '/profile/[id]', params: { id: (session?.data?.user?.id) } }
-              : '/'
-          )}
-          asChild
-        >
-          <Pressable className="flex-row items-center gap-3">
-            <Avatar alt={userName}>
-              <AvatarFallback>
-                <UIText>{userName?.slice(0, 2).toUpperCase()}</UIText>
-              </AvatarFallback>
-            </Avatar> 
-          </Pressable>
-        </Link>
-      </View>
+      {/* Footer removed per spec */}
     </View>
   );
 }

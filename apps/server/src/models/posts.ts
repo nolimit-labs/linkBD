@@ -15,45 +15,81 @@ export interface PaginationOptions {
   sortBy?: 'newest' | 'oldest' | 'popular';
 }
 
-// Getting Public Posts for Feed using cursor based pagination
-export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
-  const { 
-    limit = 20, 
-    cursor, 
-    direction = 'after',
-    sortBy = 'newest'
-  } = options;
+export type FeedMode = 'public' | 'following';
 
-  // Build where conditions
-  let whereConditions = [eq(posts.visibility, 'public')];
-  
-  // Add cursor-based filtering
+// Build orderBy clause for feeds
+export function buildOrderBy(sortBy: PaginationOptions['sortBy'] = 'newest') {
+  switch (sortBy) {
+    case 'oldest':
+      return [asc(posts.createdAt)];
+    case 'popular':
+      return [desc(posts.likesCount), desc(posts.createdAt)];
+    case 'newest':
+    default:
+      return [desc(posts.createdAt)];
+  }
+}
+
+// Build where/order for feed based on mode
+export function getPublicPostsQuery(args: PaginationOptions = {}) {
+  const { cursor, direction = 'after', sortBy = 'newest' } = args;
+  const orderBy = buildOrderBy(sortBy);
+  const where: any[] = [eq(posts.visibility, 'public')];
   if (cursor) {
     const cursorDate = new Date(cursor);
-    if (direction === 'after') {
-      whereConditions.push(lt(posts.createdAt, cursorDate));
-    } else {
-      whereConditions.push(gt(posts.createdAt, cursorDate));
-    }
+    if (direction === 'after') where.push(lt(posts.createdAt, cursorDate));
+    else where.push(gt(posts.createdAt, cursorDate));
+  }
+  return { where, orderBy };
+}
+
+export async function getFollowingPostsQuery(
+  currentAccountId: string,
+  args: PaginationOptions = {}
+): Promise<{ where: any[]; orderBy: any[]; isEmpty: boolean }> {
+  const { cursor, direction = 'after', sortBy = 'newest' } = args;
+  const orderBy = buildOrderBy(sortBy);
+
+  const following = await db
+    .select({
+      followingUserId: followers.followingId,
+      followingOrgId: followers.followingOrgId,
+    })
+    .from(followers)
+    .where(eq(followers.followerUserId, currentAccountId));
+
+  const followingUserIds = following.filter(f => f.followingUserId).map(f => f.followingUserId!);
+  const followingOrgIds = following.filter(f => f.followingOrgId).map(f => f.followingOrgId!);
+
+  if (followingUserIds.length === 0 && followingOrgIds.length === 0) {
+    return { where: [], orderBy, isEmpty: true };
   }
 
-  // Build base query with combined where conditions and sorting
-  let orderByClause;
-  switch (sortBy) {
-    case 'newest':
-      orderByClause = [desc(posts.createdAt)];
-      break;
-    case 'oldest':
-      orderByClause = [asc(posts.createdAt)];
-      break;
-    case 'popular':
-      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
-      break;
-    default:
-      orderByClause = [desc(posts.createdAt)];
+  const orParts: any[] = [];
+  if (followingUserIds.length > 0) orParts.push(inArray(posts.userId, followingUserIds));
+  if (followingOrgIds.length > 0) orParts.push(inArray(posts.organizationId, followingOrgIds));
+
+  const where: any[] = [or(...orParts), eq(posts.visibility, 'public')];
+  if (cursor) {
+    const cursorDate = new Date(cursor);
+    if (direction === 'after') where.push(lt(posts.createdAt, cursorDate));
+    else where.push(gt(posts.createdAt, cursorDate));
   }
 
-  // Fetch one extra to determine if there are more results
+  return { where, orderBy, isEmpty: false };
+}
+
+
+/**
+ * Unified posts pagination for feed-style queries.
+ * mode 'public' returns public posts.
+ * mode 'following' returns public posts authored by followed users/organizations.
+ */
+export async function getPostsPaginated(args: { where: any[]; orderBy: any[]; options?: PaginationOptions }) {
+  const { where, orderBy, options } = args;
+  const limit = options?.limit ?? 20;
+
+  // Execute unified select (author composed via COALESCE/CASE)
   const results = await db
     .select({
       // Post fields
@@ -67,7 +103,7 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
       createdBy: posts.createdBy,
       createdAt: posts.createdAt,
       updatedAt: posts.updatedAt,
-      
+
       // Author fields - organization when userId is null, user when organizationId is null
       author: {
         id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
@@ -83,16 +119,13 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
     .from(posts)
     .leftJoin(user, eq(posts.userId, user.id))
     .leftJoin(organization, eq(posts.organizationId, organization.id))
-    .where(and(...whereConditions))
-    .orderBy(...orderByClause)
+    .where(and(...where))
+    .orderBy(...orderBy)
     .limit(limit + 1);
-  
+
   const hasMore = results.length > limit;
   const posts_data = results.slice(0, limit);
-  
-  // Generate next cursor from last post
-  const nextCursor = posts_data.length > 0 ? 
-    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
+  const nextCursor = posts_data.length > 0 ? posts_data[posts_data.length - 1].createdAt.toISOString() : null;
 
   return {
     posts: posts_data,
@@ -105,143 +138,27 @@ export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
   };
 }
 
+// Getting Public Posts for Feed using cursor based pagination
+export async function getPublicPostsPaginated(options: PaginationOptions = {}) {
+  const { where, orderBy } = getPublicPostsQuery(options);
+  return getPostsPaginated({ where, orderBy, options });
+}
+
 // Get posts from followed users and organizations
 export async function getFollowingPostsPaginated(currentUserId: string, options: PaginationOptions = {}) {
-  const { 
-    limit = 20, 
-    cursor, 
-    direction = 'after',
-    sortBy = 'newest'
-  } = options;
-
-  // First get all users and organizations this user follows
-  const following = await db
-    .select({
-      followingUserId: followers.followingId,
-      followingOrgId: followers.followingOrgId,
-    })
-    .from(followers)
-    .where(eq(followers.followerUserId, currentUserId));
-
-  // Extract user and org IDs
-  const followingUserIds = following
-    .filter(f => f.followingUserId)
-    .map(f => f.followingUserId!);
-  
-  const followingOrgIds = following
-    .filter(f => f.followingOrgId)
-    .map(f => f.followingOrgId!);
-
-  // If not following anyone, return empty
-  if (followingUserIds.length === 0 && followingOrgIds.length === 0) {
+  const { where, orderBy, isEmpty } = await getFollowingPostsQuery(currentUserId, options);
+  if (isEmpty) {
     return {
       posts: [],
       pagination: {
         hasMore: false,
         nextCursor: null,
-        limit,
+        limit: options.limit ?? 20,
         count: 0
       }
     };
   }
-
-  // Build where conditions for posts from followed users/orgs
-  let whereConditions = [];
-  
-  // Include posts from followed users
-  if (followingUserIds.length > 0) {
-    whereConditions.push(inArray(posts.userId, followingUserIds));
-  }
-  
-  // Include posts from followed organizations
-  if (followingOrgIds.length > 0) {
-    whereConditions.push(inArray(posts.organizationId, followingOrgIds));
-  }
-
-  // Combine with OR - posts from either followed users or organizations
-  let baseConditions = whereConditions.length > 0 ? or(...whereConditions) : undefined;
-  
-  // Add visibility check - only public posts
-  let finalConditions = baseConditions ? 
-    [baseConditions, eq(posts.visibility, 'public')] : 
-    [eq(posts.visibility, 'public')];
-  
-  // Add cursor-based filtering
-  if (cursor) {
-    const cursorDate = new Date(cursor);
-    if (direction === 'after') {
-      finalConditions.push(lt(posts.createdAt, cursorDate));
-    } else {
-      finalConditions.push(gt(posts.createdAt, cursorDate));
-    }
-  }
-
-  // Build sorting
-  let orderByClause;
-  switch (sortBy) {
-    case 'newest':
-      orderByClause = [desc(posts.createdAt)];
-      break;
-    case 'oldest':
-      orderByClause = [asc(posts.createdAt)];
-      break;
-    case 'popular':
-      orderByClause = [desc(posts.likesCount), desc(posts.createdAt)];
-      break;
-    default:
-      orderByClause = [desc(posts.createdAt)];
-  }
-
-  // Fetch posts with author information
-  const results = await db
-    .select({
-      // Post fields
-      id: posts.id,
-      userId: posts.userId,
-      organizationId: posts.organizationId,
-      content: posts.content,
-      imageKey: posts.imageKey,
-      likesCount: posts.likesCount,
-      visibility: posts.visibility,
-      createdBy: posts.createdBy,
-      createdAt: posts.createdAt,
-      updatedAt: posts.updatedAt,
-      
-      // Author fields - organization when userId is null, user when organizationId is null
-      author: {
-        id: sql<string>`COALESCE(${organization.id}, ${user.id})`.as('author_id'),
-        name: sql<string>`COALESCE(${organization.name}, ${user.name})`.as('author_name'),
-        image: sql<string | null>`COALESCE(${organization.imageKey}, ${user.image})`.as('author_image'),
-        type: sql<'user' | 'organization'>`CASE 
-          WHEN ${posts.userId} IS NULL THEN 'organization'
-          ELSE 'user'
-        END`.as('author_type'),
-        isOfficial: sql<boolean>`COALESCE(${organization.isOfficial}, ${user.isOfficial}, false)`.as('author_is_official')
-      }
-    })
-    .from(posts)
-    .leftJoin(user, eq(posts.userId, user.id))
-    .leftJoin(organization, eq(posts.organizationId, organization.id))
-    .where(and(...finalConditions))
-    .orderBy(...orderByClause)
-    .limit(limit + 1);
-  
-  const hasMore = results.length > limit;
-  const posts_data = results.slice(0, limit);
-  
-  // Generate next cursor from last post
-  const nextCursor = posts_data.length > 0 ? 
-    posts_data[posts_data.length - 1].createdAt.toISOString() : null;
-
-  return {
-    posts: posts_data,
-    pagination: {
-      hasMore,
-      nextCursor,
-      limit,
-      count: posts_data.length
-    }
-  };
+  return getPostsPaginated({ where, orderBy, options });
 }
 
 export async function getUserPostsPaginated(userId: string, options: PaginationOptions = {}) {

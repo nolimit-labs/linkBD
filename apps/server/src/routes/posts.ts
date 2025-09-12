@@ -210,12 +210,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       const userProfile = await userModel.getUserProfileById(post.userId);
       if (userProfile) {
         author = {
-          id: userProfile.id,
-          name: userProfile.name,
-          image: userProfile.image,
-          type: userProfile.type,
-          isOfficial: userProfile.isOfficial,
-          subscriptionPlan: userProfile.subscriptionPlan
+          ...userProfile,
         };
       }
     } else if (post.organizationId) {
@@ -223,12 +218,7 @@ const postsRoute = new Hono<{ Variables: AuthVariables & SubscriptionVariables }
       const orgProfile = await orgModel.getOrgProfileById(post.organizationId);
       if (orgProfile) {
         author = {
-          id: orgProfile.id,
-          name: orgProfile.name,
-          image: orgProfile.image,
-          type: orgProfile.type,
-          isOfficial: orgProfile.isOfficial,
-          subscriptionPlan: orgProfile.subscriptionPlan
+          ...orgProfile,
         };
       }
     }

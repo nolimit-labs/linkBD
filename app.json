@@ -1,5 +1,10 @@
 {
   "ios": {
     "bundleIdentifier": "com.joeshmoe.linkbd"
+  },
+  "extra": {
+    "eas": {
+      "projectId": "b8fa9ac9-83c5-44e4-9b7c-06bace18dd13"
+    }
   }
 }

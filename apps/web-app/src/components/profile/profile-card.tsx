@@ -8,8 +8,7 @@ import { Calendar, Building, User, Edit3, Save, X, Upload } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { OfficialBadge } from './badge-official'
 import { ProBadge } from './badge-pro'
-import { FollowButton } from '@/components/profile/follow-button'
-import { FollowStats } from '@/components/posts/follow-stats'
+import { useFollow } from '@/api/followers'
 import { useState, useRef } from 'react'
 import { useSession } from '@/lib/auth-client'
 import { useActiveOrganization } from '@/lib/auth-client'
@@ -27,6 +26,8 @@ type ProfileCardProps = {
     subscriptionPlan?: string
     createdAt: string
     description?: string | null
+    followerCounts?: { followersCount: number; followingCount: number }
+    isFollowing?: boolean
   }
 }
 
@@ -38,6 +39,10 @@ export function ProfileCard({ profile }: ProfileCardProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [optimisticFollowing, setOptimisticFollowing] = useState<boolean | null>(null)
+  const [counts, setCounts] = useState<{ followersCount: number; followingCount: number }>(
+    profile.followerCounts || { followersCount: 0, followingCount: 0 }
+  )
 
   // Authentication & Session
   const { data: session } = useSession()
@@ -47,6 +52,7 @@ export function ProfileCard({ profile }: ProfileCardProps) {
   const updateUser = useUpdateUser()
   const updateOrganization = useUpdateOrganization()
   const uploadFile = useUploadFile()
+  const followMutation = useFollow()
 
   const isOrganization = profile.type === 'organization'
   
@@ -114,6 +120,35 @@ export function ProfileCard({ profile }: ProfileCardProps) {
 
   const currentImage = previewUrl || profile.image
   const isLoading = updateUser.isPending || updateOrganization.isPending || uploadFile.isPending
+  const isFollowing = optimisticFollowing ?? profile.isFollowing ?? false
+
+  const formatCount = (count: number) => {
+    if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`
+    if (count >= 1000) return `${(count / 1000).toFixed(1)}K`
+    return String(count)
+  }
+
+  const handleFollowToggle = () => {
+    if (!session) return
+    const action = isFollowing ? 'unfollow' : 'follow'
+    setOptimisticFollowing(!isFollowing)
+    // Optimistically update followers count for target profile
+    setCounts((prev) => ({
+      followersCount: Math.max(0, prev.followersCount + (action === 'follow' ? 1 : -1)),
+      followingCount: prev.followingCount,
+    }))
+
+    followMutation.mutate(
+      { targetId: profile.id, targetType: isOrganization ? 'organization' : 'user', action },
+      {
+        onError: () => {
+          // Revert optimistic changes
+          setOptimisticFollowing(null)
+          setCounts(profile.followerCounts || { followersCount: 0, followingCount: 0 })
+        },
+      }
+    )
+  }
 
   return (
     <Card className="sticky">
@@ -210,25 +245,32 @@ export function ProfileCard({ profile }: ProfileCardProps) {
             </div>
           )}
 
-          {/* Follow Stats */}
+          {/* Follower / Following Stats */}
           <div className="space-y-3">
-            <FollowStats
-              userId={isOrganization ? undefined : profile.id}
-              organizationId={isOrganization ? profile.id : undefined}
-              clickable={true}
-            />
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <span className="font-semibold">{formatCount(counts.followersCount)}</span>
+                <span className="text-muted-foreground">followers</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-semibold">{formatCount(counts.followingCount)}</span>
+                <span className="text-muted-foreground">following</span>
+              </div>
+            </div>
           </div>
 
           {/* Follow Button */}
           {!canEdit && (
             <div className="pt-2">
-              <FollowButton
-                targetId={profile.id}
-                targetType={isOrganization ? 'organization' : 'user'}
-                variant="default"
+              <Button
+                onClick={handleFollowToggle}
+                disabled={followMutation.isPending}
+                variant={isFollowing ? 'default' : 'outline'}
                 size="default"
                 className="w-full"
-              />
+              >
+                {isFollowing ? 'Following' : 'Follow'}
+              </Button>
             </div>
           )}
 
