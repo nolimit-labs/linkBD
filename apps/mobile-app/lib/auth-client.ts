@@ -25,6 +25,7 @@ export const authClient = createAuthClient({
 export const {
     organization,
     useActiveOrganization,
-    useListOrganizations,
     getSession,
+    useListOrganizations,
 } = authClient;
+
